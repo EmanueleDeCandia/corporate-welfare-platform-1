@@ -725,6 +725,10 @@ async function seedDatabase() {
   await db.update(users).set({ venueId: insertedVenues[1].id }).where(eq(users.id, marco.id));
   await db.update(users).set({ venueId: insertedVenues[3].id }).where(eq(users.id, chiara.id));
   await db.update(users).set({ venueId: teatroLauro.id }).where(eq(users.id, paolo.id));
+  await db.update(venues).set({ providerUserId: elena.id }).where(eq(venues.id, laValle.id));
+  await db.update(venues).set({ providerUserId: marco.id }).where(eq(venues.id, insertedVenues[1].id));
+  await db.update(venues).set({ providerUserId: chiara.id }).where(eq(venues.id, insertedVenues[3].id));
+  await db.update(venues).set({ providerUserId: paolo.id }).where(eq(venues.id, teatroLauro.id));
 
   const employeeSeeds = [
     { user: mario, companyId: acme.id, hotelRedeemed: true, theaterRedeemed: false },
