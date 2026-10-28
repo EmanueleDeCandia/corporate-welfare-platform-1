@@ -759,18 +759,8 @@ async function seedDatabase() {
       slotIndex: slot,
       amountCents: aperitivoAmount,
     }));
-    const theaterVouchers = [1, 2].map((slot) => ({
-      userId: employee.user.id,
-      companyId: employee.companyId,
-      type: "theater" as const,
-      status:
-        employee.theaterRedeemed && slot === 1 ? ("redeemed" as const) : ("available" as const),
-      slotIndex: slot,
-      amountCents: theaterAmount,
-      venueId: employee.theaterRedeemed && slot === 1 ? teatroLauro.id : null,
-      redeemedAt: employee.theaterRedeemed && slot === 1 ? new Date("2026-02-20T20:00:00Z") : null,
-    }));
-    await db.insert(vouchers).values([...hotelVouchers, ...aperitivoVouchers, ...theaterVouchers]);
+    // Solo Pernottamento e Aperitivo/Cena sono welfare aziendale
+    await db.insert(vouchers).values([...hotelVouchers, ...aperitivoVouchers]);
   }
 
   const insertedInvites = await db

@@ -68,7 +68,7 @@ export async function getCompanyDashboardData(companyId: number) {
     const empRedeemed = empVouchers.filter((v) => v.status === "redeemed");
     const hotelCount = empRedeemed.filter((v) => v.type === "hotel").length;
     const aperitivoCount = empRedeemed.filter((v) => v.type === "aperitivo").length;
-    const totalCount = empRedeemed.length;
+    const totalCount = hotelCount + aperitivoCount;
 
     return {
       user: emp,
