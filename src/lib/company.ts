@@ -59,6 +59,9 @@ export async function getCompanyDashboardData(companyId: number) {
   const availableVouchers = Math.max(0, totalVouchersPlafond - totalRedeemed);
   const usageRate = totalVouchersPlafond > 0 ? Math.round((totalRedeemed / totalVouchersPlafond) * 100) : 0;
 
+  // Matching Grant generato dai Promotori: 50€ per ciascun voucher pernottamento
+  const matchingGrantCents = redeemedHotel * 5000;
+
   // Mappa per ogni dipendente: quanti voucher ha riscattato e quali
   const employeeUsage = employees.map((emp) => {
     const empVouchers = companyVouchers.filter((v) => v.userId === emp.id);
@@ -72,6 +75,7 @@ export async function getCompanyDashboardData(companyId: number) {
       totalRedeemed: totalCount,
       hotelCount,
       aperitivoCount,
+      hasMatchingGrant: hotelCount > 0,
       canRedeemMore: totalCount < 2 && availableVouchers > 0,
     };
   });
@@ -85,9 +89,9 @@ export async function getCompanyDashboardData(companyId: number) {
     totalRedeemed,
     availableVouchers,
     usageRate,
+    matchingGrantCents,
     employees: employeeUsage,
     transactions: txRows,
     venues: hospitalityVenues,
   };
 }
-

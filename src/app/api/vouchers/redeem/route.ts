@@ -50,6 +50,7 @@ export async function POST(request: Request) {
     .set({ status: "redeemed", venueId: venue.id, redeemedAt: now })
     .where(eq(vouchers.id, voucher.id));
 
+  // 1. Transazione Welfare Aziendale (B2B)
   const [tx] = await db
     .insert(transactions)
     .values({
@@ -66,7 +67,28 @@ export async function POST(request: Request) {
     })
     .returning();
 
-  await awardImpact(me.id, venue.impactPointsGenerated);
+  // 2. MATCHING GRANT PROMOTORI (SOLO PER VOUCHER PERNOTTAMENTO)
+  // Valore identico a 50€:
+  // - Biglietto Spettacolo Omaggio
+  // - Incontro serale con gli artisti in Hotel
+  // - Evento del giorno successivo organizzato dal Comune
+  const isHotel = voucher.type === "hotel";
+  if (isHotel) {
+    await db.insert(transactions).values({
+      type: "welfare_redeem",
+      status: "completed",
+      userId: me.id,
+      venueId: venue.id,
+      companyId: null, // Finanziato dai Promotori / Matching Grant (non dall'azienda)
+      voucherId: null,
+      amountCents: 5000, // 50,00 € identico al voucher pernottamento
+      discountCents: 0,
+      listPriceCents: 5000,
+      serviceLabel: "Matching Grant Promotori (50€): Biglietto Spettacolo + Incontro Artisti in Hotel + Evento Comune",
+    });
+  }
+
+  await awardImpact(me.id, venue.impactPointsGenerated + (isHotel ? 2 : 0));
 
   if (company) {
     await db
@@ -81,8 +103,12 @@ export async function POST(request: Request) {
   await db.insert(notifications).values({
     venueId: venue.id,
     type: "welfare",
-    title: "Notifica welfare · riscatto istantaneo",
-    body: `L'utente dipendente "${guest}" ha appena cliccato RISCATTA.`,
+    title: isHotel ? "Riscatto Pernottamento + Matching Grant Attivato (50€)" : "Notifica welfare · riscatto istantaneo",
+    body: `L'utente dipendente "${guest}" ha riscattato ${voucherTypeLabel(voucher.type)} presso la tua struttura.${
+      isHotel
+        ? " ATTIVATO MATCHING GRANT PROMOTORI (50€): Omaggio Biglietto Spettacolo + Incontro serale artisti in Hotel + Evento Comune."
+        : ""
+    }`,
     payload: {
       guest,
       company: company?.name ?? "Impresa cliente",
@@ -90,6 +116,9 @@ export async function POST(request: Request) {
       amountCents: voucher.amountCents,
       invoiceHint: `EMETTI FATTURA DIRETTA A: Impresa Cliente ${company?.name ?? ""} (P.IVA: ${company?.vatNumber ?? "—"})`,
       vatNote: `Importo da fatturare: € ${(voucher.amountCents / 100).toFixed(2).replace(".", ",")} (IVA 10% inclusa)`,
+      matchingGrant: isHotel
+        ? "Matching Grant Promotori (50€): Biglietto Spettacolo + Incontro con gli Artisti in Hotel + Evento Comune giorno dopo."
+        : undefined,
       transactionId: tx.id,
     },
   });
@@ -98,7 +127,9 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     ok: true,
-    message: `Voucher ${voucherTypeLabel(voucher.type)} riscattato presso ${venue.name}.`,
+    message: isHotel
+      ? `Pernottamento confermato presso ${venue.name}! I Promotori hanno attivato il Matching Grant da 50€: Biglietto Spettacolo + Incontro con gli artisti in Hotel + Evento Comune.`
+      : `Voucher ${voucherTypeLabel(voucher.type)} riscattato presso ${venue.name}.`,
     impactPoints: fresh?.impactPoints ?? me.impactPoints + 1,
     badgeLevel: fresh?.badgeLevel,
   });

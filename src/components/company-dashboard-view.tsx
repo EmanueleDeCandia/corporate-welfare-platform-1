@@ -13,6 +13,8 @@ import {
   ChevronRight,
   TrendingUp,
   MapPin,
+  Sparkles,
+  Gift,
 } from "lucide-react";
 import type { Company, Venue, User, Transaction } from "@/db/schema";
 import { formatDateTime, formatEuro, initials } from "@/lib/utils";
@@ -22,6 +24,7 @@ type EmployeeRow = {
   totalRedeemed: number;
   hotelCount: number;
   aperitivoCount: number;
+  hasMatchingGrant: boolean;
   canRedeemMore: boolean;
 };
 
@@ -41,6 +44,7 @@ type Props = {
     totalRedeemed: number;
     availableVouchers: number;
     usageRate: number;
+    matchingGrantCents: number;
     employees: EmployeeRow[];
     transactions: TxItem[];
     venues: Venue[];
@@ -57,6 +61,7 @@ export function CompanyDashboardView({ data }: Props) {
     totalRedeemed,
     availableVouchers,
     usageRate,
+    matchingGrantCents,
     employees,
     transactions,
     venues,
@@ -85,7 +90,7 @@ export function CompanyDashboardView({ data }: Props) {
               </div>
               <h1 className="mt-1 font-serif text-3xl md:text-4xl">{company.name}</h1>
               <p className="text-xs text-cream/80 md:text-sm">
-                Gestione del piano welfare territoriale e rendicontazione fornitori convenzionati
+                Gestione del piano welfare territoriale e monitoraggio Matching Grant Promotori
               </p>
             </div>
           </div>
@@ -188,7 +193,7 @@ export function CompanyDashboardView({ data }: Props) {
                 </div>
                 <div>
                   <h3 className="font-serif text-xl">Canale 1 · Pernottamento</h3>
-                  <p className="text-xs text-olive">Agriturismi e Relais rurali convenzionati</p>
+                  <p className="text-xs text-olive">Agriturismi e Hotel convenzionati (50€)</p>
                 </div>
               </div>
               <div className="mt-6 flex items-baseline justify-between border-t border-mist pt-4">
@@ -222,6 +227,51 @@ export function CompanyDashboardView({ data }: Props) {
             </div>
           </div>
 
+          {/* EVIDENZA MATCHING GRANT DEI PROMOTORI (SOLO PER PERNOTTAMENTO = 50€) */}
+          <div className="rounded-[28px] bg-gradient-to-br from-forest-deep to-forest p-6 text-cream border border-gold/40 shadow-sm">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="grid h-12 w-12 place-items-center rounded-2xl bg-gold/20 text-gold">
+                  <Sparkles size={24} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-gold px-2.5 py-0.5 text-[11px] font-bold text-forest uppercase tracking-wider">
+                      Matching Grant Promotori
+                    </span>
+                    <span className="text-xs text-gold">Valore: 50,00 € a soggiorno</span>
+                  </div>
+                  <h3 className="mt-1 font-serif text-2xl text-cream">
+                    Attivazione automatica su ogni Voucher di Pernottamento
+                  </h3>
+                </div>
+              </div>
+              <div className="rounded-2xl bg-white/10 px-4 py-2 text-right">
+                <p className="text-[10px] uppercase tracking-wider text-gold">Valore Aggiunto Generato</p>
+                <p className="font-serif text-2xl text-cream">{formatEuro(matchingGrantCents)}</p>
+              </div>
+            </div>
+
+            <p className="mt-4 text-xs leading-6 text-cream/80 md:text-sm">
+              I promotori del circuito monitorano i riscatti e intervengono con un contributo <strong>Matching Grant da 50€</strong> (pari al valore del voucher pernottamento) che include automaticamente:
+            </p>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl bg-white/10 p-3.5 border border-white/10">
+                <p className="text-xs font-semibold text-gold">1. Biglietto Spettacolo Omaggio</p>
+                <p className="mt-1 text-xs text-cream/70">Ingresso gratuito alla rassegna teatrale/culturale partner</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-3.5 border border-white/10">
+                <p className="text-xs font-semibold text-gold">2. Incontro Serale in Hotel</p>
+                <p className="mt-1 text-xs text-cream/70">Incontro esclusivo serale con gli artisti direttamente nella struttura</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-3.5 border border-white/10">
+                <p className="text-xs font-semibold text-gold">3. Evento Comune Giorno Dopo</p>
+                <p className="mt-1 text-xs text-cream/70">Esperienza o visita territoriale organizzata dal Comune ospitante</p>
+              </div>
+            </div>
+          </div>
+
           {/* Regola di business riassuntiva */}
           <div className="rounded-[24px] bg-cream p-6 border border-gold/40">
             <h4 className="font-serif text-lg text-forest flex items-center gap-2">
@@ -230,7 +280,8 @@ export function CompanyDashboardView({ data }: Props) {
             <ul className="mt-3 space-y-2 text-xs leading-6 text-forest/90 md:text-sm">
               <li>• Ogni dipendente ha diritto di default a riscattare fino a <strong>2 voucher a scelta</strong> (Pernottamento o Cena).</li>
               <li>• Il secondo voucher può essere richiesto <strong>solo fino ad esaurimento delle quote residue</strong> ({availableVouchers} rimanenti).</li>
-              <li>• Al riscatto il dipendente seleziona obbligatoriamente il fornitore convenzionato; il riscatto è immediato e la spesa è rendicontata all&apos;azienda con fattura B2B ex Art. 51 TUIR.</li>
+              <li>• Al riscatto il dipendente seleziona obbligatoriamente il fornitore convenzionato; il riscatto è immediato e irrevocabile.</li>
+              <li>• Se il voucher è un <strong>Pernottamento (50€)</strong>, si attiva immediatamente il Matching Grant dei Promotori (50€) con Spettacolo + Incontro artisti in Hotel + Evento Comune.</li>
             </ul>
           </div>
         </div>
@@ -242,7 +293,7 @@ export function CompanyDashboardView({ data }: Props) {
           <div className="flex items-center justify-between pb-4 border-b border-mist">
             <div>
               <h2 className="font-serif text-2xl text-forest">Stato Riscatto Dipendenti</h2>
-              <p className="text-xs text-olive">Monitoraggio delle scelte individuali e del limite di 2 voucher</p>
+              <p className="text-xs text-olive">Monitoraggio delle scelte individuali e dei Matching Grant attivati</p>
             </div>
             <span className="rounded-full bg-forest/5 px-3 py-1 text-xs font-semibold text-forest">
               {employees.length} dipendenti attivi
@@ -255,14 +306,15 @@ export function CompanyDashboardView({ data }: Props) {
                 <tr>
                   <th className="py-3">Dipendente</th>
                   <th className="py-3">Email</th>
-                  <th className="py-3 text-center">Pernottamenti</th>
+                  <th className="py-3 text-center">Pernottamenti (50€)</th>
                   <th className="py-3 text-center">Cene KM 0</th>
+                  <th className="py-3 text-center">Matching Grant (50€)</th>
                   <th className="py-3 text-center">Totale Riscattati</th>
                   <th className="py-3 text-right">Stato Plafond</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-mist">
-                {employees.map(({ user, totalRedeemed, hotelCount, aperitivoCount, canRedeemMore }) => (
+                {employees.map(({ user, totalRedeemed, hotelCount, aperitivoCount, hasMatchingGrant, canRedeemMore }) => (
                   <tr key={user.id} className="hover:bg-sand/30 transition">
                     <td className="py-3 font-medium text-forest">
                       {user.firstName} {user.lastName}
@@ -277,6 +329,15 @@ export function CompanyDashboardView({ data }: Props) {
                       <span className="inline-flex items-center justify-center rounded-full bg-gold/20 px-2.5 py-0.5 text-xs font-semibold text-terracotta">
                         {aperitivoCount}
                       </span>
+                    </td>
+                    <td className="text-center">
+                      {hasMatchingGrant ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-gold/20 px-2.5 py-0.5 text-[11px] font-bold text-terracotta">
+                          <Sparkles size={11} /> Attivo (+50€)
+                        </span>
+                      ) : (
+                        <span className="text-xs text-olive">—</span>
+                      )}
                     </td>
                     <td className="text-center font-bold text-forest">
                       {totalRedeemed} / 2
@@ -310,7 +371,7 @@ export function CompanyDashboardView({ data }: Props) {
           <div>
             <h2 className="font-serif text-2xl text-forest">Fornitori Convenzionati di Ospitalità</h2>
             <p className="text-xs text-olive">
-              Agriturismi e Hotel del circuito selezionabili dai dipendenti per pernottamenti e cene
+              Agriturismi e Hotel dove i dipendenti possono soggiornare e sbloccare il Matching Grant dei Promotori
             </p>
           </div>
 
@@ -341,6 +402,9 @@ export function CompanyDashboardView({ data }: Props) {
                       <span className="text-olive">Aperitivo / Cena KM 0:</span>
                       <span className="font-medium">{formatEuro(venue.priceAperitivoCents)}</span>
                     </div>
+                    <div className="rounded-xl bg-gold/15 p-2 text-[11px] text-terracotta flex items-center gap-1.5">
+                      <Sparkles size={13} /> Include Matching Grant: incontro serale artisti
+                    </div>
                   </div>
                 </div>
 
@@ -366,7 +430,7 @@ export function CompanyDashboardView({ data }: Props) {
             <div>
               <h2 className="font-serif text-2xl text-forest">Fascicolo Fiscale & Fatturazione B2B</h2>
               <p className="text-xs text-olive">
-                Transazioni welfare conformi ex Art. 51 TUIR intestate a {company.name}
+                Transazioni welfare conformi ex Art. 51 TUIR intestate ad {company.name}
               </p>
             </div>
             <span className="rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold text-terracotta">
@@ -421,4 +485,3 @@ export function CompanyDashboardView({ data }: Props) {
     </div>
   );
 }
-
