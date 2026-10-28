@@ -44,7 +44,7 @@ async function seedDatabase() {
         vatNumber: "01234567890",
         city: "Ancona",
         sector: "Manifattura e design",
-        employeesCount: 420,
+        employeesCount: 100,
         fundedAmountCents: 18600000,
         impactRating: 94,
         localRedistributionCents: 12840000,
@@ -279,12 +279,15 @@ async function seedDatabase() {
     ])
     .returning();
 
-  const mario = insertedUsers[0];
-  const luigi = insertedUsers[3];
-  const elena = insertedUsers[4];
-  const marco = insertedUsers[5];
-  const chiara = insertedUsers[6];
-  const paolo = insertedUsers[7];
+  const elenaMartini = insertedUsers[0];
+  const mario = insertedUsers[1];
+  const giulia = insertedUsers[2];
+  const sofia = insertedUsers[3];
+  const luigi = insertedUsers[4];
+  const elena = insertedUsers[5];
+  const marco = insertedUsers[6];
+  const chiara = insertedUsers[7];
+  const paolo = insertedUsers[8];
 
   await db
     .update(users)
@@ -724,9 +727,9 @@ async function seedDatabase() {
   await db.update(users).set({ venueId: teatroLauro.id }).where(eq(users.id, paolo.id));
 
   const employeeSeeds = [
-    { user: insertedUsers[0], companyId: acme.id, hotelRedeemed: true, theaterRedeemed: true },
-    { user: insertedUsers[1], companyId: acme.id, hotelRedeemed: false, theaterRedeemed: false },
-    { user: insertedUsers[2], companyId: verde.id, hotelRedeemed: false, theaterRedeemed: false },
+    { user: mario, companyId: acme.id, hotelRedeemed: true, theaterRedeemed: false },
+    { user: giulia, companyId: acme.id, hotelRedeemed: false, theaterRedeemed: false },
+    { user: sofia, companyId: verde.id, hotelRedeemed: false, theaterRedeemed: false },
   ];
 
   for (const employee of employeeSeeds) {
@@ -814,7 +817,7 @@ async function seedDatabase() {
         status: "completed",
         userId: mario.id,
         venueId: teatroLauro.id,
-        companyId: acme.id,
+        companyId: null,
         amountCents: 1500,
         discountCents: 0,
         listPriceCents: 1500,
@@ -881,7 +884,7 @@ async function seedDatabase() {
         company: "ACME S.p.A.",
         vat: "01234567890",
         amountCents: 1500,
-        invoiceHint: "EMETTI FATTURA DIRETTA A: ACME S.p.A. (P.IVA: 01234567890)",
+        invoiceHint: "OMAGGIO PROMOTORI: Biglietto Spettacolo (Non fatturabile all'azienda)",
         vatNote: "Importo da fatturare: € 15,00",
         transactionId: insertedTx[1].id,
       },

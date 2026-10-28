@@ -57,7 +57,7 @@ export async function getCompanyDashboardData(companyId: number) {
   const redeemedAperitivo = companyVouchers.filter((v) => v.type === "aperitivo" && v.status === "redeemed").length;
   const totalRedeemed = redeemedHotel + redeemedAperitivo;
   const availableVouchers = Math.max(0, totalVouchersPlafond - totalRedeemed);
-  const usageRate = totalVouchersPlafond > 0 ? Math.round((totalRedeemed / totalVouchersPlafond) * 100) : 0;
+  const usageRate = totalVouchersPlafond > 0 ? Number(((totalRedeemed / totalVouchersPlafond) * 100).toFixed(1)) : 0;
 
   // Matching Grant generato dai Promotori: 50€ per ciascun voucher pernottamento
   const matchingGrantCents = redeemedHotel * 5000;
