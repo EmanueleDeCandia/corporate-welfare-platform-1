@@ -294,7 +294,7 @@ function Drawer({
   );
 }
 
-function KitTab({ user, venues, shares, certificates }: Props) {
+function KitTab({ user, company, venues, shares, certificates }: Props) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -305,10 +305,11 @@ function KitTab({ user, venues, shares, certificates }: Props) {
   const venue = venues.find((item) => item.id === venueId) ?? venues[0];
 
   const caption = useMemo(() => {
-    const percent = venue?.localSupportPercent ?? 15;
-    const place = venue?.name ?? "una struttura RADICI";
-    return `Questo soggiorno da ${place} ha sostenuto l'economia agricola locale del ${percent}% — Certificato da RADICI.\n\n#RadiciWelfare #ImpattoSociale #EconomiaLocale #KM0 #${(venue?.region ?? "Italia").replace(/\s+/g, "")}`;
-  }, [venue]);
+    const place = venue?.name ?? "Agriturismo La Valle";
+    const companyName = company?.name ?? "ACME S.p.A.";
+    const companyTag = companyName.replace(/\s+/g, "").replace(/[^a-zA-Z0-9]/g, "");
+    return `Questo soggiorno da ${place} è stato sostenuto da ${companyName} per valorizzare l'economia locale — Certificato da RADICI.\n\n#${companyTag} #RadiciWelfare #ImpattoSociale #EconomiaLocale #KM0 #${(venue?.region ?? "Marche").replace(/\s+/g, "")}`;
+  }, [venue, company]);
 
   async function onFile(file: File) {
     const image = await loadImage(URL.createObjectURL(file));
@@ -634,9 +635,24 @@ function FriendsTab({ user, invites }: Props) {
                 L&apos;amico inquadra il QR della struttura oppure apre questo invito. Il sistema lo
                 riconosce e crea l&apos;account consumer collegato a {user.firstName}.
               </p>
-              <a href={`/r/${selected.code}`} className="mt-3 inline-block text-sm text-terracotta">
-                Apri landing invito →
-              </a>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(
+                    `Ciao ${selected.firstName}! Ti ho inviato questo invito personale su RADICI con lo sconto del 10% sul tuo prossimo soggiorno o cena nei borghi marchigiani: ${typeof window !== "undefined" ? window.location.origin : ""}/r/${selected.code}`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition shadow-sm"
+                >
+                  Condividi su WhatsApp
+                </a>
+                <a
+                  href={`/r/${selected.code}`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-terracotta/30 bg-terracotta/10 px-4 py-2 text-xs font-semibold text-terracotta hover:bg-terracotta/20 transition"
+                >
+                  Vedi Convenzione & Cassa →
+                </a>
+              </div>
             </div>
           </div>
         ) : (
