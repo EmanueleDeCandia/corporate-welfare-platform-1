@@ -5,6 +5,11 @@ import { FormEvent, useState } from "react";
 
 const demos = [
   {
+    email: "elena.martini@acme.it",
+    label: "Elena Martini (CSR)",
+    hint: "Manager CSR · ACME S.p.A. (Rendicontazione)",
+  },
+  {
     email: "mario.rossi@acme.it",
     label: "Mario Rossi",
     hint: "Dipendente ACME · portafoglio e referral",

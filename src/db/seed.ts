@@ -182,6 +182,17 @@ async function seedDatabase() {
     .insert(users)
     .values([
       {
+        email: "elena.martini@acme.it",
+        passwordHash: DEMO_PASSWORD,
+        firstName: "Elena",
+        lastName: "Martini",
+        role: "csr",
+        companyId: acme.id,
+        impactPoints: 0,
+        badgeLevel: "CSR Manager",
+        referralCode: "elena-martini",
+      },
+      {
         email: "mario.rossi@acme.it",
         passwordHash: DEMO_PASSWORD,
         firstName: "Mario",

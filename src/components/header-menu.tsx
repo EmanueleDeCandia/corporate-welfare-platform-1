@@ -18,7 +18,7 @@ type Props = {
 export function HeaderMenu({ dark, user }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const accountHref = user?.role === "provider" ? "/fornitore" : "/account";
+  const accountHref = user?.role === "provider" ? "/fornitore" : user?.role === "csr" ? "/azienda" : "/account";
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -39,7 +39,7 @@ export function HeaderMenu({ dark, user }: Props) {
           <span className="font-medium">
             {user.firstName} {user.lastName}
           </span>
-          {user.role !== "provider" ? (
+          {user.role === "csr" ? (<span className="rounded-full bg-gold/20 px-2 py-0.5 text-[11px] text-gold">CSR Manager</span>) : user.role !== "provider" ? (
             <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[11px] text-gold">
               {user.impactPoints} pt
             </span>
