@@ -47,3 +47,4 @@
 1. **Driver Notifiche Email**: Integrazione provider SMTP/API (Resend/SendGrid) per recapito reale delle notifiche fiscali.
 2. **Area Promotori Dedicata (`/promotori`)**: Cruscotto per la Startup e i Comuni per monitorare l'erogazione dei Matching Grant.
 3. **Scanner QR Fornitore**: Fotocamera browser per scansione check-in dal vivo.
+

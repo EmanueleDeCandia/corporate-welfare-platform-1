@@ -256,18 +256,14 @@ export function CompanyDashboardView({ data }: Props) {
               I promotori del circuito monitorano i riscatti e intervengono con un contributo <strong>Matching Grant da 50€</strong> (pari al valore del voucher pernottamento) che include automaticamente:
             </p>
 
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl bg-white/10 p-3.5 border border-white/10">
-                <p className="text-xs font-semibold text-gold">1. Biglietto Spettacolo Omaggio</p>
-                <p className="mt-1 text-xs text-cream/70">Ingresso gratuito alla rassegna teatrale/culturale partner</p>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl bg-white/10 p-4 border border-white/10">
+                <p className="text-sm font-semibold text-gold">1. Biglietto Spettacolo a Teatro Omaggio</p>
+                <p className="mt-1 text-xs text-cream/80">Ingresso coperto al 100% per la rassegna teatrale/culturale partner</p>
               </div>
-              <div className="rounded-2xl bg-white/10 p-3.5 border border-white/10">
-                <p className="text-xs font-semibold text-gold">2. Incontro Serale in Hotel</p>
-                <p className="mt-1 text-xs text-cream/70">Incontro esclusivo serale con gli artisti direttamente nella struttura</p>
-              </div>
-              <div className="rounded-2xl bg-white/10 p-3.5 border border-white/10">
-                <p className="text-xs font-semibold text-gold">3. Evento Comune Giorno Dopo</p>
-                <p className="mt-1 text-xs text-cream/70">Esperienza o visita territoriale organizzata dal Comune ospitante</p>
+              <div className="rounded-2xl bg-white/10 p-4 border border-white/10">
+                <p className="text-sm font-semibold text-gold">2. Incontro Esclusivo Serale in Struttura</p>
+                <p className="mt-1 text-xs text-cream/80">Incontro riservato serale con gli artisti direttamente in Hotel o Agriturismo</p>
               </div>
             </div>
           </div>
@@ -281,7 +277,7 @@ export function CompanyDashboardView({ data }: Props) {
               <li>• Ogni dipendente ha diritto di default a riscattare fino a <strong>2 voucher a scelta</strong> (Pernottamento o Cena).</li>
               <li>• Il secondo voucher può essere richiesto <strong>solo fino ad esaurimento delle quote residue</strong> ({availableVouchers} rimanenti).</li>
               <li>• Al riscatto il dipendente seleziona obbligatoriamente il fornitore convenzionato; il riscatto è immediato e irrevocabile.</li>
-              <li>• Se il voucher è un <strong>Pernottamento (50€)</strong>, si attiva immediatamente il Matching Grant dei Promotori (50€) con Spettacolo + Incontro artisti in Hotel + Evento Comune.</li>
+              <li>• Se il voucher è un <strong>Pernottamento (50€)</strong>, si attiva immediatamente il Matching Grant dei Promotori (50€) con Biglietto Spettacolo + Incontro con gli artisti in Hotel/Agriturismo.</li>
             </ul>
           </div>
         </div>

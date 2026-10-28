@@ -103,7 +103,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: true,
     message: isHotel
-      ? `Pernottamento confermato presso ${venue.name}! I Promotori hanno attivato il Matching Grant: Biglietto Spettacolo Omaggio + Incontro Artisti in Hotel + Evento Comune giorno dopo (Valore raddoppiato +50€).`
+      ? `Pernottamento confermato presso ${venue.name}! I Promotori hanno attivato il Matching Grant: Biglietto Spettacolo Omaggio + Incontro Artisti in Hotel (Valore raddoppiato +50€).`
       : `Voucher ${voucherTypeLabel(voucher.type)} riscattato presso ${venue.name}.`,
     impactPoints: fresh?.impactPoints ?? me.impactPoints + 1,
     badgeLevel: fresh?.badgeLevel,
