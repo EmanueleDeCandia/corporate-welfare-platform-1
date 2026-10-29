@@ -68,9 +68,7 @@ export async function initDb() {
           company_id INTEGER REFERENCES companies(id),
           venue_id INTEGER,
           impact_points INTEGER NOT NULL DEFAULT 0,
-          badge_level TEXT NOT NULL DEFAULT 'Esploratore',
-          referral_code TEXT NOT NULL UNIQUE,
-          invited_by_user_id INTEGER,
+          badge_level TEXT NOT NULL DEFAULT 'Germoglio',
           created_at INTEGER NOT NULL DEFAULT (unixepoch())
         );
 
@@ -112,6 +110,7 @@ export async function initDb() {
           slot_index INTEGER NOT NULL DEFAULT 1,
           amount_cents INTEGER NOT NULL DEFAULT 0,
           venue_id INTEGER REFERENCES venues(id),
+          theater_venue_id INTEGER REFERENCES venues(id),
           redeemed_at INTEGER,
           created_at INTEGER NOT NULL DEFAULT (unixepoch())
         );
@@ -182,6 +181,17 @@ export async function initDb() {
           created_at INTEGER NOT NULL DEFAULT (unixepoch())
         );
       `);
+
+      // Safe migration in case vouchers table already exists without theater_venue_id
+      try {
+        const columns = sqlite.prepare("PRAGMA table_info(vouchers)").all() as Array<{ name: string }>;
+        const hasTheater = columns.some((col) => col.name === "theater_venue_id");
+        if (!hasTheater) {
+          sqlite.exec("ALTER TABLE vouchers ADD COLUMN theater_venue_id INTEGER REFERENCES venues(id);");
+        }
+      } catch (e) {
+        console.warn("Migration theater_venue_id warning:", e);
+      }
 
       // Run seeding
       const { ensureSeeded } = await import("@/db/seed");
