@@ -747,30 +747,32 @@ async function seedDatabase() {
   ];
 
   for (const employee of employeeSeeds) {
-    const hotelAmount = 5000;
-    const aperitivoAmount = 2500;
-    const theaterAmount = 1500;
-    const hotelVouchers = [1, 2, 3, 4].map((slot) => ({
+    const hotelAmount = 5000; // 50 €
+    const aperitivoAmount = 2500; // 25 €
+
+    // ESATTAMENTE 2 VOUCHER PER DIPENDENTE (Plafond fisso: 1 Notte + 1 Cena)
+    const hotelVoucher = {
       userId: employee.user.id,
       companyId: employee.companyId,
       type: "hotel" as const,
-      status:
-        employee.hotelRedeemed && slot === 1 ? ("redeemed" as const) : ("available" as const),
-      slotIndex: slot,
+      status: employee.hotelRedeemed ? ("redeemed" as const) : ("available" as const),
+      slotIndex: 1,
       amountCents: hotelAmount,
-      venueId: employee.hotelRedeemed && slot === 1 ? laValle.id : null,
-      redeemedAt: employee.hotelRedeemed && slot === 1 ? new Date("2026-03-12T18:40:00Z") : null,
-    }));
-    const aperitivoVouchers = [1, 2, 3, 4].map((slot) => ({
+      venueId: employee.hotelRedeemed ? laValle.id : null,
+      theaterVenueId: employee.hotelRedeemed ? teatroLauro.id : null,
+      redeemedAt: employee.hotelRedeemed ? new Date("2026-03-12T18:40:00Z") : null,
+    };
+
+    const aperitivoVoucher = {
       userId: employee.user.id,
       companyId: employee.companyId,
       type: "aperitivo" as const,
       status: "available" as const,
-      slotIndex: slot,
+      slotIndex: 1,
       amountCents: aperitivoAmount,
-    }));
-    // Solo Pernottamento e Aperitivo/Cena sono welfare aziendale
-    await db.insert(vouchers).values([...hotelVouchers, ...aperitivoVouchers]);
+    };
+
+    await db.insert(vouchers).values([hotelVoucher, aperitivoVoucher]);
   }
 
   const insertedInvites = await db
