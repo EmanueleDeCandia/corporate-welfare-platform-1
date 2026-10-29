@@ -22,11 +22,6 @@ type Props = {
 export function PromotersDashboardView({ data }: Props) {
   const [activeTab, setActiveTab] = useState<"overview" | "grants" | "theaters">("overview");
 
-  const fundUsagePercentage = (
-    (data.totalCommittedCents / data.totalFundCents) *
-    100
-  ).toFixed(1);
-
   return (
     <div className="space-y-8">
       {/* HEADER CRUSCOTTO PROMOTORI */}
@@ -55,37 +50,37 @@ export function PromotersDashboardView({ data }: Props) {
         {/* METRICHE CHIAVE DEL FONDO */}
         <div className="mt-8 grid grid-cols-2 gap-4 border-t border-cream/15 pt-6 lg:grid-cols-4">
           <div className="rounded-2xl bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-wider text-cream/70">Dotazione Fondo</p>
+            <p className="text-xs uppercase tracking-wider text-cream/70">Grant Assegnati</p>
             <p className="mt-2 font-serif text-2xl text-cream md:text-3xl">
-              {formatEuro(data.totalFundCents)}
+              {data.totalGrantsAssigned}
             </p>
-            <span className="mt-1 block text-[11px] text-cream/60">Fondo Startup & Sponsor</span>
+            <span className="mt-1 block text-[11px] text-cream/60">Da voucher pernottamento</span>
           </div>
 
           <div className="rounded-2xl bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-wider text-gold">Grant Erogati</p>
+            <p className="text-xs uppercase tracking-wider text-gold">Confermati (T-7 / T-3)</p>
             <p className="mt-2 font-serif text-2xl text-gold md:text-3xl">
-              {formatEuro(data.totalCommittedCents)}
+              {data.totalGrantsConfirmed}
             </p>
             <span className="mt-1 block text-[11px] text-gold/80">
-              {data.activeGrantsCount} x 50€ omaggio
+              {data.totalGrantsAttended} già presenti a teatro
             </span>
           </div>
 
           <div className="rounded-2xl bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-wider text-cream/70">Capienza Residua</p>
+            <p className="text-xs uppercase tracking-wider text-cream/70">Scaduti / No-Show</p>
             <p className="mt-2 font-serif text-2xl text-cream md:text-3xl">
-              {formatEuro(data.remainingFundCents)}
+              {data.totalGrantsExpired + data.totalGrantsNoShow}
             </p>
             <span className="mt-1 block text-[11px] text-cream/60">
-              {fundUsagePercentage}% assorbito
+              Posti liberati per capienza
             </span>
           </div>
 
           <div className="rounded-2xl bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-wider text-cream/70">Teatri Convenzionati</p>
+            <p className="text-xs uppercase tracking-wider text-cream/70">Teatri & Palcoscenici</p>
             <p className="mt-2 font-serif text-2xl text-cream md:text-3xl">{data.theatersCount}</p>
-            <span className="mt-1 block text-[11px] text-cream/60">Palcoscenici attivi</span>
+            <span className="mt-1 block text-[11px] text-cream/60">{data.eventsCount} eventi attivi</span>
           </div>
         </div>
       </section>
@@ -112,7 +107,7 @@ export function PromotersDashboardView({ data }: Props) {
               : "text-olive hover:text-forest"
           }`}
         >
-          Registro Matching Grant ({data.activeGrantsCount})
+          Registro Matching Grant ({data.totalGrantsAssigned})
         </button>
         <button
           type="button"
@@ -220,7 +215,7 @@ export function PromotersDashboardView({ data }: Props) {
                 {data.grants.map((grant) => (
                   <tr key={grant.voucherId} className="hover:bg-cream/40 transition">
                     <td className="py-3 text-xs text-olive">
-                      {grant.redeemedAt ? formatDateTime(grant.redeemedAt) : "—"}
+                      {grant.confirmedAt ? formatDateTime(grant.confirmedAt) : grant.startsAt ? `Inizio: ${formatDateTime(grant.startsAt)}` : "—"}
                     </td>
                     <td className="font-medium text-forest">
                       {grant.employeeName}

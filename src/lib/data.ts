@@ -218,9 +218,19 @@ export async function getRedeemableVenues(type: VoucherType) {
   const all = await getVenues();
   return all.filter((row) => {
     if (type === "theater") return row.venue.type === "theater";
-    if (type === "hotel") return row.venue.type === "hotel" || row.venue.type === "agriturismo";
+    if (type === "hotel" || type === "overnight") return row.venue.type === "hotel" || row.venue.type === "agriturismo";
+    if (type === "aperitivo" || type === "dinner") return row.venue.type !== "theater";
     return row.venue.type !== "theater";
   });
+}
+
+export async function getVenueOfferings(venueId?: number) {
+  await initDb();
+  const { venueOfferings } = await import("@/db/schema");
+  if (venueId) {
+    return db.select().from(venueOfferings).where(eq(venueOfferings.venueId, venueId));
+  }
+  return db.select().from(venueOfferings);
 }
 
 export async function getCompanyEmployees(companyId: number) {

@@ -1,9 +1,20 @@
 import { desc, eq } from "drizzle-orm";
 import { db, initDb } from "@/db";
-import { companies, destinations, grantEvents, users, venues, vouchers } from "@/db/schema";
+import {
+  companies,
+  destinations,
+  grantEvents,
+  matchingGrants,
+  grantSeats,
+  grantConfirmations,
+  users,
+  venues,
+  vouchers,
+} from "@/db/schema";
 
 export type PromoterGrantRow = {
   voucherId: number;
+  grantId: number;
   employeeName: string;
   employeeEmail: string;
   companyName: string;
@@ -12,17 +23,22 @@ export type PromoterGrantRow = {
   eventTitle: string;
   eventCategory: string;
   eventLocation: string;
-  theaterName: string; // compatibility
-  redeemedAt: Date | null;
+  theaterName: string;
+  startsAt: Date | null;
+  seatsRequested: number;
+  status: string;
+  confirmedAt: Date | null;
+  attendedAt: Date | null;
   grantValueCents: number;
 };
 
 export type PromoterDashboardData = {
   promoterUser: typeof users.$inferSelect;
-  totalFundCents: number;
-  totalCommittedCents: number;
-  remainingFundCents: number;
-  activeGrantsCount: number;
+  totalGrantsAssigned: number;
+  totalGrantsConfirmed: number;
+  totalGrantsAttended: number;
+  totalGrantsNoShow: number;
+  totalGrantsExpired: number;
   eventsCount: number;
   theatersCount: number;
   promotedDestinationsCount: number;
@@ -33,6 +49,10 @@ export type PromoterDashboardData = {
     category: string;
     venueName: string;
     city: string;
+    startsAt: Date | null;
+    capacity: number;
+    seatsOccupied: number;
+    seatsAvailable: number;
     grantsGeneratedCount: number;
   }>;
   theaters: Array<{
@@ -57,28 +77,7 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     return null;
   }
 
-  // Fondo complessivo stanziato dalla Startup RADICI e dai Promotori Privati
-  const TOTAL_PROMOTER_FUND_CENTS = 5000000; // 50.000 €
-  const GRANT_UNIT_VALUE_CENTS = 5000; // 50 € (25€ + 25€ per lavoratore + accompagnatore)
-
-  // Recupera tutti i voucher hotel riscattati con utente, azienda, struttura ed evento grant
-  const hotelVouchers = await db
-    .select({
-      voucher: vouchers,
-      user: users,
-      company: companies,
-      venue: venues,
-    })
-    .from(vouchers)
-    .innerJoin(users, eq(vouchers.userId, users.id))
-    .innerJoin(companies, eq(vouchers.companyId, companies.id))
-    .leftJoin(venues, eq(vouchers.venueId, venues.id))
-    .where(eq(vouchers.type, "hotel"))
-    .orderBy(desc(vouchers.redeemedAt));
-
-  const redeemedHotelVouchers = hotelVouchers.filter((v) => v.voucher.status === "redeemed");
-
-  // Catalogo Eventi del Matching Grant
+  // Catalogo Eventi del Matching Grant con capienze
   const allGrantEvents = await db.select().from(grantEvents);
   const grantEventMap = new Map(allGrantEvents.map((ge) => [ge.id, ge]));
 
@@ -87,73 +86,103 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
   const theaterMap = new Map(theaterVenues.map((th) => [th.id, th]));
   const allDestinations = await db.select().from(destinations);
 
-  // Mappa matching grants leggendo l'evento o il teatro associato
-  const grants: PromoterGrantRow[] = redeemedHotelVouchers.map((row) => {
-    const selectedEvent = row.voucher.grantEventId ? grantEventMap.get(row.voucher.grantEventId) : null;
-    const selectedTheater = row.voucher.theaterVenueId ? theaterMap.get(row.voucher.theaterVenueId) : null;
+  // Recupera tutti i matching grants con le relazioni
+  const grantRows = await db
+    .select({
+      grant: matchingGrants,
+      voucher: vouchers,
+      user: users,
+      company: companies,
+      venue: venues,
+    })
+    .from(matchingGrants)
+    .innerJoin(vouchers, eq(matchingGrants.voucherId, vouchers.id))
+    .innerJoin(users, eq(vouchers.userId, users.id))
+    .innerJoin(companies, eq(vouchers.companyId, companies.id))
+    .leftJoin(venues, eq(vouchers.venueId, venues.id))
+    .orderBy(desc(matchingGrants.assignedAt));
 
-    const eventTitle = selectedEvent?.title ?? "Stagione di Prosa e Visita nel Ridotto";
-    const eventCategory = selectedEvent?.category ?? "teatro";
-    const eventLocation = selectedEvent
-      ? `${selectedEvent.venueName} (${selectedEvent.city})`
-      : selectedTheater
-      ? `${selectedTheater.name} (${selectedTheater.city})`
-      : "Teatro Storico del Territorio";
+  // Posti assegnati complessivi per ciascun grant
+  const allSeats = await db.select().from(grantSeats);
+
+  const grants: PromoterGrantRow[] = grantRows.map((row) => {
+    const event = grantEventMap.get(row.grant.eventId);
+    const theater = event?.venueId ? theaterMap.get(event.venueId) : null;
 
     return {
       voucherId: row.voucher.id,
+      grantId: row.grant.id,
       employeeName: `${row.user.firstName} ${row.user.lastName}`,
       employeeEmail: row.user.email,
       companyName: row.company.name,
       venueName: row.venue?.name ?? "Struttura Ricettiva",
       venueCity: row.venue?.city ?? "Territorio",
-      eventTitle,
-      eventCategory,
-      eventLocation,
-      theaterName: selectedTheater?.name ?? (selectedEvent ? selectedEvent.venueName : "Teatro Storico"),
-      redeemedAt: row.voucher.redeemedAt,
-      grantValueCents: GRANT_UNIT_VALUE_CENTS,
+      eventTitle: event?.title ?? "Evento Culturale del Territorio",
+      eventCategory: event?.category ?? "teatro",
+      eventLocation: event ? `${event.venueName} (${event.city})` : "Teatro del Circuito",
+      theaterName: theater?.name ?? (event ? event.venueName : "Teatro Storico"),
+      startsAt: event?.startsAt ?? null,
+      seatsRequested: row.grant.seatsRequested,
+      status: row.grant.status,
+      confirmedAt: row.grant.confirmedAt,
+      attendedAt: row.grant.attendedAt,
+      grantValueCents: row.grant.amountCents,
     };
   });
 
-  const activeGrantsCount = grants.length;
-  const totalCommittedCents = activeGrantsCount * GRANT_UNIT_VALUE_CENTS;
-  const remainingFundCents = Math.max(0, TOTAL_PROMOTER_FUND_CENTS - totalCommittedCents);
+  // Metriche di governance del Matching Grant per la Startup (R7, R8, R9)
+  const totalGrantsAssigned = grants.length;
+  const totalGrantsConfirmed = grants.filter((g) => g.status === "confirmed").length;
+  const totalGrantsAttended = grants.filter((g) => g.status === "attended").length;
+  const totalGrantsNoShow = grants.filter((g) => g.status === "no_show").length;
+  const totalGrantsExpired = grants.filter((g) => g.status === "expired" || g.status === "declined").length;
 
-  // Statistiche per ciascun evento del Matching Grant
+  // Statistiche per ciascun evento: capienza, posti occupati e posti disponibili
   const events = allGrantEvents.map((ge) => {
-    const countForEvent = redeemedHotelVouchers.filter((v) => v.voucher.grantEventId === ge.id).length;
+    // Posti occupati = grant attivi o confermati
+    const eventGrants = grants.filter(
+      (g) =>
+        grantRows.find((r) => r.grant.id === g.grantId)?.grant.eventId === ge.id &&
+        g.status !== "declined" &&
+        g.status !== "expired"
+    );
+
+    const seatsOccupied = eventGrants.reduce((sum, g) => sum + g.seatsRequested, 0);
+    const capacity = ge.capacity || 50;
+
     return {
       id: ge.id,
       title: ge.title,
       category: ge.category,
       venueName: ge.venueName,
       city: ge.city,
-      grantsGeneratedCount: countForEvent,
+      startsAt: ge.startsAt,
+      capacity,
+      seatsOccupied,
+      seatsAvailable: Math.max(0, capacity - seatsOccupied),
+      grantsGeneratedCount: eventGrants.length,
     };
   });
 
-  // Statistiche per ciascun teatro convenzionato (backward compatibility)
+  // Statistiche per ciascun teatro convenzionato
   const theaters = theaterVenues.map((th) => {
-    const countForTheater = redeemedHotelVouchers.filter(
-      (v) => (v.voucher.theaterVenueId === th.id) || (!v.voucher.theaterVenueId && th.id === theaterVenues[0]?.id)
-    ).length;
-
+    const count = grants.filter((g) => g.theaterName === th.name).length;
     return {
       id: th.id,
       name: th.name,
       city: th.city,
       region: th.region,
-      grantsGeneratedCount: countForTheater,
+      grantsGeneratedCount: count,
     };
   });
 
   return {
     promoterUser,
-    totalFundCents: TOTAL_PROMOTER_FUND_CENTS,
-    totalCommittedCents,
-    remainingFundCents,
-    activeGrantsCount,
+    totalGrantsAssigned,
+    totalGrantsConfirmed,
+    totalGrantsAttended,
+    totalGrantsNoShow,
+    totalGrantsExpired,
     eventsCount: allGrantEvents.length,
     theatersCount: theaterVenues.length,
     promotedDestinationsCount: allDestinations.length,

@@ -114,11 +114,13 @@ export function venueTypeLabel(type: string) {
 export function voucherTypeLabel(type: string) {
   switch (type) {
     case "hotel":
+    case "overnight":
       return "Pernottamento";
     case "aperitivo":
-      return "Aperitivo KM 0";
+    case "dinner":
+      return "Cena / Aperitivo KM 0";
     case "theater":
-      return "Buono Spettacolo";
+      return "Omaggio Spettacolo";
     default:
       return type;
   }
@@ -126,8 +128,8 @@ export function voucherTypeLabel(type: string) {
 
 export function matchesVoucher(venueType: string, voucherType: string) {
   if (voucherType === "theater") return venueType === "theater";
-  if (voucherType === "hotel") return venueType === "hotel" || venueType === "agriturismo";
-  if (voucherType === "aperitivo") {
+  if (voucherType === "hotel" || voucherType === "overnight") return venueType === "hotel" || venueType === "agriturismo";
+  if (voucherType === "aperitivo" || voucherType === "dinner") {
     return venueType === "agriturismo" || venueType === "restaurant" || venueType === "hotel";
   }
   return false;
