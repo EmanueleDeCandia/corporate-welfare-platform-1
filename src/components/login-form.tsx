@@ -3,6 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 
+const DEMO_PASSWORD = "radici2026";
+
 const demos = [
   {
     email: "elena.martini@acme.it",
@@ -27,7 +29,7 @@ const demos = [
   {
     email: "chiara.promotori@radici.it",
     label: "Chiara Valenti (Promotori)",
-    hint: "Startup RADICI & Promotori · Fondo Matching Grant",
+    hint: "Startup RADICI & Promotori · Matching Grant",
   },
 ];
 
@@ -36,27 +38,39 @@ export function LoginForm() {
   const params = useSearchParams();
   const next = params.get("next");
   const [email, setEmail] = useState("mario.rossi@acme.it");
-  const [password, setPassword] = useState("radici2026");
+  const [password, setPassword] = useState(DEMO_PASSWORD);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault();
+  async function loginWith(nextEmail: string, nextPassword: string) {
+    setEmail(nextEmail);
+    setPassword(nextPassword);
     setPending(true);
     setError("");
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password, next }),
-    });
-    const data = (await response.json()) as { error?: string; redirectTo?: string };
-    setPending(false);
-    if (!response.ok) {
-      setError(data.error ?? "Accesso non riuscito.");
-      return;
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: nextEmail, password: nextPassword, next }),
+      });
+      const data = (await response.json()) as { error?: string; redirectTo?: string };
+      if (!response.ok) {
+        setError(data.error ?? "Accesso non riuscito.");
+        return;
+      }
+      router.push(next || data.redirectTo || "/account");
+      router.refresh();
+    } catch {
+      setError("Connessione non riuscita. Riprova.");
+    } finally {
+      setPending(false);
     }
-    router.push(next || data.redirectTo || "/account");
-    router.refresh();
+  }
+
+  async function onSubmit(event: FormEvent) {
+    event.preventDefault();
+    await loginWith(email, password);
   }
 
   return (
@@ -93,16 +107,15 @@ export function LoginForm() {
       </form>
       <div>
         <p className="text-xs uppercase tracking-[0.16em] text-olive">Accessi demo · password radici2026</p>
+        <p className="mt-1 text-xs text-olive">Un clic entra direttamente nell&apos;account.</p>
         <div className="mt-3 grid gap-2">
           {demos.map((demo) => (
             <button
               key={demo.email}
               type="button"
-              onClick={() => {
-                setEmail(demo.email);
-                setPassword("radici2026");
-              }}
-              className="rounded-2xl border border-forest/10 px-4 py-3 text-left hover:border-gold"
+              disabled={pending}
+              onClick={() => loginWith(demo.email, DEMO_PASSWORD)}
+              className="rounded-2xl border border-forest/10 px-4 py-3 text-left hover:border-gold disabled:opacity-60"
             >
               <span className="block text-sm font-medium text-forest">{demo.label}</span>
               <span className="text-xs text-olive">{demo.hint}</span>
