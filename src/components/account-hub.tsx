@@ -25,6 +25,7 @@ import type {
   transactions,
   venues,
   vouchers,
+  grantEvents,
 } from "@/db/schema";
 import {
   badgeForPoints,
@@ -37,6 +38,7 @@ import {
 } from "@/lib/utils";
 
 type VenueLite = typeof venues.$inferSelect;
+type GrantEventLite = typeof grantEvents.$inferSelect;
 type TxRow = { transaction: typeof transactions.$inferSelect; venue: VenueLite };
 
 type Props = {
@@ -53,6 +55,7 @@ type Props = {
   company: typeof companies.$inferSelect | null;
   vouchers: Array<typeof vouchers.$inferSelect>;
   venues: VenueLite[];
+  grantEvents?: GrantEventLite[];
   invites: Array<typeof invites.$inferSelect>;
   transactions: TxRow[];
   shares: Array<typeof shares.$inferSelect>;
@@ -88,7 +91,7 @@ export function AccountHub(props: Props) {
         ))}
       </div>
       <div className="mt-6">
-        {tab === "wallet" ? <WalletTab {...props} /> : null}
+        {tab === "wallet" ? <WalletTab {...props} grantEvents={props.grantEvents ?? []} /> : null}
         {tab === "kit" ? <KitTab {...props} /> : null}
         {tab === "friends" ? <FriendsTab {...props} /> : null}
       </div>
@@ -96,7 +99,7 @@ export function AccountHub(props: Props) {
   );
 }
 
-function WalletTab({ user, company, vouchers, venues, transactions }: Props) {
+function WalletTab({ user, company, vouchers, venues, grantEvents = [], transactions }: Props & { grantEvents?: GrantEventLite[] }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -107,13 +110,13 @@ function WalletTab({ user, company, vouchers, venues, transactions }: Props) {
     theater: vouchers.filter((item) => item.type === "theater"),
   };
 
-  async function redeem(voucherId: number, venueId: number, theaterVenueId?: number) {
+  async function redeem(voucherId: number, venueId: number, grantEventId?: number) {
     setPendingId(`${voucherId}-${venueId}`);
     setMessage("");
     const response = await fetch("/api/vouchers/redeem", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ voucherId, venueId, theaterVenueId }),
+      body: JSON.stringify({ voucherId, venueId, grantEventId }),
     });
     const data = (await response.json()) as { error?: string; message?: string };
     setPendingId(null);
@@ -199,9 +202,10 @@ function WalletTab({ user, company, vouchers, venues, transactions }: Props) {
 
       <HotelDrawer
         title="Sezione Welfare · Pernottamento"
-        subtitle="1 Voucher Pernottamento (50€) + Matching Grant Omaggio Promotori per 2 Persone (25€ + 25€)"
+        subtitle="1 Voucher Pernottamento (50€) + Matching Grant Promotori per 2 Persone (25€ + 25€)"
         items={groups.hotel}
         venues={venues}
+        grantEvents={grantEvents}
         pendingId={pendingId}
         onRedeem={redeem}
       />
@@ -248,6 +252,7 @@ function HotelDrawer({
   subtitle,
   items,
   venues,
+  grantEvents = [],
   pendingId,
   onRedeem,
 }: {
@@ -255,21 +260,38 @@ function HotelDrawer({
   subtitle: string;
   items: Array<typeof vouchers.$inferSelect>;
   venues: VenueLite[];
+  grantEvents: GrantEventLite[];
   pendingId: string | null;
-  onRedeem: (voucherId: number, venueId: number, theaterVenueId?: number) => void;
+  onRedeem: (voucherId: number, venueId: number, grantEventId?: number) => void;
 }) {
   const available = items.find((item) => item.status === "available");
   const used = items.filter((item) => item.status === "redeemed").length;
 
-  // Filtra hotel/agriturismi
+  // Filtra strutture per il pernottamento (hotel e agriturismi)
   const hotelVenues = venues.filter((v) => matchesVoucher(v.type, "hotel"));
-  // Filtra i teatri convenzionati con i Promotori
-  const theaterVenues = venues.filter((v) => v.type === "theater");
 
-  // Step 1: struttura ricettiva selezionata
+  // Eventi del Matching Grant disponibili
+  const events = grantEvents.length > 0 ? grantEvents : [
+    {
+      id: 1,
+      title: "Stagione di Prosa e Visita Esclusiva nel Ridotto",
+      category: "teatro" as const,
+      venueId: null,
+      venueName: "Teatro Lauro Rossi",
+      city: "Macerata",
+      region: "Marche",
+      description: "Posti riservati per 2 persone con incontro con gli attori a fine spettacolo.",
+      grantAmountCents: 5000,
+      artistMeetupIncluded: true,
+      active: true,
+      createdAt: new Date(),
+    }
+  ];
+
+  // Passo 1: Struttura ricettiva selezionata
   const [selectedHotelVenue, setSelectedHotelVenue] = useState<VenueLite | null>(null);
-  // Step 2: teatro scelto per il Matching Grant (preimpostato sul primo teatro convenzionato)
-  const [selectedTheaterId, setSelectedTheaterId] = useState<number>(theaterVenues[0]?.id ?? 0);
+  // Passo 2: Evento Matching Grant selezionato
+  const [selectedEventId, setSelectedEventId] = useState<number>(events[0]?.id ?? 1);
 
   return (
     <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/10">
@@ -302,11 +324,11 @@ function HotelDrawer({
         ))}
       </div>
 
-      {/* DETTAGLIO SOGGIORNO PRENOTATO E TEATRO ASSEGNATO */}
+      {/* DETTAGLIO SOGGIORNO PRENOTATO E EVENTO MATCHING GRANT ASSEGNATO */}
       {!available && items[0]?.status === "redeemed" ? (
         (() => {
           const bookedHotel = venues.find((v) => v.id === items[0].venueId);
-          const bookedTheater = venues.find((v) => v.id === items[0].theaterVenueId) || theaterVenues[0];
+          const bookedEvent = events.find((e) => e.id === items[0].grantEventId) || events[0];
           return (
             <div className="mt-5 rounded-2xl border border-forest/20 bg-forest/5 p-5">
               <div className="flex items-center justify-between">
@@ -324,9 +346,12 @@ function HotelDrawer({
                   <p className="text-xs text-olive mt-0.5">{bookedHotel?.city} · Voucher Welfare 50€</p>
                 </div>
                 <div className="rounded-xl border border-gold/40 bg-cream p-3.5">
-                  <span className="text-[11px] uppercase tracking-wider text-terracotta block">Matching Grant Promotori (Attivo)</span>
-                  <strong className="text-base font-serif text-forest block mt-0.5">{bookedTheater?.name ?? "Teatro Lauro Rossi"}</strong>
-                  <p className="text-xs text-forest mt-0.5">{bookedTheater?.city} · Biglietto 2 Persone (25€ + 25€) + Incontro Artisti</p>
+                  <span className="text-[11px] uppercase tracking-wider text-terracotta block">
+                    Matching Grant Promotori ({bookedEvent?.category.toUpperCase()})
+                  </span>
+                  <strong className="text-base font-serif text-forest block mt-0.5">{bookedEvent?.title}</strong>
+                  <p className="text-xs text-forest mt-0.5 font-medium">{bookedEvent?.venueName} ({bookedEvent?.city})</p>
+                  <p className="text-[11px] text-olive mt-0.5">Omaggio 2 Persone (25€ + 25€) · Incontro con gli artisti incluso</p>
                 </div>
               </div>
             </div>
@@ -334,10 +359,10 @@ function HotelDrawer({
         })()
       ) : null}
 
-      {/* FLUSSO DI SELEZIONE: STEP 1 (STRUTTURA) -> STEP 2 (TEATRO) */}
+      {/* FLUSSO DI SELEZIONE: PASSO 1 (PERNOTTAMENTO) -> PASSO 2 (EVENTO MATCHING GRANT) */}
       {available ? (
         <div className="mt-5 space-y-4">
-          {/* STEP 1: Scelta Struttura Ricettiva */}
+          {/* PASSO 1: Scelta Struttura Ricettiva */}
           <div>
             <div className="flex items-center justify-between">
               <p className="text-xs uppercase tracking-[0.14em] font-semibold text-forest">
@@ -391,7 +416,7 @@ function HotelDrawer({
             )}
           </div>
 
-          {/* STEP 2: Scelta del Teatro Convenzionato (sbloccata una volta selezionato l'hotel) */}
+          {/* PASSO 2: Scelta dell'Evento / Spettacolo del Matching Grant (sbloccata una volta selezionato il soggiorno) */}
           {selectedHotelVenue ? (
             <div className="rounded-2xl border border-gold/40 bg-cream p-5 animate-in fade-in duration-300">
               <div className="flex items-center gap-2">
@@ -399,34 +424,40 @@ function HotelDrawer({
                   Passo 2 di 2
                 </span>
                 <p className="text-xs uppercase tracking-[0.14em] font-semibold text-terracotta">
-                  Scegli il Teatro per il Matching Grant dei Promotori
+                  Scegli l'Esperienza / Evento del Matching Grant Promotori
                 </p>
               </div>
               <p className="mt-2 text-xs text-olive leading-relaxed">
-                Avendo selezionato il pernottamento presso <strong>{selectedHotelVenue.name}</strong>, i Promotori coprono il Matching Grant per 2 persone (25€ + 25€). Scegli a quale teatro assistere allo spettacolo:
+                Avendo selezionato il soggiorno presso <strong>{selectedHotelVenue.name}</strong>, i Promotori attivano il Matching Grant di 50€ (25€ per te + 25€ per il tuo accompagnatore). Scegli a quale evento territoriale partecipare:
               </p>
 
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                {theaterVenues.map((th) => (
+              <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
+                {events.map((ev) => (
                   <label
-                    key={th.id}
+                    key={ev.id}
                     className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3.5 text-xs transition ${
-                      selectedTheaterId === th.id
+                      selectedEventId === ev.id
                         ? "border-forest bg-white font-medium text-forest shadow-sm"
                         : "border-mist bg-white/70 text-ink/75 hover:border-gold/40"
                     }`}
                   >
                     <input
                       type="radio"
-                      name="selectedTheater"
-                      value={th.id}
-                      checked={selectedTheaterId === th.id}
-                      onChange={() => setSelectedTheaterId(th.id)}
+                      name="selectedEvent"
+                      value={ev.id}
+                      checked={selectedEventId === ev.id}
+                      onChange={() => setSelectedEventId(ev.id)}
                       className="mt-0.5 accent-forest"
                     />
-                    <div>
-                      <strong className="block text-forest text-sm font-serif">{th.name}</strong>
-                      <span className="text-[11px] text-olive">{th.city} ({th.region}) · Omaggio 2 Persone (50€)</span>
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded bg-sand px-1.5 py-0.5 text-[10px] uppercase font-semibold text-forest">
+                          {ev.category}
+                        </span>
+                        <span className="text-[11px] text-olive">{ev.venueName} · {ev.city}</span>
+                      </div>
+                      <strong className="block text-forest text-sm font-serif">{ev.title}</strong>
+                      <p className="text-[11px] text-olive leading-relaxed">{ev.description}</p>
                     </div>
                   </label>
                 ))}
@@ -436,16 +467,16 @@ function HotelDrawer({
               <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-gold/20 pt-4">
                 <div>
                   <p className="text-xs text-olive">
-                    Riepilogo: <strong>{selectedHotelVenue.name}</strong> + <strong>{theaterVenues.find(t => t.id === selectedTheaterId)?.name ?? "Teatro"}</strong>
+                    Riepilogo: <strong>{selectedHotelVenue.name}</strong> + <strong>{events.find(e => e.id === selectedEventId)?.venueName ?? "Evento Territoriale"}</strong>
                   </p>
                   <p className="text-[11px] text-terracotta mt-0.5">
-                    Alla conferma il voucher viene riscattato ai fini fiscali.
+                    Fattura B2B intestata all'azienda per la struttura · Quota Evento 50€ (2 persone) coperta dai Promotori.
                   </p>
                 </div>
                 <button
                   type="button"
                   disabled={pendingId === `${available.id}-${selectedHotelVenue.id}`}
-                  onClick={() => onRedeem(available.id, selectedHotelVenue.id, selectedTheaterId)}
+                  onClick={() => onRedeem(available.id, selectedHotelVenue.id, selectedEventId)}
                   className="rounded-full bg-forest px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-cream hover:bg-forest/90 disabled:opacity-50 transition shadow-sm"
                 >
                   {pendingId === `${available.id}-${selectedHotelVenue.id}`

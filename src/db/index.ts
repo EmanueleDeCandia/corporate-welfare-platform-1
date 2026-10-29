@@ -103,6 +103,21 @@ export async function initDb() {
           created_at INTEGER NOT NULL DEFAULT (unixepoch())
         );
 
+        
+        CREATE TABLE IF NOT EXISTS grant_events (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          title TEXT NOT NULL,
+          category TEXT NOT NULL DEFAULT 'teatro',
+          venue_id INTEGER REFERENCES venues(id),
+          venue_name TEXT NOT NULL,
+          city TEXT NOT NULL,
+          region TEXT NOT NULL,
+          description TEXT NOT NULL,
+          grant_amount_cents INTEGER NOT NULL DEFAULT 5000,
+          artist_meetup_included INTEGER NOT NULL DEFAULT 1,
+          active INTEGER NOT NULL DEFAULT 1,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch())
+        );
         CREATE TABLE IF NOT EXISTS vouchers (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           user_id INTEGER NOT NULL REFERENCES users(id),
@@ -113,6 +128,7 @@ export async function initDb() {
           amount_cents INTEGER NOT NULL DEFAULT 0,
           venue_id INTEGER REFERENCES venues(id),
           theater_venue_id INTEGER REFERENCES venues(id),
+          grant_event_id INTEGER REFERENCES grant_events(id),
           redeemed_at INTEGER,
           created_at INTEGER NOT NULL DEFAULT (unixepoch())
         );
@@ -201,6 +217,10 @@ export async function initDb() {
       try {
         const columns = sqlite.prepare("PRAGMA table_info(vouchers)").all() as Array<{ name: string }>;
         const hasTheater = columns.some((col) => col.name === "theater_venue_id");
+        
+        if (!columns.some((col) => col.name === "grant_event_id")) {
+          sqlite.exec("ALTER TABLE vouchers ADD COLUMN grant_event_id INTEGER REFERENCES grant_events(id);");
+        }
         if (!hasTheater) {
           sqlite.exec("ALTER TABLE vouchers ADD COLUMN theater_venue_id INTEGER REFERENCES venues(id);");
         }

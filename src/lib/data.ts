@@ -11,6 +11,8 @@ import {
   users,
   venues,
   vouchers,
+  grantEvents,
+  type GrantEvent,
   type VoucherType,
 } from "@/db/schema";
 import { badgeForPoints } from "@/lib/utils";
@@ -230,4 +232,8 @@ export async function getUsersByIds(ids: number[]) {
   await initDb();
   if (ids.length === 0) return [];
   return db.select().from(users).where(inArray(users.id, ids));
+}
+export async function getGrantEvents() {
+  await initDb();
+  return db.select().from(grantEvents).where(eq(grantEvents.active, true));
 }

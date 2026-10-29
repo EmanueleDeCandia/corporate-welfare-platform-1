@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { companies, notifications, transactions, users, venues, vouchers } from "@/db/schema";
+import { companies, grantEvents, notifications, transactions, users, venues, vouchers } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { awardImpact } from "@/lib/data";
 import { matchesVoucher, voucherTypeLabel } from "@/lib/utils";
@@ -14,7 +14,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Solo i dipendenti possono riscattare i voucher welfare." }, { status: 403 });
   }
 
-  const body = (await request.json()) as { voucherId?: number; venueId?: number; theaterVenueId?: number };
+  const body = (await request.json()) as {
+    voucherId?: number;
+    venueId?: number;
+    theaterVenueId?: number;
+    grantEventId?: number;
+  };
+
   if (!body.voucherId || !body.venueId) {
     return NextResponse.json({ error: "Seleziona un voucher e una struttura." }, { status: 400 });
   }
@@ -45,10 +51,21 @@ export async function POST(request: Request) {
     : [];
 
   const isHotel = voucher.type === "hotel";
-  let theaterVenue = null;
-  if (isHotel && body.theaterVenueId) {
-    const [th] = await db.select().from(venues).where(eq(venues.id, body.theaterVenueId)).limit(1);
-    theaterVenue = th ?? null;
+  let resolvedGrantEventId: number | null = null;
+  let resolvedTheaterVenueId: number | null = body.theaterVenueId ?? null;
+
+  if (isHotel) {
+    if (body.grantEventId) {
+      const [ge] = await db.select().from(grantEvents).where(eq(grantEvents.id, body.grantEventId)).limit(1);
+      if (ge) {
+        resolvedGrantEventId = ge.id;
+        if (ge.venueId) resolvedTheaterVenueId = ge.venueId;
+      }
+    } else if (body.theaterVenueId) {
+      // Fallback: cerca o associa per venueId
+      const [ge] = await db.select().from(grantEvents).where(eq(grantEvents.venueId, body.theaterVenueId)).limit(1);
+      if (ge) resolvedGrantEventId = ge.id;
+    }
   }
 
   const now = new Date();
@@ -57,13 +74,13 @@ export async function POST(request: Request) {
     .set({
       status: "redeemed",
       venueId: venue.id,
-      theaterVenueId: theaterVenue?.id ?? null,
-      redeemedAt: now
+      theaterVenueId: resolvedTheaterVenueId,
+      grantEventId: resolvedGrantEventId,
+      redeemedAt: now,
     })
     .where(eq(vouchers.id, voucher.id));
 
-  // 1. UNICA Transazione Fiscale B2B (a carico dell'azienda per la struttura)
-  // Il Matching Grant dei promotori NON è un voucher fiscale e NON deve entrare nei registri fiscali
+  // 1. UNICA Transazione Fiscale B2B (a carico dell'azienda per la struttura ricettiva)
   const [tx] = await db
     .insert(transactions)
     .values({
@@ -80,43 +97,31 @@ export async function POST(request: Request) {
     })
     .returning();
 
-  await awardImpact(me.id, venue.impactPointsGenerated + (isHotel ? 2 : 0));
-
-  if (company) {
-    await db
-      .update(companies)
-      .set({
-        localRedistributionCents: company.localRedistributionCents + voucher.amountCents,
-      })
-      .where(eq(companies.id, company.id));
-  }
-
-  // Notifica fiscale ordinaria per la struttura (solo per il riscatto welfare B2B)
-  const guest = `${me.firstName} ${me.lastName}`;
+  // 2. Notifica B2B alla struttura con i dati di fatturazione aziendale
   await db.insert(notifications).values({
     venueId: venue.id,
     type: "welfare",
-    title: "Notifica welfare · riscatto istantaneo",
-    body: `L'utente dipendente "${guest}" ha riscattato ${voucherTypeLabel(voucher.type)}.`,
+    title: `Nuovo riscatto voucher: ${voucherTypeLabel(voucher.type)}`,
+    body: `${me.firstName} ${me.lastName} ha riscattato un voucher welfare da ${voucher.amountCents / 100}€. Fattura da emettere all'azienda ${company?.name ?? "sponsor"}.`,
     payload: {
-      guest,
-      company: company?.name ?? "Impresa cliente",
-      vat: company?.vatNumber ?? "—",
+      guest: `${me.firstName} ${me.lastName}`,
+      company: company?.name ?? "Azienda Convenzionata",
+      vat: company?.vatNumber ?? "N/D",
       amountCents: voucher.amountCents,
-      invoiceHint: `EMETTI FATTURA DIRETTA A: Impresa Cliente ${company?.name ?? ""} (P.IVA: ${company?.vatNumber ?? "—"})`,
-      vatNote: `Importo da fatturare: € ${(voucher.amountCents / 100).toFixed(2).replace(".", ",")} (IVA 10% inclusa)`,
+      invoiceHint: "Fattura elettronica B2B intestata all'azienda sponsor (Art. 51 TUIR)",
+      vatNote: `Importo da fatturare: € ${(voucher.amountCents / 100).toFixed(2)}`,
       transactionId: tx.id,
     },
+    read: false,
   });
 
-  const [fresh] = await db.select().from(users).where(eq(users.id, me.id)).limit(1);
+  // 3. Punti Impatto al dipendente
+  await awardImpact(me.id, venue.impactPointsGenerated);
 
   return NextResponse.json({
-    ok: true,
+    success: true,
     message: isHotel
-      ? `Pernottamento confermato presso ${venue.name}! Matching Grant attivato: 2 biglietti per ${theaterVenue?.name ?? "Teatro Partner"} (25€ + 25€) e incontro serale con gli artisti.`
-      : `Voucher ${voucherTypeLabel(voucher.type)} riscattato presso ${venue.name}.`,
-    impactPoints: fresh?.impactPoints ?? me.impactPoints + 1,
-    badgeLevel: fresh?.badgeLevel,
+      ? "Pernottamento prenotato con successo! Il Matching Grant per l'evento selezionato è stato attivato per 2 persone."
+      : "Voucher aperitivo/cena riscattato con successo!",
   });
 }

@@ -4,6 +4,7 @@ export type UserRole = "employee" | "friend" | "provider" | "csr" | "promoter" |
 export type VoucherType = "hotel" | "aperitivo" | "theater";
 export type VoucherStatus = "available" | "redeemed" | "expired";
 export type TransactionType = "welfare_redeem" | "consumer_payment";
+export type GrantEventCategory = "teatro" | "musica" | "arte_cultura" | "natura_laboratorio";
 
 export const companies = sqliteTable("companies", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -102,6 +103,24 @@ export const venues = sqliteTable("venues", {
     .$defaultFn(() => new Date()),
 });
 
+
+export const grantEvents = sqliteTable("grant_events", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  title: text("title").notNull(),
+  category: text("category").$type<GrantEventCategory>().notNull().default("teatro"),
+  venueId: integer("venue_id").references(() => venues.id),
+  venueName: text("venue_name").notNull(),
+  city: text("city").notNull(),
+  region: text("region").notNull(),
+  description: text("description").notNull(),
+  grantAmountCents: integer("grant_amount_cents").notNull().default(5000),
+  artistMeetupIncluded: integer("artist_meetup_included", { mode: "boolean" }).default(true),
+  active: integer("active", { mode: "boolean" }).default(true),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
 export const vouchers = sqliteTable("vouchers", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id")
@@ -116,6 +135,7 @@ export const vouchers = sqliteTable("vouchers", {
   amountCents: integer("amount_cents").notNull().default(0),
   venueId: integer("venue_id").references(() => venues.id),
   theaterVenueId: integer("theater_venue_id").references(() => venues.id),
+  grantEventId: integer("grant_event_id").references(() => grantEvents.id),
   redeemedAt: integer("redeemed_at", { mode: "timestamp" }),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
@@ -228,3 +248,6 @@ export type Notification = typeof notifications.$inferSelect;
 export type Share = typeof shares.$inferSelect;
 export type Certificate = typeof certificates.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
+
+export type GrantEvent = typeof grantEvents.$inferSelect;
+export type NewGrantEvent = typeof grantEvents.$inferInsert;

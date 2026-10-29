@@ -1,6 +1,6 @@
 import { desc, eq } from "drizzle-orm";
 import { db, initDb } from "@/db";
-import { companies, destinations, users, venues, vouchers } from "@/db/schema";
+import { companies, destinations, grantEvents, users, venues, vouchers } from "@/db/schema";
 
 export type PromoterGrantRow = {
   voucherId: number;
@@ -9,7 +9,10 @@ export type PromoterGrantRow = {
   companyName: string;
   venueName: string;
   venueCity: string;
-  theaterName: string;
+  eventTitle: string;
+  eventCategory: string;
+  eventLocation: string;
+  theaterName: string; // compatibility
   redeemedAt: Date | null;
   grantValueCents: number;
 };
@@ -20,9 +23,18 @@ export type PromoterDashboardData = {
   totalCommittedCents: number;
   remainingFundCents: number;
   activeGrantsCount: number;
+  eventsCount: number;
   theatersCount: number;
   promotedDestinationsCount: number;
   grants: PromoterGrantRow[];
+  events: Array<{
+    id: number;
+    title: string;
+    category: string;
+    venueName: string;
+    city: string;
+    grantsGeneratedCount: number;
+  }>;
   theaters: Array<{
     id: number;
     name: string;
@@ -47,9 +59,9 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
 
   // Fondo complessivo stanziato dalla Startup RADICI e dai Promotori Privati
   const TOTAL_PROMOTER_FUND_CENTS = 5000000; // 50.000 €
-  const GRANT_UNIT_VALUE_CENTS = 5000; // 50 € (Spettacolo Teatrale per 2 persone 25€+25€ + Incontro Artisti)
+  const GRANT_UNIT_VALUE_CENTS = 5000; // 50 € (25€ + 25€ per lavoratore + accompagnatore)
 
-  // Recupera tutti i voucher hotel riscattati con l'eventuale teatro scelto
+  // Recupera tutti i voucher hotel riscattati con utente, azienda, struttura ed evento grant
   const hotelVouchers = await db
     .select({
       voucher: vouchers,
@@ -66,17 +78,27 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
 
   const redeemedHotelVouchers = hotelVouchers.filter((v) => v.voucher.status === "redeemed");
 
-  // Teatri convenzionati con i Promotori
+  // Catalogo Eventi del Matching Grant
+  const allGrantEvents = await db.select().from(grantEvents);
+  const grantEventMap = new Map(allGrantEvents.map((ge) => [ge.id, ge]));
+
   const allVenues = await db.select().from(venues);
   const theaterVenues = allVenues.filter((v) => v.type === "theater");
   const theaterMap = new Map(theaterVenues.map((th) => [th.id, th]));
   const allDestinations = await db.select().from(destinations);
 
-  // Mappa matching grants leggendo il teatro realmente selezionato dal dipendente
+  // Mappa matching grants leggendo l'evento o il teatro associato
   const grants: PromoterGrantRow[] = redeemedHotelVouchers.map((row) => {
-    const selectedTheater = row.voucher.theaterVenueId
-      ? theaterMap.get(row.voucher.theaterVenueId)
-      : theaterVenues[0];
+    const selectedEvent = row.voucher.grantEventId ? grantEventMap.get(row.voucher.grantEventId) : null;
+    const selectedTheater = row.voucher.theaterVenueId ? theaterMap.get(row.voucher.theaterVenueId) : null;
+
+    const eventTitle = selectedEvent?.title ?? "Stagione di Prosa e Visita nel Ridotto";
+    const eventCategory = selectedEvent?.category ?? "teatro";
+    const eventLocation = selectedEvent
+      ? `${selectedEvent.venueName} (${selectedEvent.city})`
+      : selectedTheater
+      ? `${selectedTheater.name} (${selectedTheater.city})`
+      : "Teatro Storico del Territorio";
 
     return {
       voucherId: row.voucher.id,
@@ -85,7 +107,10 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       companyName: row.company.name,
       venueName: row.venue?.name ?? "Struttura Ricettiva",
       venueCity: row.venue?.city ?? "Territorio",
-      theaterName: selectedTheater?.name ?? "Teatro Storico del Territorio",
+      eventTitle,
+      eventCategory,
+      eventLocation,
+      theaterName: selectedTheater?.name ?? (selectedEvent ? selectedEvent.venueName : "Teatro Storico"),
       redeemedAt: row.voucher.redeemedAt,
       grantValueCents: GRANT_UNIT_VALUE_CENTS,
     };
@@ -95,7 +120,20 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
   const totalCommittedCents = activeGrantsCount * GRANT_UNIT_VALUE_CENTS;
   const remainingFundCents = Math.max(0, TOTAL_PROMOTER_FUND_CENTS - totalCommittedCents);
 
-  // Statistiche per ciascun teatro convenzionato
+  // Statistiche per ciascun evento del Matching Grant
+  const events = allGrantEvents.map((ge) => {
+    const countForEvent = redeemedHotelVouchers.filter((v) => v.voucher.grantEventId === ge.id).length;
+    return {
+      id: ge.id,
+      title: ge.title,
+      category: ge.category,
+      venueName: ge.venueName,
+      city: ge.city,
+      grantsGeneratedCount: countForEvent,
+    };
+  });
+
+  // Statistiche per ciascun teatro convenzionato (backward compatibility)
   const theaters = theaterVenues.map((th) => {
     const countForTheater = redeemedHotelVouchers.filter(
       (v) => (v.voucher.theaterVenueId === th.id) || (!v.voucher.theaterVenueId && th.id === theaterVenues[0]?.id)
@@ -116,9 +154,11 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     totalCommittedCents,
     remainingFundCents,
     activeGrantsCount,
+    eventsCount: allGrantEvents.length,
     theatersCount: theaterVenues.length,
     promotedDestinationsCount: allDestinations.length,
     grants,
+    events,
     theaters,
   };
 }

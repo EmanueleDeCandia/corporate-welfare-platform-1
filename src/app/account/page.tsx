@@ -4,6 +4,7 @@ import { LogoutButton } from "@/components/logout-button";
 import { PublicShell } from "@/components/public-shell";
 import { getCurrentUser } from "@/lib/auth";
 import {
+  getGrantEvents,
   getUserCertificates,
   getUserInvites,
   getUserShares,
@@ -20,9 +21,10 @@ export default async function AccountPage() {
   if (!user) redirect("/login?next=/account");
   if (user.role === "provider") redirect("/fornitore");
 
-  const [vouchers, venues, invites, transactions, shares, certificates] = await Promise.all([
+  const [vouchers, venues, grantEventsList, invites, transactions, shares, certificates] = await Promise.all([
     getUserVouchers(user.id),
     getVenues(),
+    getGrantEvents(),
     getUserInvites(user.id),
     getUserTransactions(user.id),
     getUserShares(user.id),
@@ -59,6 +61,7 @@ export default async function AccountPage() {
             company={user.company}
             vouchers={vouchers}
             venues={venues.map((row) => row.venue)}
+            grantEvents={grantEventsList}
             invites={invites}
             transactions={transactions}
             shares={shares}

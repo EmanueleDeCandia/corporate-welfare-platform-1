@@ -19,7 +19,7 @@ export async function POST() {
     .where(eq(vouchers.userId, me.id));
 
   // Ripristina lo stato:
-  // - L'hotel torna ad available, con venueId = null, theaterVenueId = null, redeemedAt = null
+  // - L'hotel torna ad available, con venueId = null, theaterVenueId = null, grantEventId = null, redeemedAt = null
   // - L'aperitivo torna ad available
   for (const v of myVouchers) {
     await db
@@ -28,6 +28,7 @@ export async function POST() {
         status: "available",
         venueId: null,
         theaterVenueId: null,
+        grantEventId: null,
         redeemedAt: null,
       })
       .where(eq(vouchers.id, v.id));
@@ -40,6 +41,6 @@ export async function POST() {
 
   return NextResponse.json({
     success: true,
-    message: "Stato demo ripristinato: ora puoi selezionare struttura e teatro da zero.",
+    message: "Stato demo ripristinato: ora puoi selezionare struttura ed evento Matching Grant da zero.",
   });
 }

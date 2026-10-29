@@ -11,6 +11,7 @@ import {
   users,
   venues,
   vouchers,
+  grantEvents,
 } from "@/db/schema";
 import { badgeForPoints, hashPassword } from "@/lib/utils";
 
@@ -740,6 +741,76 @@ async function seedDatabase() {
   await db.update(venues).set({ providerUserId: chiara.id }).where(eq(venues.id, insertedVenues[3].id));
   await db.update(venues).set({ providerUserId: paolo.id }).where(eq(venues.id, teatroLauro.id));
 
+
+  // POPOLAMENTO EVENTI E SPETTACOLI DEL MATCHING GRANT PROMOTORI
+  const insertedGrantEvents = await db
+    .insert(grantEvents)
+    .values([
+      {
+        title: "Stagione di Prosa e Visita Esclusiva nel Ridotto",
+        category: "teatro",
+        venueId: teatroLauro.id,
+        venueName: "Teatro Lauro Rossi",
+        city: "Macerata",
+        region: "Marche",
+        description: "Posti riservati per 2 persone nel teatro barocco all'italiana, con introduzione alla stagione e incontro con gli attori.",
+        grantAmountCents: 5000,
+        artistMeetupIncluded: true,
+        active: true,
+      },
+      {
+        title: "Concerto Sinfonico e Percorso nel Foyer delle Muse",
+        category: "musica",
+        venueId: null,
+        venueName: "Teatro delle Muse",
+        city: "Ancona",
+        region: "Marche",
+        description: "2 biglietti per la rassegna concertistica serale con brindisi e incontro nel foyer con i musicisti.",
+        grantAmountCents: 5000,
+        artistMeetupIncluded: true,
+        active: true,
+      },
+      {
+        title: "Rassegna Teatrale Storica e Incontro con la Compagnia",
+        category: "teatro",
+        venueId: null,
+        venueName: "Teatro dell'Aquila",
+        city: "Fermo",
+        region: "Marche",
+        description: "2 ingressi di platea per lo spettacolo di prosa con visita al sipario storico e colloquio a fine spettacolo.",
+        grantAmountCents: 5000,
+        artistMeetupIncluded: true,
+        active: true,
+      },
+      {
+        title: "Notte d'Opera e Percorso Architettonico",
+        category: "musica",
+        venueId: null,
+        venueName: "Arena Sferisterio",
+        city: "Macerata",
+        region: "Marche",
+        description: "Omaggio per 2 persone per l'opera lirica all'aperto nello storico monumento neoclassico con introduzione critica.",
+        grantAmountCents: 5000,
+        artistMeetupIncluded: true,
+        active: true,
+      },
+      {
+        title: "Festival di Musica Antica e Visita alle Sale Rinascimentali",
+        category: "arte_cultura",
+        venueId: null,
+        venueName: "Palazzo Ducale & Teatro Sanzio",
+        city: "Urbino",
+        region: "Marche",
+        description: "Visita serale riservata e concerto di musica rinascimentale per 2 persone nel cuore dell'arte italiana.",
+        grantAmountCents: 5000,
+        artistMeetupIncluded: true,
+        active: true,
+      },
+    ])
+    .returning();
+
+  const defaultGrantEvent = insertedGrantEvents[0];
+
   const employeeSeeds = [
     { user: mario, companyId: acme.id, hotelRedeemed: true, theaterRedeemed: false },
     { user: giulia, companyId: acme.id, hotelRedeemed: false, theaterRedeemed: false },
@@ -760,6 +831,7 @@ async function seedDatabase() {
       amountCents: hotelAmount,
       venueId: employee.hotelRedeemed ? laValle.id : null,
       theaterVenueId: employee.hotelRedeemed ? teatroLauro.id : null,
+      grantEventId: employee.hotelRedeemed ? defaultGrantEvent.id : null,
       redeemedAt: employee.hotelRedeemed ? new Date("2026-03-12T18:40:00Z") : null,
     };
 
