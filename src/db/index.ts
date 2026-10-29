@@ -69,6 +69,8 @@ export async function initDb() {
           venue_id INTEGER,
           impact_points INTEGER NOT NULL DEFAULT 0,
           badge_level TEXT NOT NULL DEFAULT 'Germoglio',
+          referral_code TEXT,
+          invited_by_user_id INTEGER,
           created_at INTEGER NOT NULL DEFAULT (unixepoch())
         );
 
@@ -181,6 +183,19 @@ export async function initDb() {
           created_at INTEGER NOT NULL DEFAULT (unixepoch())
         );
       `);
+
+      // Safe migration for users table
+      try {
+        const userCols = sqlite.prepare("PRAGMA table_info(users)").all() as Array<{ name: string }>;
+        if (!userCols.some((col) => col.name === "referral_code")) {
+          sqlite.exec("ALTER TABLE users ADD COLUMN referral_code TEXT;");
+        }
+        if (!userCols.some((col) => col.name === "invited_by_user_id")) {
+          sqlite.exec("ALTER TABLE users ADD COLUMN invited_by_user_id INTEGER;");
+        }
+      } catch (e) {
+        console.warn("Migration users warning:", e);
+      }
 
       // Safe migration in case vouchers table already exists without theater_venue_id
       try {
