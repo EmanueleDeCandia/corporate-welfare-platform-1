@@ -218,6 +218,131 @@ function WalletTab({ user, company, vouchers, venues, transactions }: Props) {
   );
 }
 
+
+function HotelDrawer({
+  title,
+  subtitle,
+  items,
+  venues,
+  pendingId,
+  onRedeem,
+}: {
+  title: string;
+  subtitle: string;
+  items: Array<typeof vouchers.$inferSelect>;
+  venues: VenueLite[];
+  pendingId: string | null;
+  onRedeem: (voucherId: number, venueId: number, theaterVenueId?: number) => void;
+}) {
+  const available = items.find((item) => item.status === "available");
+  const used = items.filter((item) => item.status === "redeemed").length;
+
+  // Filtra hotel/agriturismi
+  const hotelVenues = venues.filter((v) => matchesVoucher(v.type, "hotel"));
+  // Filtra i teatri convenzionati con i Promotori
+  const theaterVenues = venues.filter((v) => v.type === "theater");
+
+  const [selectedTheaterId, setSelectedTheaterId] = useState<number>(
+    theaterVenues[0]?.id ?? 0
+  );
+
+  return (
+    <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/10">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <span className="rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold text-terracotta">
+            Matching Grant Attivo (2 Persone · 25€ + 25€)
+          </span>
+          <h3 className="mt-2 font-serif text-2xl text-forest">{title}</h3>
+          <p className="text-sm text-olive">{subtitle}</p>
+        </div>
+        <p className="text-sm font-medium text-forest">
+          {items.length - used}/{items.length} disponibili
+        </p>
+      </div>
+
+      <div className="mt-4 flex gap-2">
+        {items.map((item) => (
+          <div
+            key={item.id}
+            className={`h-16 flex-1 rounded-2xl border px-3 py-2 text-xs ${
+              item.status === "available"
+                ? "border-gold/40 bg-cream text-forest"
+                : "border-mist bg-mist/40 text-olive line-through"
+            }`}
+          >
+            <p>Slot {item.slotIndex}</p>
+            <p className="mt-1 font-medium">{formatEuro(item.amountCents)}</p>
+          </div>
+        ))}
+      </div>
+
+      {available ? (
+        <div className="mt-5 rounded-2xl border border-gold/30 bg-cream p-4">
+          <p className="text-xs uppercase tracking-[0.14em] font-semibold text-terracotta">
+            Seleziona il Teatro Convenzionato dei Promotori
+          </p>
+          <p className="mt-1 text-xs text-olive leading-relaxed">
+            I Promotori stanziano 50€ (25€ per te + 25€ per il tuo accompagnatore). Scegli il teatro dove assistere allo spettacolo:
+          </p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {theaterVenues.map((th) => (
+              <label
+                key={th.id}
+                className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition ${
+                  selectedTheaterId === th.id
+                    ? "border-forest bg-forest/5 font-medium text-forest"
+                    : "border-mist bg-white text-ink/75 hover:border-gold/40"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="selectedTheater"
+                  value={th.id}
+                  checked={selectedTheaterId === th.id}
+                  onChange={() => setSelectedTheaterId(th.id)}
+                  className="mt-0.5 accent-forest"
+                />
+                <div>
+                  <strong className="block text-forest text-sm font-serif">{th.name}</strong>
+                  <span className="text-[11px] text-olive">{th.city} ({th.region}) · Omaggio 2 Persone</span>
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <div className="mt-5 space-y-2">
+        <p className="text-xs uppercase tracking-[0.14em] text-olive">
+          Seleziona la struttura ricettiva per il pernottamento
+        </p>
+        {hotelVenues.map((venue) => (
+          <div
+            key={venue.id}
+            className="flex flex-col gap-3 rounded-2xl border border-mist px-4 py-3 md:flex-row md:items-center md:justify-between hover:bg-sand/20 transition"
+          >
+            <div>
+              <p className="font-medium text-forest">{venue.name}</p>
+              <p className="text-xs text-olive">
+                {venue.city} · {venueTypeLabel(venue.type)} · Voucher Pernottamento (50€)
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={!available || pendingId === `${available?.id}-${venue.id}`}
+              onClick={() => available && onRedeem(available.id, venue.id, selectedTheaterId)}
+              className="rounded-full bg-forest px-5 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-cream hover:bg-forest/90 disabled:bg-mist disabled:text-olive transition"
+            >
+              {available ? "Riscatta Pernottamento" : "Esaurito"}
+            </button>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function Drawer({
   title,
   subtitle,

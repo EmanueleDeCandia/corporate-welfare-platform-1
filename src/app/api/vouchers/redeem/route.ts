@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Solo i dipendenti possono riscattare i voucher welfare." }, { status: 403 });
   }
 
-  const body = (await request.json()) as { voucherId?: number; venueId?: number };
+  const body = (await request.json()) as { voucherId?: number; venueId?: number; theaterVenueId?: number };
   if (!body.voucherId || !body.venueId) {
     return NextResponse.json({ error: "Seleziona un voucher e una struttura." }, { status: 400 });
   }
@@ -44,10 +44,22 @@ export async function POST(request: Request) {
     ? await db.select().from(companies).where(eq(companies.id, me.companyId)).limit(1)
     : [];
 
+  const isHotel = voucher.type === "hotel";
+  let theaterVenue = null;
+  if (isHotel && body.theaterVenueId) {
+    const [th] = await db.select().from(venues).where(eq(venues.id, body.theaterVenueId)).limit(1);
+    theaterVenue = th ?? null;
+  }
+
   const now = new Date();
   await db
     .update(vouchers)
-    .set({ status: "redeemed", venueId: venue.id, redeemedAt: now })
+    .set({
+      status: "redeemed",
+      venueId: venue.id,
+      theaterVenueId: theaterVenue?.id ?? null,
+      redeemedAt: now
+    })
     .where(eq(vouchers.id, voucher.id));
 
   // 1. UNICA Transazione Fiscale B2B (a carico dell'azienda per la struttura)
@@ -68,7 +80,6 @@ export async function POST(request: Request) {
     })
     .returning();
 
-  const isHotel = voucher.type === "hotel";
   await awardImpact(me.id, venue.impactPointsGenerated + (isHotel ? 2 : 0));
 
   if (company) {
@@ -103,7 +114,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: true,
     message: isHotel
-      ? `Pernottamento confermato presso ${venue.name}! I Promotori hanno attivato il Matching Grant: Biglietto Spettacolo Omaggio + Incontro Artisti in Hotel (Valore raddoppiato +50€).`
+      ? `Pernottamento confermato presso ${venue.name}! Matching Grant attivato: 2 biglietti per ${theaterVenue?.name ?? "Teatro Partner"} (25€ + 25€) e incontro serale con gli artisti.`
       : `Voucher ${voucherTypeLabel(voucher.type)} riscattato presso ${venue.name}.`,
     impactPoints: fresh?.impactPoints ?? me.impactPoints + 1,
     badgeLevel: fresh?.badgeLevel,

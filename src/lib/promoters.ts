@@ -47,9 +47,9 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
 
   // Fondo complessivo stanziato dalla Startup RADICI e dai Promotori Privati
   const TOTAL_PROMOTER_FUND_CENTS = 5000000; // 50.000 €
-  const GRANT_UNIT_VALUE_CENTS = 5000; // 50 € (Spettacolo Teatrale + Incontro Artisti)
+  const GRANT_UNIT_VALUE_CENTS = 5000; // 50 € (Spettacolo Teatrale per 2 persone 25€+25€ + Incontro Artisti)
 
-  // Recupera tutti i voucher hotel riscattati (ciascuno attiva 1 Matching Grant)
+  // Recupera tutti i voucher hotel riscattati con l'eventuale teatro scelto
   const hotelVouchers = await db
     .select({
       voucher: vouchers,
@@ -69,12 +69,15 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
   // Teatri convenzionati con i Promotori
   const allVenues = await db.select().from(venues);
   const theaterVenues = allVenues.filter((v) => v.type === "theater");
+  const theaterMap = new Map(theaterVenues.map((th) => [th.id, th]));
   const allDestinations = await db.select().from(destinations);
 
-  // Mappa matching grants
+  // Mappa matching grants leggendo il teatro realmente selezionato dal dipendente
   const grants: PromoterGrantRow[] = redeemedHotelVouchers.map((row) => {
-    // Assegna il teatro di riferimento del territorio o il primo teatro convenzionato
-    const matchedTheater = theaterVenues[0]?.name ?? "Teatro Storico del Territorio";
+    const selectedTheater = row.voucher.theaterVenueId
+      ? theaterMap.get(row.voucher.theaterVenueId)
+      : theaterVenues[0];
+
     return {
       voucherId: row.voucher.id,
       employeeName: `${row.user.firstName} ${row.user.lastName}`,
@@ -82,7 +85,7 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       companyName: row.company.name,
       venueName: row.venue?.name ?? "Struttura Ricettiva",
       venueCity: row.venue?.city ?? "Territorio",
-      theaterName: matchedTheater,
+      theaterName: selectedTheater?.name ?? "Teatro Storico del Territorio",
       redeemedAt: row.voucher.redeemedAt,
       grantValueCents: GRANT_UNIT_VALUE_CENTS,
     };
@@ -93,13 +96,19 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
   const remainingFundCents = Math.max(0, TOTAL_PROMOTER_FUND_CENTS - totalCommittedCents);
 
   // Statistiche per ciascun teatro convenzionato
-  const theaters = theaterVenues.map((th) => ({
-    id: th.id,
-    name: th.name,
-    city: th.city,
-    region: th.region,
-    grantsGeneratedCount: activeGrantsCount,
-  }));
+  const theaters = theaterVenues.map((th) => {
+    const countForTheater = redeemedHotelVouchers.filter(
+      (v) => (v.voucher.theaterVenueId === th.id) || (!v.voucher.theaterVenueId && th.id === theaterVenues[0]?.id)
+    ).length;
+
+    return {
+      id: th.id,
+      name: th.name,
+      city: th.city,
+      region: th.region,
+      grantsGeneratedCount: countForTheater,
+    };
+  });
 
   return {
     promoterUser,
@@ -113,4 +122,3 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     theaters,
   };
 }
-

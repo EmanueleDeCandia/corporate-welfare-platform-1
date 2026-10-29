@@ -115,6 +115,7 @@ export const vouchers = sqliteTable("vouchers", {
   slotIndex: integer("slot_index").notNull().default(1),
   amountCents: integer("amount_cents").notNull().default(0),
   venueId: integer("venue_id").references(() => venues.id),
+  theaterVenueId: integer("theater_venue_id").references(() => venues.id),
   redeemedAt: integer("redeemed_at", { mode: "timestamp" }),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
