@@ -1,14 +1,8 @@
 import { cookies } from "next/headers";
 import { and, eq, gt } from "drizzle-orm";
-import { db, initDb } from "@/db";
-import {
-  companies,
-  sessions,
-  users,
-  venues,
-  type UserRole,
-} from "@/db/schema";
-import { randomToken } from "@/lib/utils";
+import { db, initDb, sqlite } from "@/db";
+import { companies, sessions, users, venues, type UserRole } from "@/db/schema";
+import { randomToken, unixSeconds } from "@/lib/utils";
 
 export const SESSION_COOKIE = "radici_session";
 const SESSION_DAYS = 14;
@@ -31,6 +25,7 @@ export type SessionUser = {
 
 export async function createSession(userId: number) {
   await initDb();
+  sqlite.prepare(`DELETE FROM sessions WHERE expires_at < ?`).run(unixSeconds());
   const token = randomToken();
   const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000);
   await db.insert(sessions).values({ token, userId, expiresAt });
@@ -75,23 +70,11 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
   if (!row) return null;
 
   const company = row.user.companyId
-    ? (
-        await db
-          .select()
-          .from(companies)
-          .where(eq(companies.id, row.user.companyId))
-          .limit(1)
-      )[0] ?? null
+    ? ((await db.select().from(companies).where(eq(companies.id, row.user.companyId)).limit(1))[0] ?? null)
     : null;
 
   const venue = row.user.venueId
-    ? (
-        await db
-          .select()
-          .from(venues)
-          .where(eq(venues.id, row.user.venueId))
-          .limit(1)
-      )[0] ?? null
+    ? ((await db.select().from(venues).where(eq(venues.id, row.user.venueId)).limit(1))[0] ?? null)
     : null;
 
   return {
@@ -113,4 +96,9 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
 
 export function displayName(user: { firstName: string; lastName: string }) {
   return `${user.firstName} ${user.lastName}`;
+}
+
+export function safeNextPath(next: string | null | undefined) {
+  if (!next || !next.startsWith("/") || next.startsWith("//")) return null;
+  return next;
 }

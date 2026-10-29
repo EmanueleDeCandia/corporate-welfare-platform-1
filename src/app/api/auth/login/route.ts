@@ -2,15 +2,22 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { createSession } from "@/lib/auth";
+import { createSession, safeNextPath } from "@/lib/auth";
 import { ensureSeeded } from "@/db/seed";
 import { verifyPassword } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
+function defaultRedirect(role: string) {
+  if (role === "provider") return "/fornitore";
+  if (role === "csr") return "/azienda";
+  if (role === "promoter" || role === "admin") return "/promotori";
+  return "/account";
+}
+
 export async function POST(request: Request) {
   await ensureSeeded();
-  const body = (await request.json()) as { email?: string; password?: string };
+  const body = (await request.json()) as { email?: string; password?: string; next?: string };
   const email = body.email?.trim().toLowerCase();
   const password = body.password ?? "";
 
@@ -24,7 +31,7 @@ export async function POST(request: Request) {
   }
 
   await createSession(user.id);
-  const redirectTo = user.role === "provider" ? "/fornitore" : user.role === "csr" ? "/azienda" : user.role === "promoter" ? "/promotori" : "/account";
+  const redirectTo = safeNextPath(body.next) ?? defaultRedirect(user.role);
   return NextResponse.json({
     ok: true,
     redirectTo,

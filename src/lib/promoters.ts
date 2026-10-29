@@ -1,8 +1,10 @@
-import { desc, eq } from "drizzle-orm";
-import { db, initDb } from "@/db";
-import { companies, destinations, grantEvents, users, venues, vouchers } from "@/db/schema";
+import { db, initDb, sqlite } from "@/db";
+import { destinations, users, venues } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { getGrantPipeline, listGrantEvents } from "@/lib/grants";
 
 export type PromoterGrantRow = {
+  grantId: number;
   voucherId: number;
   employeeName: string;
   employeeEmail: string;
@@ -12,17 +14,16 @@ export type PromoterGrantRow = {
   eventTitle: string;
   eventCategory: string;
   eventLocation: string;
-  theaterName: string; // compatibility
-  redeemedAt: Date | null;
-  grantValueCents: number;
+  theaterName: string;
+  status: string;
+  seatsRequested: number;
+  assignedAt: Date | null;
+  confirmationToken: string | null;
 };
 
 export type PromoterDashboardData = {
   promoterUser: typeof users.$inferSelect;
-  totalFundCents: number;
-  totalCommittedCents: number;
-  remainingFundCents: number;
-  activeGrantsCount: number;
+  pipeline: ReturnType<typeof getGrantPipeline>;
   eventsCount: number;
   theatersCount: number;
   promotedDestinationsCount: number;
@@ -33,6 +34,10 @@ export type PromoterDashboardData = {
     category: string;
     venueName: string;
     city: string;
+    startsAt: Date;
+    capacity: number;
+    seatsOccupied: number;
+    seatsFree: number;
     grantsGeneratedCount: number;
   }>;
   theaters: Array<{
@@ -47,114 +52,106 @@ export type PromoterDashboardData = {
 export async function getPromotersDashboardData(promoterUserId: number): Promise<PromoterDashboardData | null> {
   await initDb();
 
-  const [promoterUser] = await db
-    .select()
-    .from(users)
-    .where(eq(users.id, promoterUserId))
-    .limit(1);
-
-  if (!promoterUser || promoterUser.role !== "promoter") {
+  const [promoterUser] = await db.select().from(users).where(eq(users.id, promoterUserId)).limit(1);
+  if (!promoterUser || (promoterUser.role !== "promoter" && promoterUser.role !== "admin")) {
     return null;
   }
 
-  // Fondo complessivo stanziato dalla Startup RADICI e dai Promotori Privati
-  const TOTAL_PROMOTER_FUND_CENTS = 5000000; // 50.000 €
-  const GRANT_UNIT_VALUE_CENTS = 5000; // 50 € (25€ + 25€ per lavoratore + accompagnatore)
-
-  // Recupera tutti i voucher hotel riscattati con utente, azienda, struttura ed evento grant
-  const hotelVouchers = await db
-    .select({
-      voucher: vouchers,
-      user: users,
-      company: companies,
-      venue: venues,
-    })
-    .from(vouchers)
-    .innerJoin(users, eq(vouchers.userId, users.id))
-    .innerJoin(companies, eq(vouchers.companyId, companies.id))
-    .leftJoin(venues, eq(vouchers.venueId, venues.id))
-    .where(eq(vouchers.type, "hotel"))
-    .orderBy(desc(vouchers.redeemedAt));
-
-  const redeemedHotelVouchers = hotelVouchers.filter((v) => v.voucher.status === "redeemed");
-
-  // Catalogo Eventi del Matching Grant
-  const allGrantEvents = await db.select().from(grantEvents);
-  const grantEventMap = new Map(allGrantEvents.map((ge) => [ge.id, ge]));
-
+  const pipeline = getGrantPipeline();
+  const eventRows = listGrantEvents();
   const allVenues = await db.select().from(venues);
-  const theaterVenues = allVenues.filter((v) => v.type === "theater");
-  const theaterMap = new Map(theaterVenues.map((th) => [th.id, th]));
+  const theaterVenues = allVenues.filter((v) => v.type === "theater" || v.type === "show_venue");
   const allDestinations = await db.select().from(destinations);
 
-  // Mappa matching grants leggendo l'evento o il teatro associato
-  const grants: PromoterGrantRow[] = redeemedHotelVouchers.map((row) => {
-    const selectedEvent = row.voucher.grantEventId ? grantEventMap.get(row.voucher.grantEventId) : null;
-    const selectedTheater = row.voucher.theaterVenueId ? theaterMap.get(row.voucher.theaterVenueId) : null;
+  const grantRows = sqlite
+    .prepare(
+      `SELECT g.id AS grant_id, g.voucher_id, g.status, g.seats_requested, g.assigned_at,
+              u.first_name, u.last_name, u.email,
+              c.name AS company_name,
+              hv.name AS venue_name, hv.city AS venue_city,
+              e.title AS event_title, e.category AS event_category,
+              tv.name AS theater_name, tv.city AS theater_city,
+              conf.token AS confirmation_token
+       FROM matching_grants g
+       JOIN vouchers v ON v.id = g.voucher_id
+       JOIN users u ON u.id = v.user_id
+       JOIN companies c ON c.id = v.company_id
+       JOIN grant_events e ON e.id = g.event_id
+       JOIN venues tv ON tv.id = e.venue_id
+       LEFT JOIN voucher_selections s ON s.voucher_id = v.id
+       LEFT JOIN venues hv ON hv.id = s.venue_id
+       LEFT JOIN grant_confirmations conf ON conf.matching_grant_id = g.id
+       ORDER BY g.assigned_at DESC`,
+    )
+    .all() as Array<{
+    grant_id: number;
+    voucher_id: number;
+    status: string;
+    seats_requested: number;
+    assigned_at: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    company_name: string;
+    venue_name: string | null;
+    venue_city: string | null;
+    event_title: string;
+    event_category: string;
+    theater_name: string;
+    theater_city: string;
+    confirmation_token: string | null;
+  }>;
 
-    const eventTitle = selectedEvent?.title ?? "Stagione di Prosa e Visita nel Ridotto";
-    const eventCategory = selectedEvent?.category ?? "teatro";
-    const eventLocation = selectedEvent
-      ? `${selectedEvent.venueName} (${selectedEvent.city})`
-      : selectedTheater
-      ? `${selectedTheater.name} (${selectedTheater.city})`
-      : "Teatro Storico del Territorio";
+  const grants: PromoterGrantRow[] = grantRows.map((row) => ({
+    grantId: row.grant_id,
+    voucherId: row.voucher_id,
+    employeeName: `${row.first_name} ${row.last_name}`,
+    employeeEmail: row.email,
+    companyName: row.company_name,
+    venueName: row.venue_name ?? "Struttura ricettiva",
+    venueCity: row.venue_city ?? "Territorio",
+    eventTitle: row.event_title,
+    eventCategory: row.event_category,
+    eventLocation: `${row.theater_name} (${row.theater_city})`,
+    theaterName: row.theater_name,
+    status: row.status,
+    seatsRequested: row.seats_requested,
+    assignedAt: row.assigned_at ? new Date(row.assigned_at * 1000) : null,
+    confirmationToken: row.confirmation_token,
+  }));
 
-    return {
-      voucherId: row.voucher.id,
-      employeeName: `${row.user.firstName} ${row.user.lastName}`,
-      employeeEmail: row.user.email,
-      companyName: row.company.name,
-      venueName: row.venue?.name ?? "Struttura Ricettiva",
-      venueCity: row.venue?.city ?? "Territorio",
-      eventTitle,
-      eventCategory,
-      eventLocation,
-      theaterName: selectedTheater?.name ?? (selectedEvent ? selectedEvent.venueName : "Teatro Storico"),
-      redeemedAt: row.voucher.redeemedAt,
-      grantValueCents: GRANT_UNIT_VALUE_CENTS,
-    };
-  });
+  const grantsByEvent = new Map<number, number>();
+  for (const row of grantRows) {
+    const event = eventRows.find((item) => item.title === row.event_title);
+    if (!event) continue;
+    grantsByEvent.set(event.id, (grantsByEvent.get(event.id) ?? 0) + 1);
+  }
 
-  const activeGrantsCount = grants.length;
-  const totalCommittedCents = activeGrantsCount * GRANT_UNIT_VALUE_CENTS;
-  const remainingFundCents = Math.max(0, TOTAL_PROMOTER_FUND_CENTS - totalCommittedCents);
+  const events = eventRows.map((ge) => ({
+    id: ge.id,
+    title: ge.title,
+    category: ge.category,
+    venueName: ge.venue_name,
+    city: ge.venue_city,
+    startsAt: new Date(ge.starts_at * 1000),
+    capacity: ge.capacity,
+    seatsOccupied: ge.seats_occupied,
+    seatsFree: ge.seats_free,
+    grantsGeneratedCount: grantRows.filter((row) => row.event_title === ge.title).length,
+  }));
 
-  // Statistiche per ciascun evento del Matching Grant
-  const events = allGrantEvents.map((ge) => {
-    const countForEvent = redeemedHotelVouchers.filter((v) => v.voucher.grantEventId === ge.id).length;
-    return {
-      id: ge.id,
-      title: ge.title,
-      category: ge.category,
-      venueName: ge.venueName,
-      city: ge.city,
-      grantsGeneratedCount: countForEvent,
-    };
-  });
-
-  // Statistiche per ciascun teatro convenzionato (backward compatibility)
-  const theaters = theaterVenues.map((th) => {
-    const countForTheater = redeemedHotelVouchers.filter(
-      (v) => (v.voucher.theaterVenueId === th.id) || (!v.voucher.theaterVenueId && th.id === theaterVenues[0]?.id)
-    ).length;
-
-    return {
-      id: th.id,
-      name: th.name,
-      city: th.city,
-      region: th.region,
-      grantsGeneratedCount: countForTheater,
-    };
-  });
+  const theaters = theaterVenues.map((th) => ({
+    id: th.id,
+    name: th.name,
+    city: th.city,
+    region: th.region,
+    grantsGeneratedCount: grantRows.filter((row) => row.theater_name === th.name).length,
+  }));
 
   return {
     promoterUser,
-    totalFundCents: TOTAL_PROMOTER_FUND_CENTS,
-    totalCommittedCents,
-    remainingFundCents,
-    activeGrantsCount,
-    eventsCount: allGrantEvents.length,
+    pipeline,
+    eventsCount: eventRows.length,
     theatersCount: theaterVenues.length,
     promotedDestinationsCount: allDestinations.length,
     grants,

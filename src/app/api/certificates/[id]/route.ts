@@ -227,7 +227,7 @@ export async function GET(
   doc.text("DATI DI REGISTRAZIONE", 25, 233);
   doc.setFont("times", "normal");
   doc.setFontSize(8);
-  doc.text(`Protocollo Univoco: RD-ESG-00${cert.id}-2026`, 25, 239);
+  doc.text(`Protocollo Univoco: ${cert.protocolNumber}`, 25, 239);
   doc.text(`Data di Emissione: ${formatDate(cert.createdAt)}`, 25, 244);
   doc.text(`Livello Comunitario: ${user?.badgeLevel ?? me.badgeLevel}`, 25, 249);
   doc.text(`Punti Impatto Conseguiti: ${user?.impactPoints ?? me.impactPoints}`, 25, 254);

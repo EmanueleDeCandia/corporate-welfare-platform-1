@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Compass, MapPin, Sparkles } from "lucide-react";
+import { ArrowLeft, Compass, MapPin } from "lucide-react";
 import { PublicShell } from "@/components/public-shell";
 import { VenueCard } from "@/components/venue-card";
 import { getDestinationBySlug, getVenuesByDestination } from "@/lib/data";
@@ -87,6 +87,7 @@ export default async function DestinationDetailPage({
                 venue={row.venue}
                 destination={row.destination}
                 sponsor={row.sponsor}
+                fromPriceCents={row.flags.fromPriceCents}
               />
             ))}
           </div>

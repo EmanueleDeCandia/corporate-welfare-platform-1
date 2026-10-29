@@ -51,7 +51,13 @@ export default async function CompanyDetailPage({
             </p>
             <div className="mt-6 grid gap-5">
               {venues.map((row) => (
-                <VenueCard key={row.venue.id} venue={row.venue} destination={row.destination} sponsor={company} />
+                <VenueCard
+                  key={row.venue.id}
+                  venue={row.venue}
+                  destination={row.destination}
+                  sponsor={company}
+                  fromPriceCents={row.flags.fromPriceCents}
+                />
               ))}
               {venues.length === 0 ? (
                 <p className="rounded-[28px] bg-white p-6 text-sm text-olive">

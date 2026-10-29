@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { invites, users } from "@/db/schema";
 import { createSession } from "@/lib/auth";
@@ -41,6 +41,9 @@ export async function POST(request: Request) {
   if (!invite) {
     invite = (await db.select().from(invites).where(eq(invites.email, email)).limit(1))[0];
   }
+  if (invite?.expiresAt && invite.expiresAt < new Date()) {
+    invite = undefined;
+  }
 
   const [user] = await db
     .insert(users)
@@ -60,8 +63,8 @@ export async function POST(request: Request) {
   if (invite && invite.status === "pending") {
     await db
       .update(invites)
-      .set({ status: "registered", friendUserId: user.id })
-      .where(eq(invites.id, invite.id));
+      .set({ status: "registered", friendUserId: user.id, acceptedAt: new Date() })
+      .where(and(eq(invites.id, invite.id)));
   }
 
   await createSession(user.id);

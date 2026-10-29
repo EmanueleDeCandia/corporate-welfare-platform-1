@@ -19,13 +19,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Il testo del post è obbligatorio." }, { status: 400 });
   }
 
-  await db.insert(shares).values({
-    userId: me.id,
-    venueId: body.venueId ?? null,
-    caption,
-  });
+  const [share] = await db
+    .insert(shares)
+    .values({
+      userId: me.id,
+      venueId: body.venueId ?? null,
+      caption,
+    })
+    .returning();
 
-  await awardImpact(me.id, 1);
+  await awardImpact(me.id, 1, "share", "venue", String(body.venueId ?? share.id));
   const [fresh] = await db.select().from(users).where(eq(users.id, me.id)).limit(1);
 
   return NextResponse.json({

@@ -3,17 +3,13 @@
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Award,
   BadgeCheck,
   Copy,
   Download,
-  FileText,
   Leaf,
   QrCode,
   Share2,
   ShieldCheck,
-  Sparkles,
-  Ticket,
   Users,
   Wallet,
 } from "lucide-react";
@@ -25,21 +21,72 @@ import type {
   transactions,
   venues,
   vouchers,
-  grantEvents,
+  VenueOffering,
 } from "@/db/schema";
 import {
   badgeForPoints,
   formatDate,
   formatDateTime,
   formatEuro,
-  matchesVoucher,
+  grantStatusLabel,
   venueTypeLabel,
+  voucherStatusLabel,
   voucherTypeLabel,
 } from "@/lib/utils";
 
-type VenueLite = typeof venues.$inferSelect;
-type GrantEventLite = typeof grantEvents.$inferSelect;
-type TxRow = { transaction: typeof transactions.$inferSelect; venue: VenueLite };
+type VenueRow = {
+  venue: typeof venues.$inferSelect;
+  offerings: VenueOffering[];
+  flags: { offersOvernight: boolean; offersDinner: boolean; offersBoth: boolean; fromPriceCents: number };
+};
+
+type GrantEventRow = {
+  id: number;
+  title: string;
+  category: string;
+  venue_id: number;
+  description: string;
+  starts_at: number;
+  venue_name: string;
+  venue_city: string;
+  seats_free: number;
+  capacity: number;
+  artist_meetup_included: number;
+};
+
+type SelectionRow = {
+  id: number;
+  voucher_id: number;
+  venue_id: number;
+  offering_id: number;
+  service_date: string;
+  selected_at: number;
+  attendance_status: string;
+  qr_token: string;
+  venue_name: string;
+  venue_city: string;
+  offering_name: string;
+};
+
+type GrantRow = {
+  id: number;
+  voucher_id: number;
+  event_id: number;
+  seats_requested: number;
+  status: string;
+  qr_token: string;
+  assigned_at: number;
+  event_title: string;
+  starts_at: number;
+  category: string;
+  theater_name: string;
+  theater_city: string;
+  confirmation_token: string | null;
+  confirmation_response: string | null;
+  respond_by: number | null;
+};
+
+type TxRow = { transaction: typeof transactions.$inferSelect; venue: typeof venues.$inferSelect };
 
 type Props = {
   user: {
@@ -54,8 +101,10 @@ type Props = {
   };
   company: typeof companies.$inferSelect | null;
   vouchers: Array<typeof vouchers.$inferSelect>;
-  venues: VenueLite[];
-  grantEvents?: GrantEventLite[];
+  selections: SelectionRow[];
+  grants: GrantRow[];
+  venues: VenueRow[];
+  grantEvents: GrantEventRow[];
   invites: Array<typeof invites.$inferSelect>;
   transactions: TxRow[];
   shares: Array<typeof shares.$inferSelect>;
@@ -91,7 +140,7 @@ export function AccountHub(props: Props) {
         ))}
       </div>
       <div className="mt-6">
-        {tab === "wallet" ? <WalletTab {...props} grantEvents={props.grantEvents ?? []} /> : null}
+        {tab === "wallet" ? <WalletTab {...props} /> : null}
         {tab === "kit" ? <KitTab {...props} /> : null}
         {tab === "friends" ? <FriendsTab {...props} /> : null}
       </div>
@@ -99,55 +148,12 @@ export function AccountHub(props: Props) {
   );
 }
 
-function WalletTab({ user, company, vouchers, venues, grantEvents = [], transactions }: Props & { grantEvents?: GrantEventLite[] }) {
+function WalletTab(props: Props) {
+  const { user, company, vouchers, selections, grants, venues, grantEvents, transactions } = props;
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [pendingId, setPendingId] = useState<string | null>(null);
-
-  const groups = {
-    hotel: vouchers.filter((item) => item.type === "hotel"),
-    aperitivo: vouchers.filter((item) => item.type === "aperitivo"),
-    theater: vouchers.filter((item) => item.type === "theater"),
-  };
-
-  async function redeem(voucherId: number, venueId: number, grantEventId?: number) {
-    setPendingId(`${voucherId}-${venueId}`);
-    setMessage("");
-    const response = await fetch("/api/vouchers/redeem", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ voucherId, venueId, grantEventId }),
-    });
-    const data = (await response.json()) as { error?: string; message?: string };
-    setPendingId(null);
-    if (!response.ok) {
-      setMessage(data.error ?? "Riscatto non riuscito.");
-      return;
-    }
-    setMessage(data.message ?? "Voucher riscattato.");
-    router.refresh();
-  }
-
-  const [resetting, setResetting] = useState(false);
-  async function resetDemo() {
-    if (!confirm("Vuoi ripristinare i voucher per provare la selezione del Teatro e della Struttura da zero?")) {
-      return;
-    }
-    setResetting(true);
-    setMessage("");
-    try {
-      const response = await fetch("/api/vouchers/reset-demo", { method: "POST" });
-      const data = await response.json();
-      if (!response.ok) {
-        setMessage(data.error ?? "Errore nel reset demo.");
-      } else {
-        setMessage(data.message ?? "Dati demo ripristinati con successo.");
-        router.refresh();
-      }
-    } finally {
-      setResetting(false);
-    }
-  }
+  const [offerFilter, setOfferFilter] = useState<"all" | "overnight" | "dinner">("all");
 
   if (user.role !== "employee") {
     return (
@@ -163,8 +169,7 @@ function WalletTab({ user, company, vouchers, venues, grantEvents = [], transact
             <div key={transaction.id} className="rounded-2xl border border-mist px-4 py-3">
               <p className="font-medium text-forest">{venue.name}</p>
               <p className="text-sm text-olive">
-                {transaction.serviceLabel} · {formatEuro(transaction.amountCents)} ·{" "}
-                {formatDateTime(transaction.createdAt)}
+                {transaction.serviceLabel} · {formatEuro(transaction.amountCents)} · {formatDateTime(transaction.createdAt)}
               </p>
             </div>
           ))}
@@ -173,25 +178,73 @@ function WalletTab({ user, company, vouchers, venues, grantEvents = [], transact
     );
   }
 
+  const overnight = vouchers.filter((item) => item.benefitType === "overnight");
+  const dinner = vouchers.filter((item) => item.benefitType === "dinner");
+
+  async function selectVoucher(voucherId: number, venueId: number, offeringId: number, serviceDate: string) {
+    setPendingId(`${voucherId}-${offeringId}`);
+    setMessage("");
+    const response = await fetch("/api/vouchers/select", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ voucherId, venueId, offeringId, serviceDate }),
+    });
+    const data = (await response.json()) as { error?: string; message?: string };
+    setPendingId(null);
+    if (!response.ok) {
+      setMessage(data.error ?? "Selezione non riuscita.");
+      return;
+    }
+    setMessage(data.message ?? "Voucher selezionato.");
+    router.refresh();
+  }
+
+  async function claimGrant(payload: {
+    voucherId: number;
+    eventId: number;
+    seatsRequested: number;
+    companionName?: string;
+    companionEmail?: string;
+  }) {
+    setPendingId(`grant-${payload.voucherId}`);
+    setMessage("");
+    const response = await fetch("/api/grants/claim", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = (await response.json()) as { error?: string; message?: string };
+    setPendingId(null);
+    if (!response.ok) {
+      setMessage(data.error ?? "Prenotazione grant non riuscita.");
+      return;
+    }
+    setMessage(data.message ?? "Grant prenotato.");
+    router.refresh();
+  }
+
+  async function confirmGrant(token: string, responseValue: "confirmed" | "declined") {
+    setPendingId(`cnf-${token}`);
+    const response = await fetch(`/api/grants/confirm/${token}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ response: responseValue }),
+    });
+    const data = (await response.json()) as { error?: string; message?: string };
+    setPendingId(null);
+    setMessage(data.message ?? data.error ?? "");
+    if (response.ok) router.refresh();
+  }
+
   return (
     <div className="space-y-6">
-      <section className="rounded-[28px] bg-forest text-cream p-6 md:p-8">
-        <p className="text-xs uppercase tracking-[0.18em] text-gold">Cassetti fiscali</p>
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <h2 className="mt-2 font-serif text-3xl">Portafoglio welfare e omaggi</h2>
-          <button
-            type="button"
-            disabled={resetting}
-            onClick={resetDemo}
-            className="rounded-full border border-gold/40 bg-cream/10 px-4 py-2 text-xs font-medium text-cream hover:bg-cream/20 disabled:opacity-50 transition"
-            title="Ripristina i voucher disponibili per testare la selezione di struttura e teatro da zero"
-          >
-            {resetting ? "Ripristino in corso..." : "↺ Ripristina dati demo per test"}
-          </button>
-        </div>
+      <section className="rounded-[28px] bg-forest p-6 text-cream md:p-8">
+        <p className="text-xs uppercase tracking-[0.18em] text-gold">Piano welfare</p>
+        <h2 className="mt-2 font-serif text-3xl">Portafoglio: selezione e presenza</h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-cream/75">
-          I voucher restano nel tuo account finché non li usi sul posto. Al riscatto il buono si
-          azzera e la struttura riceve i dati di fatturazione diretta di {company?.name ?? "la tua impresa"}.
+          La selezione è l&apos;atto fiscale: da quel momento {company?.name ?? "la tua impresa"} paga il
+          fornitore, anche se non ti presenti. Il Matching Grant si sceglie dopo il pernottamento e
+          occupa posti a teatro solo se confermi la presenza.
         </p>
         {company ? (
           <p className="mt-4 text-sm text-gold">
@@ -200,33 +253,41 @@ function WalletTab({ user, company, vouchers, venues, grantEvents = [], transact
         ) : null}
       </section>
 
-      <HotelDrawer
-        title="Sezione Welfare · Pernottamento"
-        subtitle="1 Voucher Pernottamento (50€) + Matching Grant Promotori per 2 Persone (25€ + 25€)"
-        items={groups.hotel}
+      <BenefitDrawer
+        title="Pernottamento"
+        subtitle="1 voucher base da 50 €. La selezione addebita l'impresa e sblocca il Matching Grant (secondo passo)."
+        items={overnight}
+        selections={selections}
+        grants={grants}
         venues={venues}
+        offerFilter={offerFilter}
+        onFilter={setOfferFilter}
+        pendingId={pendingId}
+        onSelect={selectVoucher}
         grantEvents={grantEvents}
-        pendingId={pendingId}
-        onRedeem={redeem}
+        onClaimGrant={claimGrant}
+        onConfirmGrant={confirmGrant}
       />
-      <Drawer
-        title="Sezione Welfare · Cena & Aperitivo KM 0"
-        subtitle="1 Voucher Degustazione (25€) · filiera agricola del territorio"
-        items={groups.aperitivo}
+      <BenefitDrawer
+        title="Cena KM 0"
+        subtitle="1 voucher base da 25 €. Nessun Matching Grant: solo selezione struttura, data e presenza."
+        items={dinner}
+        selections={selections}
+        grants={grants}
         venues={venues}
+        offerFilter={offerFilter}
+        onFilter={setOfferFilter}
         pendingId={pendingId}
-        onRedeem={redeem}
+        onSelect={selectVoucher}
       />
 
-      {message ? (
-        <p className="rounded-2xl bg-sage/15 px-4 py-3 text-sm text-forest">{message}</p>
-      ) : null}
+      {message ? <p className="rounded-2xl bg-sage/15 px-4 py-3 text-sm text-forest">{message}</p> : null}
 
       <section className="rounded-[28px] bg-white p-6">
-        <h3 className="font-serif text-2xl text-forest">Movimenti recenti</h3>
+        <h3 className="font-serif text-2xl text-forest">Movimenti</h3>
         <div className="mt-4 space-y-3">
           {transactions.length === 0 ? (
-            <p className="text-sm text-olive">Nessun movimento. Il primo riscatto apparirà qui.</p>
+            <p className="text-sm text-olive">Nessun movimento. La prima selezione apparirà qui.</p>
           ) : (
             transactions.map(({ transaction, venue }) => (
               <div key={transaction.id} className="flex items-center justify-between gap-4 border-b border-mist pb-3">
@@ -246,324 +307,316 @@ function WalletTab({ user, company, vouchers, venues, grantEvents = [], transact
   );
 }
 
-
-function HotelDrawer({
+function BenefitDrawer({
   title,
   subtitle,
   items,
+  selections,
+  grants,
   venues,
-  grantEvents = [],
+  offerFilter,
+  onFilter,
   pendingId,
-  onRedeem,
+  onSelect,
+  grantEvents = [],
+  onClaimGrant,
+  onConfirmGrant,
 }: {
   title: string;
   subtitle: string;
   items: Array<typeof vouchers.$inferSelect>;
-  venues: VenueLite[];
-  grantEvents: GrantEventLite[];
+  selections: SelectionRow[];
+  grants: GrantRow[];
+  venues: VenueRow[];
+  offerFilter: "all" | "overnight" | "dinner";
+  onFilter: (value: "all" | "overnight" | "dinner") => void;
   pendingId: string | null;
-  onRedeem: (voucherId: number, venueId: number, grantEventId?: number) => void;
+  onSelect: (voucherId: number, venueId: number, offeringId: number, serviceDate: string) => void;
+  grantEvents?: GrantEventRow[];
+  onClaimGrant?: (payload: {
+    voucherId: number;
+    eventId: number;
+    seatsRequested: number;
+    companionName?: string;
+    companionEmail?: string;
+  }) => void;
+  onConfirmGrant?: (token: string, response: "confirmed" | "declined") => void;
 }) {
-  const available = items.find((item) => item.status === "available");
-  const used = items.filter((item) => item.status === "redeemed").length;
+  const assigned = items.find((item) => item.status === "assigned");
+  const benefitType = items[0]?.benefitType ?? "overnight";
+  const [venueId, setVenueId] = useState<number | "">("");
+  const [offeringId, setOfferingId] = useState<number | "">("");
+  const [serviceDate, setServiceDate] = useState("");
+  const [eventId, setEventId] = useState<number | "">("");
+  const [seats, setSeats] = useState<1 | 2>(2);
+  const [companionName, setCompanionName] = useState("");
+  const [companionEmail, setCompanionEmail] = useState("");
 
-  // Filtra strutture per il pernottamento (hotel e agriturismi)
-  const hotelVenues = venues.filter((v) => matchesVoucher(v.type, "hotel"));
-
-  // Eventi del Matching Grant disponibili
-  const events = grantEvents.length > 0 ? grantEvents : [
-    {
-      id: 1,
-      title: "Stagione di Prosa e Visita Esclusiva nel Ridotto",
-      category: "teatro" as const,
-      venueId: null,
-      venueName: "Teatro Lauro Rossi",
-      city: "Macerata",
-      region: "Marche",
-      description: "Posti riservati per 2 persone con incontro con gli attori a fine spettacolo.",
-      grantAmountCents: 5000,
-      artistMeetupIncluded: true,
-      active: true,
-      createdAt: new Date(),
-    }
-  ];
-
-  // Passo 1: Struttura ricettiva selezionata
-  const [selectedHotelVenue, setSelectedHotelVenue] = useState<VenueLite | null>(null);
-  // Passo 2: Evento Matching Grant selezionato
-  const [selectedEventId, setSelectedEventId] = useState<number>(events[0]?.id ?? 1);
+  const filteredVenues = venues.filter((row) => {
+    const matchType = row.offerings.some(
+      (offering) => offering.active && offering.acceptsWelfare && offering.benefitType === benefitType,
+    );
+    if (!matchType) return false;
+    if (offerFilter === "all") return true;
+    if (offerFilter === "overnight") return row.flags.offersOvernight && !row.flags.offersDinner;
+    return row.flags.offersDinner && !row.flags.offersOvernight;
+  });
+  const bothVenues = venues.filter(
+    (row) =>
+      row.flags.offersBoth &&
+      row.offerings.some((offering) => offering.active && offering.acceptsWelfare && offering.benefitType === benefitType),
+  );
+  const visibleVenues = offerFilter === "all" ? [...bothVenues, ...filteredVenues.filter((row) => !row.flags.offersBoth)] : filteredVenues;
+  const selectedVenue = visibleVenues.find((row) => row.venue.id === venueId);
+  const offerings = (selectedVenue?.offerings ?? []).filter(
+    (offering) => offering.active && offering.acceptsWelfare && offering.benefitType === benefitType,
+  );
 
   return (
-    <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/10">
+    <section className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <span className="rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold text-terracotta">
-            Matching Grant Attivo (2 Persone · 25€ + 25€)
-          </span>
+          {benefitType === "overnight" ? (
+            <span className="rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold text-terracotta">
+              Matching Grant dopo la selezione (2 posti)
+            </span>
+          ) : null}
           <h3 className="mt-2 font-serif text-2xl text-forest">{title}</h3>
           <p className="text-sm text-olive">{subtitle}</p>
         </div>
         <p className="text-sm font-medium text-forest">
-          {items.length - used}/{items.length} disponibili
+          {items.filter((item) => item.status === "assigned").length}/{items.length} da selezionare
         </p>
       </div>
 
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         {items.map((item) => (
           <div
             key={item.id}
-            className={`h-16 flex-1 rounded-2xl border px-3 py-2 text-xs ${
-              item.status === "available"
+            className={`min-w-[140px] flex-1 rounded-2xl border px-3 py-2 text-xs ${
+              item.status === "assigned"
                 ? "border-gold/40 bg-cream text-forest"
-                : "border-mist bg-mist/40 text-olive line-through"
+                : "border-mist bg-mist/40 text-olive"
             }`}
           >
-            <p>Slot {item.slotIndex} {item.status === "redeemed" ? "· Riscattato" : ""}</p>
-            <p className="mt-1 font-medium">{formatEuro(item.amountCents)}</p>
+            <p>
+              {item.origin === "extra" ? "Extra" : "Base"} · {voucherStatusLabel(item.status)}
+            </p>
+            <p className="mt-1 font-medium text-forest">{formatEuro(item.amountCents)}</p>
           </div>
         ))}
       </div>
 
-      {/* DETTAGLIO SOGGIORNO PRENOTATO E EVENTO MATCHING GRANT ASSEGNATO */}
-      {!available && items[0]?.status === "redeemed" ? (
-        (() => {
-          const bookedHotel = venues.find((v) => v.id === items[0].venueId);
-          const bookedEvent = events.find((e) => e.id === items[0].grantEventId) || events[0];
+      {items
+        .filter((item) => item.status !== "assigned")
+        .map((item) => {
+          const selection = selections.find((row) => row.voucher_id === item.id);
+          const grant = grants.find((row) => row.voucher_id === item.id);
           return (
-            <div className="mt-5 rounded-2xl border border-forest/20 bg-forest/5 p-5">
-              <div className="flex items-center justify-between">
+            <div key={`sel-${item.id}`} className="mt-5 rounded-2xl border border-forest/15 bg-forest/5 p-5">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="rounded-full bg-forest px-3 py-1 text-xs font-medium text-cream">
-                  Pernottamento Confermato & Fiscale B2B Assegnato
+                  {voucherTypeLabel(item.benefitType)} · {voucherStatusLabel(item.status)}
                 </span>
-                <span className="text-xs text-olive">
-                  Prenotato il: {items[0].redeemedAt ? formatDateTime(items[0].redeemedAt) : "—"}
-                </span>
-              </div>
-              <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                <div className="rounded-xl border border-mist bg-white p-3.5">
-                  <span className="text-[11px] uppercase tracking-wider text-olive block">Struttura Ospitante</span>
-                  <strong className="text-base font-serif text-forest block mt-0.5">{bookedHotel?.name ?? "Struttura Convenzionata"}</strong>
-                  <p className="text-xs text-olive mt-0.5">{bookedHotel?.city} · Voucher Welfare 50€</p>
-                </div>
-                <div className="rounded-xl border border-gold/40 bg-cream p-3.5">
-                  <span className="text-[11px] uppercase tracking-wider text-terracotta block">
-                    Matching Grant Promotori ({bookedEvent?.category.toUpperCase()})
+                {selection ? (
+                  <span className="text-xs text-olive">
+                    Data servizio {selection.service_date} · presenza {selection.attendance_status}
                   </span>
-                  <strong className="text-base font-serif text-forest block mt-0.5">{bookedEvent?.title}</strong>
-                  <p className="text-xs text-forest mt-0.5 font-medium">{bookedEvent?.venueName} ({bookedEvent?.city})</p>
-                  <p className="text-[11px] text-olive mt-0.5">Omaggio 2 Persone (25€ + 25€) · Incontro con gli artisti incluso</p>
-                </div>
+                ) : null}
               </div>
-            </div>
-          );
-        })()
-      ) : null}
+              {selection ? (
+                <div className="mt-3 grid gap-4 sm:grid-cols-[1fr_auto]">
+                  <div>
+                    <strong className="font-serif text-lg text-forest">{selection.venue_name}</strong>
+                    <p className="text-xs text-olive">
+                      {selection.venue_city} · {selection.offering_name}
+                    </p>
+                    <p className="mt-2 text-xs text-forest">
+                      Addebito già generato. Il no-show non lo annulla.
+                    </p>
+                  </div>
+                  <img
+                    src={`/api/qr/${selection.qr_token}`}
+                    alt="QR selezione"
+                    className="h-28 w-28 rounded-2xl border border-gold/30 bg-white"
+                  />
+                </div>
+              ) : null}
 
-      {/* FLUSSO DI SELEZIONE: PASSO 1 (PERNOTTAMENTO) -> PASSO 2 (EVENTO MATCHING GRANT) */}
-      {available ? (
-        <div className="mt-5 space-y-4">
-          {/* PASSO 1: Scelta Struttura Ricettiva */}
-          <div>
-            <div className="flex items-center justify-between">
-              <p className="text-xs uppercase tracking-[0.14em] font-semibold text-forest">
-                1. Seleziona la struttura per il pernottamento
-              </p>
-              {selectedHotelVenue ? (
-                <button
-                  type="button"
-                  onClick={() => setSelectedHotelVenue(null)}
-                  className="text-xs text-terracotta hover:underline"
-                >
-                  Cambia struttura
-                </button>
+              {item.benefitType === "overnight" && grant ? (
+                <div className="mt-4 rounded-xl border border-gold/40 bg-cream p-4">
+                  <p className="text-[11px] uppercase tracking-wider text-terracotta">Matching Grant · {grantStatusLabel(grant.status)}</p>
+                  <strong className="mt-1 block font-serif text-forest">{grant.event_title}</strong>
+                  <p className="text-xs text-olive">
+                    {grant.theater_name} ({grant.theater_city}) · {grant.seats_requested} posti ·{" "}
+                    {formatDateTime(new Date(grant.starts_at * 1000))}
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <img src={`/api/qr/${grant.qr_token}`} alt="QR grant" className="h-24 w-24 rounded-xl bg-white p-1" />
+                    {grant.confirmation_token && ["assigned", "confirmation_sent"].includes(grant.status) && onConfirmGrant ? (
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          disabled={pendingId === `cnf-${grant.confirmation_token}`}
+                          onClick={() => onConfirmGrant(grant.confirmation_token!, "confirmed")}
+                          className="rounded-full bg-forest px-4 py-2 text-xs text-cream"
+                        >
+                          Confermo presenza
+                        </button>
+                        <button
+                          type="button"
+                          disabled={pendingId === `cnf-${grant.confirmation_token}`}
+                          onClick={() => onConfirmGrant(grant.confirmation_token!, "declined")}
+                          className="rounded-full border border-forest/20 px-4 py-2 text-xs"
+                        >
+                          Rinuncio (libero i posti)
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              ) : null}
+
+              {item.benefitType === "overnight" && !grant && ["selected", "attended", "no_show"].includes(item.status) && onClaimGrant ? (
+                <div className="mt-4 rounded-xl border border-gold/40 bg-white p-4">
+                  <p className="text-sm font-medium text-forest">Secondo passo: scegli l&apos;evento culturale</p>
+                  <p className="mt-1 text-xs text-olive">
+                    I posti si occupano solo ora. Se non scegli, nessun grant e nessuna capienza impegnata.
+                  </p>
+                  <div className="mt-3 grid gap-3 md:grid-cols-2">
+                    <select
+                      value={eventId}
+                      onChange={(event) => setEventId(Number(event.target.value))}
+                      className="rounded-2xl border border-forest/10 bg-cream px-3 py-2 text-sm"
+                    >
+                      <option value="">Seleziona evento</option>
+                      {grantEvents
+                        .filter((event) => event.seats_free > 0)
+                        .map((event) => (
+                          <option key={event.id} value={event.id}>
+                            {event.title} · {event.venue_city} · {event.seats_free} posti liberi
+                          </option>
+                        ))}
+                    </select>
+                    <select
+                      value={seats}
+                      onChange={(event) => setSeats(Number(event.target.value) === 1 ? 1 : 2)}
+                      className="rounded-2xl border border-forest/10 bg-cream px-3 py-2 text-sm"
+                    >
+                      <option value={2}>2 posti (dipendente + accompagnatore)</option>
+                      <option value={1}>1 posto (solo dipendente)</option>
+                    </select>
+                    {seats === 2 ? (
+                      <>
+                        <input
+                          placeholder="Nome accompagnatore"
+                          value={companionName}
+                          onChange={(event) => setCompanionName(event.target.value)}
+                          className="rounded-2xl border border-forest/10 bg-cream px-3 py-2 text-sm"
+                        />
+                        <input
+                          placeholder="Email accompagnatore (facoltativa)"
+                          value={companionEmail}
+                          onChange={(event) => setCompanionEmail(event.target.value)}
+                          className="rounded-2xl border border-forest/10 bg-cream px-3 py-2 text-sm"
+                        />
+                      </>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={!eventId || pendingId === `grant-${item.id}`}
+                    onClick={() =>
+                      eventId &&
+                      onClaimGrant({
+                        voucherId: item.id,
+                        eventId: Number(eventId),
+                        seatsRequested: seats,
+                        companionName,
+                        companionEmail,
+                      })
+                    }
+                    className="mt-3 rounded-full bg-terracotta px-5 py-2 text-xs font-semibold uppercase tracking-wider text-cream disabled:bg-mist disabled:text-olive"
+                  >
+                    Prenota i posti grant
+                  </button>
+                </div>
               ) : null}
             </div>
+          );
+        })}
 
-            {selectedHotelVenue ? (
-              <div className="mt-2 flex items-center justify-between rounded-2xl border-2 border-forest bg-forest/5 px-4 py-3">
-                <div>
-                  <span className="text-[10px] uppercase tracking-wider font-semibold text-forest block">Struttura Selezionata</span>
-                  <strong className="text-base font-serif text-forest">{selectedHotelVenue.name}</strong>
-                  <p className="text-xs text-olive">{selectedHotelVenue.city} · Voucher Welfare 50€</p>
-                </div>
-                <span className="rounded-full bg-forest text-cream text-xs px-3 py-1 font-medium">
-                  ✓ Selezionato
-                </span>
-              </div>
-            ) : (
-              <div className="mt-2 space-y-2">
-                {hotelVenues.map((venue) => (
-                  <div
-                    key={venue.id}
-                    className="flex flex-col gap-3 rounded-2xl border border-mist px-4 py-3 md:flex-row md:items-center md:justify-between hover:bg-sand/20 transition"
-                  >
-                    <div>
-                      <p className="font-medium text-forest">{venue.name}</p>
-                      <p className="text-xs text-olive">
-                        {venue.city} · {venueTypeLabel(venue.type)} · Voucher Pernottamento (50€)
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setSelectedHotelVenue(venue)}
-                      className="rounded-full border border-forest bg-white px-5 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-forest hover:bg-forest hover:text-cream transition"
-                    >
-                      Seleziona Pernottamento
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+      {assigned ? (
+        <div className="mt-5 space-y-4">
+          <div className="flex flex-wrap gap-2">
+            {(
+              [
+                ["all", "Tutte le strutture"],
+                ["overnight", "Solo pernottamento"],
+                ["dinner", "Solo cena"],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => onFilter(id)}
+                className={`rounded-full px-3 py-1 text-xs ${
+                  offerFilter === id ? "bg-forest text-cream" : "bg-cream text-forest"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
           </div>
-
-          {/* PASSO 2: Scelta dell'Evento / Spettacolo del Matching Grant (sbloccata una volta selezionato il soggiorno) */}
-          {selectedHotelVenue ? (
-            <div className="rounded-2xl border border-gold/40 bg-cream p-5 animate-in fade-in duration-300">
-              <div className="flex items-center gap-2">
-                <span className="rounded-full bg-gold/20 px-2.5 py-0.5 text-xs font-semibold text-terracotta">
-                  Passo 2 di 2
-                </span>
-                <p className="text-xs uppercase tracking-[0.14em] font-semibold text-terracotta">
-                  Scegli l'Esperienza / Evento del Matching Grant Promotori
-                </p>
-              </div>
-              <p className="mt-2 text-xs text-olive leading-relaxed">
-                Avendo selezionato il soggiorno presso <strong>{selectedHotelVenue.name}</strong>, i Promotori attivano il Matching Grant di 50€ (25€ per te + 25€ per il tuo accompagnatore). Scegli a quale evento territoriale partecipare:
-              </p>
-
-              <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
-                {events.map((ev) => (
-                  <label
-                    key={ev.id}
-                    className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3.5 text-xs transition ${
-                      selectedEventId === ev.id
-                        ? "border-forest bg-white font-medium text-forest shadow-sm"
-                        : "border-mist bg-white/70 text-ink/75 hover:border-gold/40"
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="selectedEvent"
-                      value={ev.id}
-                      checked={selectedEventId === ev.id}
-                      onChange={() => setSelectedEventId(ev.id)}
-                      className="mt-0.5 accent-forest"
-                    />
-                    <div className="space-y-0.5">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded bg-sand px-1.5 py-0.5 text-[10px] uppercase font-semibold text-forest">
-                          {ev.category}
-                        </span>
-                        <span className="text-[11px] text-olive">{ev.venueName} · {ev.city}</span>
-                      </div>
-                      <strong className="block text-forest text-sm font-serif">{ev.title}</strong>
-                      <p className="text-[11px] text-olive leading-relaxed">{ev.description}</p>
-                    </div>
-                  </label>
-                ))}
-              </div>
-
-              {/* CONFERMA E RISCATTO DEFINITIVO */}
-              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-gold/20 pt-4">
-                <div>
-                  <p className="text-xs text-olive">
-                    Riepilogo: <strong>{selectedHotelVenue.name}</strong> + <strong>{events.find(e => e.id === selectedEventId)?.venueName ?? "Evento Territoriale"}</strong>
-                  </p>
-                  <p className="text-[11px] text-terracotta mt-0.5">
-                    Fattura B2B intestata all'azienda per la struttura · Quota Evento 50€ (2 persone) coperta dai Promotori.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  disabled={pendingId === `${available.id}-${selectedHotelVenue.id}`}
-                  onClick={() => onRedeem(available.id, selectedHotelVenue.id, selectedEventId)}
-                  className="rounded-full bg-forest px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-cream hover:bg-forest/90 disabled:opacity-50 transition shadow-sm"
-                >
-                  {pendingId === `${available.id}-${selectedHotelVenue.id}`
-                    ? "Registrazione in corso..."
-                    : "Conferma Prenotazione & Riscatta"}
-                </button>
-              </div>
-            </div>
-          ) : null}
+          <select
+            value={venueId}
+            onChange={(event) => {
+              setVenueId(event.target.value ? Number(event.target.value) : "");
+              setOfferingId("");
+            }}
+            className="w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3 text-sm"
+          >
+            <option value="">1. Scegli la struttura</option>
+            {visibleVenues.map((row) => (
+              <option key={row.venue.id} value={row.venue.id}>
+                {row.venue.name} · {row.venue.city} · {venueTypeLabel(row.venue.type)}
+              </option>
+            ))}
+          </select>
+          <select
+            value={offeringId}
+            onChange={(event) => setOfferingId(event.target.value ? Number(event.target.value) : "")}
+            className="w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3 text-sm"
+            disabled={!selectedVenue}
+          >
+            <option value="">2. Scegli l&apos;offerta</option>
+            {offerings.map((offering) => (
+              <option key={offering.id} value={offering.id}>
+                {offering.name} · listino {formatEuro(offering.listPriceCents)}
+              </option>
+            ))}
+          </select>
+          <label className="block text-sm text-olive">
+            3. Data del servizio (obbligatoria)
+            <input
+              type="date"
+              value={serviceDate}
+              onChange={(event) => setServiceDate(event.target.value)}
+              className="mt-1 w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3 text-forest"
+            />
+          </label>
+          <button
+            type="button"
+            disabled={!venueId || !offeringId || !serviceDate || pendingId === `${assigned.id}-${offeringId}`}
+            onClick={() =>
+              venueId && offeringId && serviceDate && onSelect(assigned.id, Number(venueId), Number(offeringId), serviceDate)
+            }
+            className="rounded-full bg-forest px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-cream disabled:bg-mist disabled:text-olive"
+          >
+            Conferma selezione (addebito impresa)
+          </button>
         </div>
       ) : null}
-    </section>
-  );
-}
-
-function Drawer({
-  title,
-  subtitle,
-  items,
-  venues,
-  pendingId,
-  onRedeem,
-}: {
-  title: string;
-  subtitle: string;
-  items: Array<typeof vouchers.$inferSelect>;
-  venues: VenueLite[];
-  pendingId: string | null;
-  onRedeem: (voucherId: number, venueId: number) => void;
-}) {
-  const available = items.find((item) => item.status === "available");
-  const used = items.filter((item) => item.status === "redeemed").length;
-
-  return (
-    <section className="rounded-[28px] bg-white p-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h3 className="font-serif text-2xl text-forest">{title}</h3>
-          <p className="text-sm text-olive">{subtitle}</p>
-        </div>
-        <p className="text-sm text-forest">
-          {items.length - used}/{items.length} disponibili
-        </p>
-      </div>
-      <div className="mt-4 flex gap-2">
-        {items.map((item) => (
-          <div
-            key={item.id}
-            className={`h-16 flex-1 rounded-2xl border px-3 py-2 text-xs ${
-              item.status === "available"
-                ? "border-gold/40 bg-cream text-forest"
-                : "border-mist bg-mist/40 text-olive line-through"
-            }`}
-          >
-            <p>Slot {item.slotIndex}</p>
-            <p className="mt-1 font-medium">{formatEuro(item.amountCents)}</p>
-          </div>
-        ))}
-      </div>
-      <div className="mt-5 space-y-2">
-        <p className="text-xs uppercase tracking-[0.14em] text-olive">
-          Sei sul posto? Clicca la struttura e premi RISCATTA
-        </p>
-        {venues
-          .filter((venue) => items[0] && matchesVoucher(venue.type, items[0].type))
-          .map((venue) => (
-            <div
-              key={venue.id}
-              className="flex flex-col gap-3 rounded-2xl border border-mist px-4 py-3 md:flex-row md:items-center md:justify-between"
-            >
-              <div>
-                <p className="font-medium text-forest">{venue.name}</p>
-                <p className="text-xs text-olive">
-                  {venue.city} · {venueTypeLabel(venue.type)} · {voucherTypeLabel(items[0]?.type ?? "hotel")}
-                </p>
-              </div>
-              <button
-                type="button"
-                disabled={!available || pendingId === `${available?.id}-${venue.id}`}
-                onClick={() => available && onRedeem(available.id, venue.id)}
-                className="rounded-full bg-terracotta px-5 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-cream disabled:bg-mist disabled:text-olive"
-              >
-                {available ? "Riscatta" : "Esaurito"}
-              </button>
-            </div>
-          ))}
-      </div>
     </section>
   );
 }
@@ -572,17 +625,17 @@ function KitTab({ user, company, venues, shares, certificates }: Props) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [venueId, setVenueId] = useState(venues[0]?.id ?? 0);
+  const [venueId, setVenueId] = useState(venues[0]?.venue.id ?? 0);
   const [preview, setPreview] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [message, setMessage] = useState("");
-  const venue = venues.find((item) => item.id === venueId) ?? venues[0];
+  const venue = venues.find((item) => item.venue.id === venueId)?.venue ?? venues[0]?.venue;
 
   const caption = useMemo(() => {
-    const place = venue?.name ?? "Agriturismo La Valle";
-    const companyName = company?.name ?? "ACME S.p.A.";
+    const place = venue?.name ?? "una struttura RADICI";
+    const companyName = company?.name ?? "la tua impresa";
     const companyTag = companyName.replace(/\s+/g, "").replace(/[^a-zA-Z0-9]/g, "");
-    return `Questo soggiorno da ${place} è stato sostenuto da ${companyName} per valorizzare l'economia locale — Certificato da RADICI.\n\n#${companyTag} #RadiciWelfare #ImpattoSociale #EconomiaLocale #KM0 #${(venue?.region ?? "Marche").replace(/\s+/g, "")}`;
+    return `Questo soggiorno da ${place} è stato sostenuto da ${companyName} per valorizzare l'economia locale — Certificato da RADICI.\n\n#${companyTag} #RadiciWelfare #ImpattoSociale #EconomiaLocale #KM0`;
   }, [venue, company]);
 
   async function onFile(file: File) {
@@ -607,8 +660,7 @@ function KitTab({ user, company, venues, shares, certificates }: Props) {
     ctx.font = "600 34px Georgia";
     ctx.fillText("Impatto sociale certificato", 250, height - 170);
     ctx.font = "22px Georgia";
-    const line = `Questo soggiorno ha sostenuto l'economia agricola locale del ${venue?.localSupportPercent ?? 15}%`;
-    ctx.fillText(line, 250, height - 128);
+    ctx.fillText(`Questo soggiorno ha sostenuto l'economia agricola locale del ${venue?.localSupportPercent ?? 15}%`, 250, height - 128);
     ctx.font = "18px Georgia";
     ctx.fillStyle = "#B8954A";
     ctx.fillText("Certificato da RADICI", 250, height - 92);
@@ -629,12 +681,8 @@ function KitTab({ user, company, venues, shares, certificates }: Props) {
   return (
     <div className="grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
       <section className="rounded-[28px] bg-white p-6">
-        <p className="text-xs uppercase tracking-[0.16em] text-olive">Punti Impatto 1 · social share</p>
+        <p className="text-xs uppercase tracking-[0.16em] text-olive">Punti Impatto · social share</p>
         <h2 className="mt-2 font-serif text-3xl text-forest">Generatore di post pronti</h2>
-        <p className="mt-3 text-sm leading-6 text-ink/75">
-          Carica una foto del soggiorno. RADICI applica il badge ufficiale e prepara testo e hashtag
-          già approvati per Instagram, Facebook o LinkedIn.
-        </p>
         <label className="mt-4 block text-sm text-olive">
           Struttura da certificare
           <select
@@ -643,8 +691,8 @@ function KitTab({ user, company, venues, shares, certificates }: Props) {
             className="mt-1 w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3"
           >
             {venues.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
+              <option key={item.venue.id} value={item.venue.id}>
+                {item.venue.name}
               </option>
             ))}
           </select>
@@ -667,16 +715,10 @@ function KitTab({ user, company, venues, shares, certificates }: Props) {
           }}
         />
         <canvas ref={canvasRef} className="hidden" />
-        {preview ? (
-          <img src={preview} alt="Anteprima post certificato" className="mt-4 rounded-3xl" />
-        ) : null}
+        {preview ? <img src={preview} alt="Anteprima post certificato" className="mt-4 rounded-3xl" /> : null}
         <div className="mt-4 flex flex-wrap gap-2">
           {preview ? (
-            <a
-              href={preview}
-              download="radici-impatto.jpg"
-              className="inline-flex items-center gap-2 rounded-full bg-forest px-4 py-2 text-sm text-cream"
-            >
+            <a href={preview} download="radici-impatto.jpg" className="inline-flex items-center gap-2 rounded-full bg-forest px-4 py-2 text-sm text-cream">
               <Download size={16} /> Scarica immagine
             </a>
           ) : null}
@@ -691,20 +733,13 @@ function KitTab({ user, company, venues, shares, certificates }: Props) {
           >
             <Copy size={16} /> {copied ? "Testo copiato" : "Copia testo e hashtag"}
           </button>
-          <button
-            type="button"
-            onClick={confirmShare}
-            className="inline-flex items-center gap-2 rounded-full bg-terracotta px-4 py-2 text-sm text-cream"
-          >
+          <button type="button" onClick={confirmShare} className="inline-flex items-center gap-2 rounded-full bg-terracotta px-4 py-2 text-sm text-cream">
             <BadgeCheck size={16} /> Ho condiviso
           </button>
         </div>
-        <pre className="mt-4 whitespace-pre-wrap rounded-2xl bg-cream p-4 text-sm leading-6 text-forest">
-          {caption}
-        </pre>
+        <pre className="mt-4 whitespace-pre-wrap rounded-2xl bg-cream p-4 text-sm leading-6 text-forest">{caption}</pre>
         {message ? <p className="mt-3 text-sm text-forest">{message}</p> : null}
       </section>
-
       <div className="space-y-6">
         <section className="rounded-[28px] bg-forest p-6 text-cream">
           <p className="text-xs uppercase tracking-[0.16em] text-gold">Livello cittadinanza attiva</p>
@@ -713,94 +748,38 @@ function KitTab({ user, company, venues, shares, certificates }: Props) {
           <p className="mt-6 font-serif text-5xl">{user.impactPoints}</p>
           <p className="text-sm text-gold">Punti Impatto Sociale</p>
         </section>
-        <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/5">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-gold">
-                <ShieldCheck size={15} /> Registro Ufficiale ESG
-              </div>
-              <h3 className="mt-1 font-serif text-2xl text-forest">Certificati di Impatto</h3>
-              <p className="mt-1 text-xs text-olive">
-                Attestati ufficiali firmati digitalmente su CO₂ evitata e valore economico rigenerato.
-              </p>
-            </div>
-          </div>
-
+        <section className="rounded-[28px] bg-white p-6">
+          <h3 className="font-serif text-2xl text-forest">Certificati di Impatto</h3>
           <div className="mt-6 space-y-6">
             {certificates.map((cert) => (
-              <div
-                key={cert.id}
-                className="relative overflow-hidden rounded-[24px] border-2 border-gold/40 bg-gradient-to-br from-[#FFFDF9] to-[#F7F2E7] p-6 shadow-sm transition-all hover:shadow-md"
-              >
-                {/* Background decorative watermark */}
-                <div className="pointer-events-none absolute -right-6 -bottom-6 text-gold/10">
-                  <Award size={160} />
+              <div key={cert.id} className="rounded-[24px] border-2 border-gold/40 bg-gradient-to-br from-[#FFFDF9] to-[#F7F2E7] p-6">
+                <div className="flex items-center justify-between border-b border-gold/25 pb-3">
+                  <div className="flex items-center gap-2">
+                    {cert.type === "co2" ? <Leaf size={14} /> : <ShieldCheck size={14} />}
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-forest">CIRCUITO RADICI · ESG</p>
+                  </div>
+                  <span className="rounded-full bg-gold/15 px-2.5 py-0.5 text-[10px] font-semibold text-forest">
+                    {cert.protocolNumber}
+                  </span>
                 </div>
-
-                <div className="relative z-10 flex flex-col justify-between">
-                  {/* Top Seal & Protocol */}
-                  <div className="flex items-center justify-between border-b border-gold/25 pb-3">
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-forest text-gold shadow-sm">
-                        {cert.type === "co2" ? <Leaf size={14} /> : <ShieldCheck size={14} />}
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-forest">
-                          CIRCUITO RADICI · ESG
-                        </p>
-                        <p className="text-[9px] uppercase tracking-[0.12em] text-olive">
-                          {cert.type === "co2" ? "Impatto Ambientale" : "Impatto Territoriale"}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="rounded-full bg-gold/15 px-2.5 py-0.5 text-[10px] font-semibold text-forest border border-gold/30">
-                      PROT. RD-00{cert.id}-2026
-                    </span>
-                  </div>
-
-                  {/* Certificate Title & Description */}
-                  <div className="mt-4">
-                    <h4 className="font-serif text-lg font-medium text-forest">{cert.title}</h4>
-                    <p className="mt-1 text-xs text-olive leading-relaxed">{cert.description}</p>
-                  </div>
-
-                  {/* Impact Metric Hero Box */}
-                  <div className="my-4 rounded-2xl bg-forest/5 border border-forest/10 p-3.5 text-center">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-olive">
-                      Valore Certificato Ufficiale
-                    </p>
-                    <p className="mt-0.5 font-serif text-3xl font-bold text-terracotta">
-                      {cert.type === "economic" ? `€ ${cert.impactValue}` : cert.impactValue}
-                    </p>
-                    <p className="text-xs font-medium text-forest">{cert.unitLabel}</p>
-                  </div>
-
-                  {/* Footer & Download Button */}
-                  <div className="border-t border-gold/20 pt-3.5 flex flex-wrap items-center justify-between gap-3">
-                    <div className="text-left">
-                      <p className="text-[10px] uppercase tracking-[0.12em] text-olive">Intestatario</p>
-                      <p className="text-xs font-semibold text-forest">
-                        {user.firstName} {user.lastName}
-                      </p>
-                    </div>
-
-                    <a
-                      href={`/api/certificates/${cert.id}`}
-                      download={`certificato-radici-${cert.id}.pdf`}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-forest px-3.5 py-1.5 text-xs font-medium text-cream shadow-sm hover:bg-forest/90 transition-all"
-                    >
-                      <Download size={13} /> Scarica PDF Ufficiale A4
-                    </a>
-                  </div>
+                <h4 className="mt-4 font-serif text-lg text-forest">{cert.title}</h4>
+                <p className="mt-1 text-xs text-olive">{cert.description}</p>
+                <div className="my-4 rounded-2xl bg-forest/5 p-3.5 text-center">
+                  <p className="font-serif text-3xl font-bold text-terracotta">
+                    {cert.type === "economic" ? `€ ${cert.impactValue}` : cert.impactValue}
+                  </p>
+                  <p className="text-xs font-medium text-forest">{cert.unitLabel}</p>
                 </div>
+                <a
+                  href={`/api/certificates/${cert.id}`}
+                  download={`certificato-radici-${cert.id}.pdf`}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-forest px-3.5 py-1.5 text-xs text-cream"
+                >
+                  <Download size={13} /> Scarica PDF
+                </a>
               </div>
             ))}
-
-            {certificates.length === 0 ? (
-              <p className="text-sm text-olive">
-                I certificati si sbloccano dopo i primi riscatti e le condivisioni.
-              </p>
-            ) : null}
+            {certificates.length === 0 ? <p className="text-sm text-olive">I certificati si sbloccano dopo le prime selezioni.</p> : null}
           </div>
         </section>
         <section className="rounded-[28px] bg-white p-6">
@@ -849,44 +828,21 @@ function FriendsTab({ user, invites }: Props) {
   return (
     <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
       <section className="rounded-[28px] bg-white p-6">
-        <p className="text-xs uppercase tracking-[0.16em] text-olive">Punti Impatto 2 · pay-local</p>
+        <p className="text-xs uppercase tracking-[0.16em] text-olive">Punti Impatto · pay-local</p>
         <h2 className="mt-2 font-serif text-3xl text-forest">Invita un amico</h2>
         <p className="mt-3 text-sm leading-6 text-ink/75">
-          L&apos;amico non usa voucher aziendali: paga con la propria carta, ottiene un micro-sconto e
-          al saldo tu ricevi +1 Punto Impatto Sociale.
+          L&apos;amico non usa voucher aziendali: paga con la propria carta, ottiene uno sconto e al saldo tu ricevi +1 Punto Impatto.
         </p>
         <div className="mt-5 space-y-3">
-          <input
-            placeholder="Nome"
-            value={form.firstName}
-            onChange={(event) => setForm((current) => ({ ...current, firstName: event.target.value }))}
-            className="w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3"
-          />
-          <input
-            placeholder="Cognome"
-            value={form.lastName}
-            onChange={(event) => setForm((current) => ({ ...current, lastName: event.target.value }))}
-            className="w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3"
-          />
-          <input
-            placeholder="Email"
-            type="email"
-            value={form.email}
-            onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))}
-            className="w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3"
-          />
+          <input placeholder="Nome" value={form.firstName} onChange={(event) => setForm((current) => ({ ...current, firstName: event.target.value }))} className="w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3" />
+          <input placeholder="Cognome" value={form.lastName} onChange={(event) => setForm((current) => ({ ...current, lastName: event.target.value }))} className="w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3" />
+          <input placeholder="Email" type="email" value={form.email} onChange={(event) => setForm((current) => ({ ...current, email: event.target.value }))} className="w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3" />
           {error ? <p className="text-sm text-wine">{error}</p> : null}
-          <button
-            type="button"
-            disabled={pending}
-            onClick={createInvite}
-            className="w-full rounded-2xl bg-forest py-3 text-sm text-cream"
-          >
+          <button type="button" disabled={pending} onClick={createInvite} className="w-full rounded-2xl bg-forest py-3 text-sm text-cream">
             {pending ? "Generazione QR…" : "Genera QR-code referral"}
           </button>
         </div>
       </section>
-
       <section className="rounded-[28px] bg-cream p-6">
         <div className="flex items-center gap-2 text-forest">
           <QrCode size={18} />
@@ -894,53 +850,23 @@ function FriendsTab({ user, invites }: Props) {
         </div>
         {selected ? (
           <div className="mt-4 grid gap-4 md:grid-cols-[180px_1fr]">
-            <img
-              src={`/api/qr/${selected.code}?kind=invite`}
-              alt={`QR referral ${selected.firstName}`}
-              className="rounded-3xl border border-gold/30 bg-paper"
-            />
+            <img src={`/api/qr/${selected.code}?kind=invite`} alt={`QR referral ${selected.firstName}`} className="rounded-3xl border border-gold/30 bg-paper" />
             <div>
               <p className="font-medium text-forest">
                 {selected.firstName} {selected.lastName}
               </p>
               <p className="text-sm text-olive">{selected.email}</p>
-              <p className="mt-2 text-xs uppercase tracking-[0.14em] text-terracotta">{selected.status}</p>
-              <p className="mt-3 text-sm leading-6 text-ink/75">
-                L&apos;amico inquadra il QR della struttura oppure apre questo invito. Il sistema lo
-                riconosce e crea l&apos;account consumer collegato a {user.firstName}.
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <a
-                  href={`https://wa.me/?text=${encodeURIComponent(
-                    `Ciao ${selected.firstName}! Ti ho inviato questo invito personale su RADICI con lo sconto del 10% sul tuo prossimo soggiorno o cena nei borghi marchigiani: ${typeof window !== "undefined" ? window.location.origin : ""}/r/${selected.code}`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition shadow-sm"
-                >
-                  Condividi su WhatsApp
-                </a>
-                <a
-                  href={`/r/${selected.code}`}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-terracotta/30 bg-terracotta/10 px-4 py-2 text-xs font-semibold text-terracotta hover:bg-terracotta/20 transition"
-                >
-                  Vedi Convenzione & Cassa →
-                </a>
-              </div>
+              <a href={`/r/${selected.code}`} className="mt-3 inline-flex rounded-full border border-terracotta/30 px-4 py-2 text-xs font-semibold text-terracotta">
+                Vedi convenzione
+              </a>
             </div>
           </div>
         ) : (
           <p className="mt-4 text-sm text-olive">Genera il primo invito per vedere il QR-code.</p>
         )}
-
         <div className="mt-6 space-y-2">
           {invites.map((invite) => (
-            <button
-              key={invite.id}
-              type="button"
-              onClick={() => setCreated(invite)}
-              className="flex w-full items-center justify-between rounded-2xl bg-white px-4 py-3 text-left"
-            >
+            <button key={invite.id} type="button" onClick={() => setCreated(invite)} className="flex w-full items-center justify-between rounded-2xl bg-white px-4 py-3 text-left">
               <span>
                 <span className="block font-medium text-forest">
                   {invite.firstName} {invite.lastName}

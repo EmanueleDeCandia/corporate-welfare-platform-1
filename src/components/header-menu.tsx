@@ -18,7 +18,14 @@ type Props = {
 export function HeaderMenu({ dark, user }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const accountHref = user?.role === "provider" ? "/fornitore" : user?.role === "csr" ? "/azienda" : "/account";
+  const accountHref =
+    user?.role === "provider"
+      ? "/fornitore"
+      : user?.role === "csr"
+        ? "/azienda"
+        : user?.role === "promoter" || user?.role === "admin"
+          ? "/promotori"
+          : "/account";
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });

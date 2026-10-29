@@ -1,15 +1,10 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
-import { invites, notifications, transactions, users, venues } from "@/db/schema";
+import { invites, notifications, transactions, venueOfferings, venues } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { awardImpact } from "@/lib/data";
-import {
-  FRIEND_DISCOUNT_RATE,
-  defaultServiceForVenue,
-  servicePrice,
-  voucherTypeLabel,
-} from "@/lib/utils";
+import { DEFAULT_FRIEND_DISCOUNT_BPS, voucherTypeLabel } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +16,7 @@ export async function POST(request: Request) {
 
   const body = (await request.json()) as {
     venueId?: number;
-    service?: "hotel" | "aperitivo" | "theater";
+    offeringId?: number;
     cardName?: string;
     cardNumber?: string;
     inviteCode?: string;
@@ -41,20 +36,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Struttura non trovata." }, { status: 404 });
   }
 
-  const service = body.service ?? defaultServiceForVenue(venue.type);
-  const listPrice = servicePrice(venue, service);
-  if (listPrice <= 0) {
+  const offerings = await db.select().from(venueOfferings).where(eq(venueOfferings.venueId, venue.id));
+  const offering =
+    (body.offeringId ? offerings.find((item) => item.id === body.offeringId) : undefined) ??
+    offerings.find((item) => item.active) ??
+    null;
+  if (!offering || offering.listPriceCents <= 0) {
     return NextResponse.json({ error: "Servizio non disponibile in questa struttura." }, { status: 400 });
   }
 
   const isFriend = me.role === "friend";
-  const discountCents = isFriend ? Math.round(listPrice * FRIEND_DISCOUNT_RATE) : 0;
-  const amountCents = listPrice - discountCents;
+  const discountBps = isFriend ? offering.friendDiscountBps || DEFAULT_FRIEND_DISCOUNT_BPS : 0;
+  const discountCents = Math.round((offering.listPriceCents * discountBps) / 10000);
+  const amountCents = offering.listPriceCents - discountCents;
 
-  let invite =
-    body.inviteCode
-      ? (await db.select().from(invites).where(eq(invites.code, body.inviteCode)).limit(1))[0]
-      : undefined;
+  let invite = body.inviteCode
+    ? (await db.select().from(invites).where(eq(invites.code, body.inviteCode)).limit(1))[0]
+    : undefined;
   if (!invite) {
     invite = (await db.select().from(invites).where(eq(invites.email, me.email)).limit(1))[0];
   }
@@ -62,27 +60,34 @@ export async function POST(request: Request) {
   const [tx] = await db
     .insert(transactions)
     .values({
-      type: "consumer_payment",
+      kind: "consumer_payment",
       status: "receipted",
       userId: me.id,
       venueId: venue.id,
       inviteId: invite?.id ?? null,
+      offeringId: offering.id,
       amountCents,
       discountCents,
-      listPriceCents: listPrice,
-      serviceLabel: `${voucherTypeLabel(service)} · pagamento ospite`,
+      listPriceCents: offering.listPriceCents,
+      serviceLabel: `${voucherTypeLabel(offering.benefitType)} · ${offering.name} · pagamento ospite`,
     })
     .returning();
 
   const inviterId = invite?.inviterId ?? me.invitedByUserId;
   let inviterName = "";
   if (inviterId) {
-    const awarded = await awardImpact(inviterId, 1);
+    const awarded = await awardImpact(
+      inviterId,
+      1,
+      "referral",
+      "invite",
+      String(invite?.id ?? `user:${me.id}`),
+    );
     inviterName = awarded ? `${awarded.firstName} ${awarded.lastName}` : "";
     if (invite && invite.status !== "converted") {
       await db
         .update(invites)
-        .set({ status: "converted", friendUserId: me.id })
+        .set({ status: "converted", friendUserId: me.id, acceptedAt: new Date() })
         .where(eq(invites.id, invite.id));
     }
   }
@@ -102,6 +107,7 @@ export async function POST(request: Request) {
       impact: inviterName ? `Assegnato +1 Punto Impatto a ${inviterName}` : "Nessun referral collegato",
       transactionId: tx.id,
     },
+    transactionId: tx.id,
   });
 
   return NextResponse.json({

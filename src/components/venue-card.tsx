@@ -8,9 +8,10 @@ type Props = {
   destination?: typeof destinations.$inferSelect | null;
   sponsor?: typeof companies.$inferSelect | null;
   featured?: boolean;
+  fromPriceCents?: number;
 };
 
-export function VenueCard({ venue, destination, sponsor, featured = false }: Props) {
+export function VenueCard({ venue, destination, sponsor, featured = false, fromPriceCents = 0 }: Props) {
   const services = venue.services ?? [];
 
   return (
@@ -42,9 +43,7 @@ export function VenueCard({ venue, destination, sponsor, featured = false }: Pro
             <div className="text-right text-sm">
               <p className="text-[11px] uppercase tracking-[0.14em] text-olive">da</p>
               <p className="font-medium text-forest">
-                {formatEuro(
-                  venue.priceHotelCents || venue.priceAperitivoCents || venue.priceShowCents,
-                )}
+                {fromPriceCents > 0 ? formatEuro(fromPriceCents) : "su richiesta"}
               </p>
             </div>
           </div>

@@ -16,12 +16,16 @@ export default function HowItWorksPage() {
         <ol className="mt-10 space-y-5">
           {[
             {
-              title: "L'impresa acquista i cassetti",
-              text: "Quattro slot hotel, quattro aperitivi KM 0 e omaggi teatro da 15€. Il valore resta nel portafoglio del dipendente finché non viene usato.",
+              title: "L'impresa attiva il piano",
+              text: "Ogni dipendente riceve 1 pernottamento da 50 € e 1 cena KM 0 da 25 €. Il budget virtuale è nominale; l'impresa paga solo quando il dipendente seleziona data e struttura.",
             },
             {
-              title: "Il dipendente esplora e riscatta",
-              text: "Dal telefono, sul posto, preme RISCATTA. Il buono si azzera e l'hotel riceve i dati per fatturare direttamente all'impresa.",
+              title: "Il dipendente seleziona data e struttura",
+              text: "Sceglie offerta, data e struttura. La selezione è unica e non annullabile: nasce l'addebito B2B. Extra fino al 20% solo dopo che il voucher base dello stesso tipo è stato selezionato.",
+            },
+            {
+              title: "Matching Grant dopo il pernottamento",
+              text: "Chi ha selezionato un pernottamento può prenotare un evento culturale (fino a 2 posti). Conferma T-7/T-3; senza risposta i posti si liberano. Nessun esborso in caso di assenza.",
             },
             {
               title: "Il kit social certifica l'impatto",
@@ -33,7 +37,7 @@ export default function HowItWorksPage() {
             },
             {
               title: "Il fornitore ha due inbox in una",
-              text: "Notifica welfare: emetti fattura all'impresa. Notifica referral: incasso già ricevuto, emetti scontrino all'ospite.",
+              text: "Notifica welfare: emetti fattura all'impresa. Notifica referral: incasso già ricevuto, emetti scontrino all'ospite. Presenze e no-show dal pannello o dal QR.",
             },
           ].map((step, index) => (
             <li key={step.title} className="rounded-[28px] bg-white p-6">

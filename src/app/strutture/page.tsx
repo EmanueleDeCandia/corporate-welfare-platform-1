@@ -23,6 +23,7 @@ export default async function VenuesPage() {
               venue={row.venue}
               destination={row.destination}
               sponsor={row.sponsor}
+              fromPriceCents={row.flags.fromPriceCents}
             />
           ))}
         </div>

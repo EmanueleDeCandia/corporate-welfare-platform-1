@@ -4,7 +4,7 @@ import { ArrowLeft, MapPin, Sparkles } from "lucide-react";
 import { PublicShell } from "@/components/public-shell";
 import { getCurrentUser } from "@/lib/auth";
 import { getUserVouchers, getVenueBySlug } from "@/lib/data";
-import { formatEuro, initials, matchesVoucher, venueTypeLabel } from "@/lib/utils";
+import { formatEuro, initials, venueTypeLabel } from "@/lib/utils";
 import { VenueRedeem } from "@/components/venue-redeem";
 
 export const dynamic = "force-dynamic";
@@ -17,17 +17,18 @@ export default async function VenueDetailPage({
   const { slug } = await params;
   const row = await getVenueBySlug(slug);
   if (!row) notFound();
-  const { venue, destination, sponsor } = row;
+  const { venue, destination, sponsor, offerings } = row;
   const user = await getCurrentUser();
   const vouchers = user?.role === "employee" ? await getUserVouchers(user.id) : [];
-  const redeemable = vouchers.filter(
-    (voucher) => voucher.status === "available" && matchesVoucher(venue.type, voucher.type),
+  const redeemable = vouchers.filter((voucher) =>
+    voucher.status === "assigned" &&
+    offerings.some((offering) => offering.active && offering.acceptsWelfare && offering.benefitType === voucher.benefitType),
   );
 
   const services = venue.services ?? [];
   const gallery = venue.gallery ?? [];
-  const rooms = venue.rooms ?? [];
-  const aperitivoMenu = venue.aperitivoMenu ?? [];
+  const rooms = offerings.filter((item) => item.benefitType === "overnight");
+  const aperitivoMenu = offerings.filter((item) => item.benefitType === "dinner");
 
   return (
     <PublicShell>
@@ -140,10 +141,10 @@ export default async function VenueDetailPage({
                 <h2 className="font-serif text-2xl text-forest">Camere & Alloggi</h2>
                 <div className="mt-4 space-y-3">
                   {rooms.map((room) => (
-                    <div key={room.name} className="rounded-2xl bg-cream p-4">
+                    <div key={room.id} className="rounded-2xl bg-cream p-4">
                       <div className="flex items-start justify-between gap-3">
                         <p className="font-medium text-forest">{room.name}</p>
-                        <p className="font-semibold text-terracotta">{formatEuro(room.priceCents)}</p>
+                        <p className="font-semibold text-terracotta">{formatEuro(room.listPriceCents)}</p>
                       </div>
                       <p className="mt-1 text-xs text-olive leading-relaxed">{room.description}</p>
                     </div>
@@ -157,10 +158,10 @@ export default async function VenueDetailPage({
                 <h2 className="font-serif text-2xl text-forest">Menù Degustazione KM 0</h2>
                 <div className="mt-4 space-y-3">
                   {aperitivoMenu.map((item) => (
-                    <div key={item.name} className="border-b border-mist pb-3 last:border-0 last:pb-0">
+                    <div key={item.id} className="border-b border-mist pb-3 last:border-0 last:pb-0">
                       <div className="flex justify-between items-baseline gap-3">
                         <p className="font-medium text-forest">{item.name}</p>
-                        <p className="font-semibold text-terracotta text-sm">{formatEuro(item.priceCents)}</p>
+                        <p className="font-semibold text-terracotta text-sm">{formatEuro(item.listPriceCents)}</p>
                       </div>
                       <p className="mt-1 text-xs text-olive leading-relaxed">{item.description}</p>
                     </div>
@@ -178,7 +179,7 @@ export default async function VenueDetailPage({
 
               {user?.role === "employee" ? (
                 <div className="mt-4">
-                  <VenueRedeem vouchers={redeemable} venueId={venue.id} />
+                  <VenueRedeem vouchers={redeemable} venueId={venue.id} offerings={offerings} />
                 </div>
               ) : (
                 <div className="mt-5 flex flex-col gap-2.5">

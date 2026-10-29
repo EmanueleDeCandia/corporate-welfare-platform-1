@@ -62,9 +62,7 @@ export default async function ExplorePage({
               lat: row.venue.lat,
               lng: row.venue.lng,
               coverImage: row.venue.coverImage,
-              priceHotelCents: row.venue.priceHotelCents,
-              priceAperitivoCents: row.venue.priceAperitivoCents,
-              priceShowCents: row.venue.priceShowCents,
+              fromPriceCents: row.flags.fromPriceCents,
               localSupportPercent: row.venue.localSupportPercent,
             }))}
             zoom={params.destinazione ? 8 : 6}
@@ -82,6 +80,7 @@ export default async function ExplorePage({
               venue={row.venue}
               destination={row.destination}
               sponsor={row.sponsor}
+              fromPriceCents={row.flags.fromPriceCents}
             />
           ))}
         </div>

@@ -187,8 +187,8 @@ export default async function HomePage() {
                 </div>
                 <h3 className="mt-5 font-serif text-xl text-forest">Per i Dipendenti</h3>
                 <p className="mt-2 text-sm text-olive leading-relaxed">
-                  Portafoglio digitale con 4 notti, 4 aperitivi KM 0 e 2 spettacoli teatrali
-                  all&apos;anno, riscattabili istantaneamente.
+                  Portafoglio digitale con 1 pernottamento e 1 cena KM 0 all&apos;anno.
+                  Selezioni data e struttura; il Matching Grant culturale si attiva dopo.
                 </p>
               </div>
               <Link href="/account" className="mt-6 inline-flex items-center gap-1 text-xs font-semibold text-forest hover:text-gold transition-colors">
@@ -307,6 +307,7 @@ export default async function HomePage() {
                 venue={row.venue}
                 destination={row.destination}
                 sponsor={row.sponsor}
+                fromPriceCents={row.flags.fromPriceCents}
               />
             ))}
           </div>

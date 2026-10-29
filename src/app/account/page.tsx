@@ -4,14 +4,14 @@ import { LogoutButton } from "@/components/logout-button";
 import { PublicShell } from "@/components/public-shell";
 import { getCurrentUser } from "@/lib/auth";
 import {
-  getGrantEvents,
+  getEmployeeWallet,
   getUserCertificates,
   getUserInvites,
   getUserShares,
   getUserTransactions,
-  getUserVouchers,
   getVenues,
 } from "@/lib/data";
+import { listGrantEvents } from "@/lib/grants";
 import { badgeForPoints } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -20,17 +20,18 @@ export default async function AccountPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login?next=/account");
   if (user.role === "provider") redirect("/fornitore");
+  if (user.role === "csr") redirect("/azienda");
+  if (user.role === "promoter") redirect("/promotori");
 
-  const [vouchers, venues, grantEventsList, invites, transactions, shares, certificates] = await Promise.all([
-    getUserVouchers(user.id),
+  const [wallet, venues, invites, transactions, shares, certificates] = await Promise.all([
+    getEmployeeWallet(user.id),
     getVenues(),
-    getGrantEvents(),
     getUserInvites(user.id),
     getUserTransactions(user.id),
     getUserShares(user.id),
     getUserCertificates(user.id),
   ]);
-
+  const grantEventsList = listGrantEvents();
   const badge = badgeForPoints(user.impactPoints);
 
   return (
@@ -59,8 +60,10 @@ export default async function AccountPage() {
           <AccountHub
             user={user}
             company={user.company}
-            vouchers={vouchers}
-            venues={venues.map((row) => row.venue)}
+            vouchers={wallet.vouchers}
+            selections={wallet.selections}
+            grants={wallet.grants}
+            venues={venues}
             grantEvents={grantEventsList}
             invites={invites}
             transactions={transactions}

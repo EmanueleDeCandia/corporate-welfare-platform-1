@@ -9,7 +9,7 @@ export function SiteFooter() {
           <p className="font-serif text-3xl tracking-[0.16em] text-[#fbf7f0]">RADICI</p>
           <p className="mt-3 max-w-md text-sm leading-6 text-[#fbf7f0]/80">
             Il welfare aziendale che fa crescere il territorio. Le imprese finanziano soggiorni e
-            aperitivi KM 0, i dipendenti scoprono le destinazioni, gli amici pagano in locale e i
+            cene KM 0, i dipendenti scoprono le destinazioni, gli amici pagano in locale e i
             fornitori incassano due canali: B2B e B2C.
           </p>
         </div>

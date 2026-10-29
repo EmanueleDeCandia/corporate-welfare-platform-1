@@ -31,8 +31,7 @@ export async function POST(
 
   await db.update(notifications).set({ read: true }).where(eq(notifications.id, notification.id));
 
-  const payload = (notification.payload ?? {}) as Record<string, any>;
-  const txId = Number(payload.transactionId ?? 0);
+  const txId = notification.transactionId ?? Number((notification.payload as { transactionId?: number })?.transactionId ?? 0);
   if (txId && body.action === "confirm") {
     await db
       .update(transactions)

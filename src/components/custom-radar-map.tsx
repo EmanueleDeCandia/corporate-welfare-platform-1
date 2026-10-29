@@ -29,9 +29,7 @@ export type MapVenue = {
   lat: number;
   lng: number;
   coverImage?: string;
-  priceHotelCents?: number;
-  priceAperitivoCents?: number;
-  priceShowCents?: number;
+  fromPriceCents?: number;
   localSupportPercent?: number;
 };
 
