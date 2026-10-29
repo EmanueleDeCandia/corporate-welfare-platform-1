@@ -107,13 +107,13 @@ function WalletTab({ user, company, vouchers, venues, transactions }: Props) {
     theater: vouchers.filter((item) => item.type === "theater"),
   };
 
-  async function redeem(voucherId: number, venueId: number) {
+  async function redeem(voucherId: number, venueId: number, theaterVenueId?: number) {
     setPendingId(`${voucherId}-${venueId}`);
     setMessage("");
     const response = await fetch("/api/vouchers/redeem", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ voucherId, venueId }),
+      body: JSON.stringify({ voucherId, venueId, theaterVenueId }),
     });
     const data = (await response.json()) as { error?: string; message?: string };
     setPendingId(null);
@@ -123,6 +123,27 @@ function WalletTab({ user, company, vouchers, venues, transactions }: Props) {
     }
     setMessage(data.message ?? "Voucher riscattato.");
     router.refresh();
+  }
+
+  const [resetting, setResetting] = useState(false);
+  async function resetDemo() {
+    if (!confirm("Vuoi ripristinare i voucher per provare la selezione del Teatro e della Struttura da zero?")) {
+      return;
+    }
+    setResetting(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/vouchers/reset-demo", { method: "POST" });
+      const data = await response.json();
+      if (!response.ok) {
+        setMessage(data.error ?? "Errore nel reset demo.");
+      } else {
+        setMessage(data.message ?? "Dati demo ripristinati con successo.");
+        router.refresh();
+      }
+    } finally {
+      setResetting(false);
+    }
   }
 
   if (user.role !== "employee") {
@@ -153,7 +174,18 @@ function WalletTab({ user, company, vouchers, venues, transactions }: Props) {
     <div className="space-y-6">
       <section className="rounded-[28px] bg-forest text-cream p-6 md:p-8">
         <p className="text-xs uppercase tracking-[0.18em] text-gold">Cassetti fiscali</p>
-        <h2 className="mt-2 font-serif text-3xl">Portafoglio welfare e omaggi</h2>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h2 className="mt-2 font-serif text-3xl">Portafoglio welfare e omaggi</h2>
+          <button
+            type="button"
+            disabled={resetting}
+            onClick={resetDemo}
+            className="rounded-full border border-gold/40 bg-cream/10 px-4 py-2 text-xs font-medium text-cream hover:bg-cream/20 disabled:opacity-50 transition"
+            title="Ripristina i voucher disponibili per testare la selezione di struttura e teatro da zero"
+          >
+            {resetting ? "Ripristino in corso..." : "↺ Ripristina dati demo per test"}
+          </button>
+        </div>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-cream/75">
           I voucher restano nel tuo account finché non li usi sul posto. Al riscatto il buono si
           azzera e la struttura riceve i dati di fatturazione diretta di {company?.name ?? "la tua impresa"}.
