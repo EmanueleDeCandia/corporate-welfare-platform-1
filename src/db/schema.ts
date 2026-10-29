@@ -1,6 +1,6 @@
 import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-export type UserRole = "employee" | "friend" | "provider" | "csr" | "admin";
+export type UserRole = "employee" | "friend" | "provider" | "csr" | "promoter" | "admin";
 export type VoucherType = "hotel" | "aperitivo" | "theater";
 export type VoucherStatus = "available" | "redeemed" | "expired";
 export type TransactionType = "welfare_redeem" | "consumer_payment";

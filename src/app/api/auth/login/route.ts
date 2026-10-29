@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   }
 
   await createSession(user.id);
-  const redirectTo = user.role === "provider" ? "/fornitore" : user.role === "csr" ? "/azienda" : "/account";
+  const redirectTo = user.role === "provider" ? "/fornitore" : user.role === "csr" ? "/azienda" : user.role === "promoter" ? "/promotori" : "/account";
   return NextResponse.json({
     ok: true,
     redirectTo,

@@ -24,6 +24,11 @@ const demos = [
     label: "Luigi Bianchi",
     hint: "Amico / consumer · pagamento locale",
   },
+  {
+    email: "chiara.promotori@radici.it",
+    label: "Chiara Valenti (Promotori)",
+    hint: "Startup RADICI & Promotori · Fondo Matching Grant",
+  },
 ];
 
 export function LoginForm() {

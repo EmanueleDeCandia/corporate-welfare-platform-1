@@ -276,7 +276,17 @@ async function seedDatabase() {
         badgeLevel: "Partner",
         referralCode: "paolo-luzi",
       },
-    ])
+          {
+        email: "chiara.promotori@radici.it",
+        passwordHash: DEMO_PASSWORD,
+        firstName: "Chiara",
+        lastName: "Valenti",
+        role: "promoter",
+        impactPoints: 0,
+        badgeLevel: "Promotori RADICI",
+        referralCode: "chiara-promotori",
+      },
+])
     .returning();
 
   const elenaMartini = insertedUsers[0];
