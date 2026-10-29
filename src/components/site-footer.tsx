@@ -1,3 +1,4 @@
+import { GlobalResetButton } from "@/components/global-reset-button";
 import Link from "next/link";
 
 export function SiteFooter() {
@@ -31,8 +32,11 @@ export function SiteFooter() {
           </div>
         </div>
       </div>
-      <div className="border-t border-white/10 px-4 py-4 text-center text-xs text-[#fbf7f0]/60">
-        © {new Date().getFullYear()} RADICI · Certificati di impatto sociale territoriale · Italia
+      <div className="border-t border-white/10 px-4 py-4 flex flex-wrap items-center justify-between gap-4 text-xs text-[#fbf7f0]/60 max-w-7xl mx-auto">
+        <div>
+          © {new Date().getFullYear()} RADICI · Certificati di impatto sociale territoriale · Italia
+        </div>
+        <GlobalResetButton className="rounded-full border border-white/20 bg-white/5 px-3 py-1.5 text-xs text-[#fbf7f0]/80 hover:bg-white/15 hover:text-white" />
       </div>
     </footer>
   );
