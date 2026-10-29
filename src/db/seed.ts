@@ -12,6 +12,12 @@ import {
   venues,
   vouchers,
   grantEvents,
+  welfarePlans,
+  venueOfferings,
+  voucherSelections,
+  matchingGrants,
+  grantSeats,
+  grantConfirmations,
 } from "@/db/schema";
 import { badgeForPoints, hashPassword } from "@/lib/utils";
 
@@ -119,6 +125,44 @@ async function seedDatabase() {
 
   const acme = insertedCompanies[0];
   const verde = insertedCompanies[1];
+
+  // POPOLAMENTO PIANI WELFARE AZIENDALI
+  const insertedPlans = await db
+    .insert(welfarePlans)
+    .values([
+      {
+        companyId: acme.id,
+        year: 2026,
+        validFrom: new Date("2026-01-01T00:00:00Z"),
+        validUntil: new Date("2026-12-31T23:59:59Z"),
+        eligibleEmployees: acme.employeesCount || 100,
+        overnightAmountCents: 5000,
+        dinnerAmountCents: 2500,
+        overnightExtraThresholdBps: 2000, // 20%
+        overnightExtraCapBps: 2000,       // 20%
+        dinnerExtraThresholdBps: 2000,   // 20%
+        dinnerExtraCapBps: 2000,         // 20%
+        status: "active",
+      },
+      {
+        companyId: verde.id,
+        year: 2026,
+        validFrom: new Date("2026-01-01T00:00:00Z"),
+        validUntil: new Date("2026-12-31T23:59:59Z"),
+        eligibleEmployees: verde.employeesCount || 260,
+        overnightAmountCents: 5000,
+        dinnerAmountCents: 2500,
+        overnightExtraThresholdBps: 2000,
+        overnightExtraCapBps: 2000,
+        dinnerExtraThresholdBps: 2000,
+        dinnerExtraCapBps: 2000,
+        status: "active",
+      },
+    ])
+    .returning();
+
+  const acmePlan = insertedPlans[0];
+  const verdePlan = insertedPlans[1];
 
   const insertedDestinations = await db
     .insert(destinations)
@@ -741,8 +785,163 @@ async function seedDatabase() {
   await db.update(venues).set({ providerUserId: chiara.id }).where(eq(venues.id, insertedVenues[3].id));
   await db.update(venues).set({ providerUserId: paolo.id }).where(eq(venues.id, teatroLauro.id));
 
+  // POPOLAMENTO OFFERTE SERVIZI STRUTTURE (PERNOTTAMENTO, CENA O ENTRAMBI)
+  const laValleVen = insertedVenues[0]; // Agriturismo: entrambi
+  const relaisLanghe = insertedVenues[1]; // Hotel: entrambi
+  const podereFonte = insertedVenues[2]; // Agriturismo: entrambi
+  const masseriaGrazie = insertedVenues[3]; // Agriturismo: entrambi
+  const teatroLauroVen = insertedVenues[4]; // Teatro: no welfare voucher standard
+  const osteriaTiglio = insertedVenues[5]; // Ristorante: solo cena
+  const palazzoColli = insertedVenues[6]; // Hotel: entrambi
+  const tenutaSanFelice = insertedVenues[7]; // Agriturismo: entrambi
+  const teatroMuse = insertedVenues[8]; // Teatro: no welfare voucher standard
+  const corteUlivi = insertedVenues[9]; // Ristorante: solo cena
 
-  // POPOLAMENTO EVENTI E SPETTACOLI DEL MATCHING GRANT PROMOTORI
+  const insertedOfferings = await db
+    .insert(venueOfferings)
+    .values([
+      // La Valle: entrambi
+      {
+        venueId: laValleVen.id,
+        benefitType: "overnight",
+        name: "Camera Matrimoniale dei Cipressi",
+        description: "Letto in ferro battuto, travi a vista e finestra sulla vallata dei Sibillini.",
+        listPriceCents: 5000,
+        acceptsWelfare: true,
+        dailyCapacity: 4,
+      },
+      {
+        venueId: laValleVen.id,
+        benefitType: "dinner",
+        name: "Aperitivo Degustazione & Cena KM 0",
+        description: "Tagliere dei Sibillini con ciauscolo, pecorino di fossa e calice di Visner.",
+        listPriceCents: 2500,
+        acceptsWelfare: true,
+        dailyCapacity: 20,
+      },
+      // Relais Langhe Oro: entrambi
+      {
+        venueId: relaisLanghe.id,
+        benefitType: "overnight",
+        name: "Camera Superior Vigneto",
+        description: "Vista panoramica sui filari di Barolo, colazione con nocciole d'alpeggio.",
+        listPriceCents: 9000,
+        acceptsWelfare: true,
+        dailyCapacity: 5,
+      },
+      {
+        venueId: relaisLanghe.id,
+        benefitType: "dinner",
+        name: "Cena & Gran Tagliere Langarolo",
+        description: "Castelmagno d'alpeggio, toma, tartare di fassona e calice di nebbiolo.",
+        listPriceCents: 2800,
+        acceptsWelfare: true,
+        dailyCapacity: 15,
+      },
+      // Podere Fontebella: entrambi
+      {
+        venueId: podereFonte.id,
+        benefitType: "overnight",
+        name: "Camera delle Crete Senesi",
+        description: "Soggiorno nel casale del Settecento tra cipressi e crete toscane.",
+        listPriceCents: 8500,
+        acceptsWelfare: true,
+        dailyCapacity: 3,
+      },
+      {
+        venueId: podereFonte.id,
+        benefitType: "dinner",
+        name: "Degustazione Pecorai di Pienza",
+        description: "Pecorini stagionati, miele d'acacia e bruschetta all'olio nuovo franto.",
+        listPriceCents: 2400,
+        acceptsWelfare: true,
+        dailyCapacity: 12,
+      },
+      // Masseria Le Grazie: entrambi
+      {
+        venueId: masseriaGrazie.id,
+        benefitType: "overnight",
+        name: "Suite della Corte in Pietra",
+        description: "Volte a stella in masseria fortificata tra gli ulivi secolari di Ostuni.",
+        listPriceCents: 11000,
+        acceptsWelfare: true,
+        dailyCapacity: 4,
+      },
+      {
+        venueId: masseriaGrazie.id,
+        benefitType: "dinner",
+        name: "Cena Tradizionale di Pittule e Bombette",
+        description: "Bombette di capocollo, verdure di campo e olio extravergine monocultivar.",
+        listPriceCents: 2200,
+        acceptsWelfare: true,
+        dailyCapacity: 18,
+      },
+      // Osteria del Tiglio: SOLO CENA
+      {
+        venueId: osteriaTiglio.id,
+        benefitType: "dinner",
+        name: "Cena di Campagna sotto il Tiglio",
+        description: "Crescia sfogliata recanatese, pecorino marchigiano e verdure di stagione.",
+        listPriceCents: 2500,
+        acceptsWelfare: true,
+        dailyCapacity: 25,
+      },
+      // Palazzo dei Colli: entrambi
+      {
+        venueId: palazzoColli.id,
+        benefitType: "overnight",
+        name: "Camera del Duca Affrescata",
+        description: "Palazzo nobiliare rinascimentale nel centro di Urbino a due passi dai musei.",
+        listPriceCents: 9500,
+        acceptsWelfare: true,
+        dailyCapacity: 6,
+      },
+      {
+        venueId: palazzoColli.id,
+        benefitType: "dinner",
+        name: "Aperitivo in Corte Rinascimentale",
+        description: "Casciotta d'Urbino DOP, crescia e verdicchio classico.",
+        listPriceCents: 2000,
+        acceptsWelfare: true,
+        dailyCapacity: 15,
+      },
+      // Tenuta San Felice: entrambi
+      {
+        venueId: tenutaSanFelice.id,
+        benefitType: "overnight",
+        name: "Camera del Granaio",
+        description: "Lino grezzo, soffitti alti e vista sui campi di grano di Montalcino.",
+        listPriceCents: 8000,
+        acceptsWelfare: true,
+        dailyCapacity: 4,
+      },
+      {
+        venueId: tenutaSanFelice.id,
+        benefitType: "dinner",
+        name: "Tramonto sul Grano & Calice di Brunello",
+        description: "Crostini toscani al fegatino, salumi di cinta e rosso aziendale.",
+        listPriceCents: 2300,
+        acceptsWelfare: true,
+        dailyCapacity: 16,
+      },
+      // Corte degli Ulivi: SOLO CENA
+      {
+        venueId: corteUlivi.id,
+        benefitType: "dinner",
+        name: "Aperitivo & Cena in Corte Barocca",
+        description: "Puccia leccese, crudi di mare, cicorie selvatiche e negroamaro.",
+        listPriceCents: 2500,
+        acceptsWelfare: true,
+        dailyCapacity: 20,
+      },
+    ])
+    .returning();
+
+  const defaultOvernightOffering = insertedOfferings[0]; // La Valle overnight
+  const defaultDinnerOffering = insertedOfferings[1];    // La Valle dinner
+
+
+  // POPOLAMENTO EVENTI E SPETTACOLI DEL MATCHING GRANT PROMOTORI (CON DATE E CAPIENZA POSTI)
   const insertedGrantEvents = await db
     .insert(grantEvents)
     .values([
@@ -754,7 +953,11 @@ async function seedDatabase() {
         city: "Macerata",
         region: "Marche",
         description: "Posti riservati per 2 persone nel teatro barocco all'italiana, con introduzione alla stagione e incontro con gli attori.",
+        startsAt: new Date("2026-05-15T20:30:00Z"),
+        capacity: 40,
         grantAmountCents: 5000,
+        confirmationSendDays: 7,
+        confirmationDeadlineDays: 3,
         artistMeetupIncluded: true,
         active: true,
       },
@@ -766,7 +969,11 @@ async function seedDatabase() {
         city: "Ancona",
         region: "Marche",
         description: "2 biglietti per la rassegna concertistica serale con brindisi e incontro nel foyer con i musicisti.",
+        startsAt: new Date("2026-05-22T21:00:00Z"),
+        capacity: 50,
         grantAmountCents: 5000,
+        confirmationSendDays: 7,
+        confirmationDeadlineDays: 3,
         artistMeetupIncluded: true,
         active: true,
       },
@@ -778,7 +985,11 @@ async function seedDatabase() {
         city: "Fermo",
         region: "Marche",
         description: "2 ingressi di platea per lo spettacolo di prosa con visita al sipario storico e colloquio a fine spettacolo.",
+        startsAt: new Date("2026-06-05T20:45:00Z"),
+        capacity: 35,
         grantAmountCents: 5000,
+        confirmationSendDays: 7,
+        confirmationDeadlineDays: 3,
         artistMeetupIncluded: true,
         active: true,
       },
@@ -790,7 +1001,11 @@ async function seedDatabase() {
         city: "Macerata",
         region: "Marche",
         description: "Omaggio per 2 persone per l'opera lirica all'aperto nello storico monumento neoclassico con introduzione critica.",
+        startsAt: new Date("2026-07-10T21:15:00Z"),
+        capacity: 60,
         grantAmountCents: 5000,
+        confirmationSendDays: 7,
+        confirmationDeadlineDays: 3,
         artistMeetupIncluded: true,
         active: true,
       },
@@ -802,7 +1017,11 @@ async function seedDatabase() {
         city: "Urbino",
         region: "Marche",
         description: "Visita serale riservata e concerto di musica rinascimentale per 2 persone nel cuore dell'arte italiana.",
+        startsAt: new Date("2026-06-20T19:30:00Z"),
+        capacity: 30,
         grantAmountCents: 5000,
+        confirmationSendDays: 7,
+        confirmationDeadlineDays: 3,
         artistMeetupIncluded: true,
         active: true,
       },
@@ -812,39 +1031,109 @@ async function seedDatabase() {
   const defaultGrantEvent = insertedGrantEvents[0];
 
   const employeeSeeds = [
-    { user: mario, companyId: acme.id, hotelRedeemed: true, theaterRedeemed: false },
-    { user: giulia, companyId: acme.id, hotelRedeemed: false, theaterRedeemed: false },
-    { user: sofia, companyId: verde.id, hotelRedeemed: false, theaterRedeemed: false },
+    { user: mario, companyId: acme.id, planId: acmePlan.id, hotelRedeemed: true },
+    { user: giulia, companyId: acme.id, planId: acmePlan.id, hotelRedeemed: false },
+    { user: sofia, companyId: verde.id, planId: verdePlan.id, hotelRedeemed: false },
   ];
+
+  let marioOvernightVoucherId = 1;
 
   for (const employee of employeeSeeds) {
     const hotelAmount = 5000; // 50 €
     const aperitivoAmount = 2500; // 25 €
 
-    // ESATTAMENTE 2 VOUCHER PER DIPENDENTE (Plafond fisso: 1 Notte + 1 Cena)
-    const hotelVoucher = {
-      userId: employee.user.id,
-      companyId: employee.companyId,
-      type: "hotel" as const,
-      status: employee.hotelRedeemed ? ("redeemed" as const) : ("available" as const),
-      slotIndex: 1,
-      amountCents: hotelAmount,
-      venueId: employee.hotelRedeemed ? laValle.id : null,
-      theaterVenueId: employee.hotelRedeemed ? teatroLauro.id : null,
-      grantEventId: employee.hotelRedeemed ? defaultGrantEvent.id : null,
-      redeemedAt: employee.hotelRedeemed ? new Date("2026-03-12T18:40:00Z") : null,
-    };
+    // ESATTAMENTE 2 VOUCHER BASE PER DIPENDENTE (1 Notte + 1 Cena)
+    const [insertedHotelVoucher] = await db
+      .insert(vouchers)
+      .values({
+        planId: employee.planId,
+        userId: employee.user.id,
+        companyId: employee.companyId,
+        type: "hotel",
+        status: employee.hotelRedeemed ? "redeemed" : "available",
+        origin: "base",
+        slotIndex: 1,
+        amountCents: hotelAmount,
+        venueId: employee.hotelRedeemed ? laValle.id : null,
+        theaterVenueId: employee.hotelRedeemed ? teatroLauro.id : null,
+        grantEventId: employee.hotelRedeemed ? defaultGrantEvent.id : null,
+        redeemedAt: employee.hotelRedeemed ? new Date("2026-03-12T18:40:00Z") : null,
+      })
+      .returning();
 
-    const aperitivoVoucher = {
+    if (employee.user.id === mario.id) {
+      marioOvernightVoucherId = insertedHotelVoucher.id;
+
+      // Creazione selezione puntuale e tracciamento presenza per Mario
+      await db.insert(voucherSelections).values({
+        voucherId: insertedHotelVoucher.id,
+        venueId: laValle.id,
+        offeringId: defaultOvernightOffering.id,
+        serviceDate: "2026-03-12",
+        selectedAt: new Date("2026-03-12T18:40:00Z"),
+        attendanceStatus: "attended",
+        checkedInAt: new Date("2026-03-12T19:00:00Z"),
+        checkedInByUserId: elena.id,
+        notes: "Check-in confermato con successo da Agriturismo La Valle.",
+      });
+
+      // Creazione Matching Grant riservato a chi seleziona Pernottamento
+      const [insertedGrant] = await db
+        .insert(matchingGrants)
+        .values({
+          voucherId: insertedHotelVoucher.id,
+          eventId: defaultGrantEvent.id,
+          amountCents: 5000,
+          seatsRequested: 2,
+          status: "confirmed",
+          assignedAt: new Date("2026-03-12T18:40:00Z"),
+          confirmedAt: new Date("2026-05-10T11:00:00Z"),
+        })
+        .returning();
+
+      // 2 Posti: Dipendente + Accompagnatore
+      await db.insert(grantSeats).values([
+        {
+          matchingGrantId: insertedGrant.id,
+          holderRole: "employee",
+          holderName: `${mario.firstName} ${mario.lastName}`,
+          holderEmail: mario.email,
+          valueCents: 2500,
+          attended: false,
+        },
+        {
+          matchingGrantId: insertedGrant.id,
+          holderRole: "companion",
+          holderName: "Ospite Accompagnatore",
+          holderEmail: null,
+          valueCents: 2500,
+          attended: false,
+        },
+      ]);
+
+      // Registro conferma email (finestra T-7 con scadenza T-3)
+      await db.insert(grantConfirmations).values({
+        matchingGrantId: insertedGrant.id,
+        token: "conf-mario-rossi-grant-2026",
+        scheduledFor: new Date("2026-05-08T09:00:00Z"), // T-7 rispetto al 15 Maggio
+        respondBy: new Date("2026-05-12T23:59:59Z"),    // T-3 rispetto al 15 Maggio
+        sentAt: new Date("2026-05-08T09:05:00Z"),
+        response: "confirmed",
+        respondedAt: new Date("2026-05-10T11:00:00Z"),
+        reminderCount: 0,
+      });
+    }
+
+    await db.insert(vouchers).values({
+      planId: employee.planId,
       userId: employee.user.id,
       companyId: employee.companyId,
-      type: "aperitivo" as const,
-      status: "available" as const,
+      type: "aperitivo",
+      status: "available",
+      origin: "base",
       slotIndex: 1,
       amountCents: aperitivoAmount,
-    };
-
-    await db.insert(vouchers).values([hotelVoucher, aperitivoVoucher]);
+    });
   }
 
   const insertedInvites = await db
@@ -883,7 +1172,7 @@ async function seedDatabase() {
         userId: mario.id,
         venueId: laValle.id,
         companyId: acme.id,
-        voucherId: 1,
+        voucherId: marioOvernightVoucherId,
         amountCents: 5000,
         discountCents: 0,
         listPriceCents: 5000,
