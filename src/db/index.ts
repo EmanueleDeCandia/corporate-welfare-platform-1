@@ -44,6 +44,36 @@ export async function initDb() {
           created_at INTEGER NOT NULL DEFAULT (unixepoch())
         );
 
+        CREATE TABLE IF NOT EXISTS welfare_plans (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          company_id INTEGER NOT NULL REFERENCES companies(id),
+          year INTEGER NOT NULL,
+          valid_from INTEGER NOT NULL,
+          valid_until INTEGER NOT NULL,
+          eligible_employees INTEGER NOT NULL DEFAULT 0,
+          overnight_amount_cents INTEGER NOT NULL DEFAULT 5000,
+          dinner_amount_cents INTEGER NOT NULL DEFAULT 2500,
+          overnight_extra_threshold_bps INTEGER NOT NULL DEFAULT 2000,
+          overnight_extra_cap_bps INTEGER NOT NULL DEFAULT 2000,
+          dinner_extra_threshold_bps INTEGER NOT NULL DEFAULT 2000,
+          dinner_extra_cap_bps INTEGER NOT NULL DEFAULT 2000,
+          status TEXT NOT NULL DEFAULT 'active',
+          created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          UNIQUE(company_id, year)
+        );
+
+        CREATE TABLE IF NOT EXISTS plan_extra_allocations (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          plan_id INTEGER NOT NULL REFERENCES welfare_plans(id),
+          benefit_type TEXT NOT NULL,
+          created_by_user_id INTEGER REFERENCES users(id),
+          selected_at_time INTEGER NOT NULL,
+          available_at_time INTEGER NOT NULL,
+          vouchers_granted INTEGER NOT NULL,
+          note TEXT,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch())
+        );
+
         CREATE TABLE IF NOT EXISTS destinations (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL,
@@ -68,8 +98,8 @@ export async function initDb() {
           company_id INTEGER REFERENCES companies(id),
           venue_id INTEGER,
           impact_points INTEGER NOT NULL DEFAULT 0,
-          badge_level TEXT NOT NULL DEFAULT 'Germoglio',
-          referral_code TEXT,
+          badge_level TEXT NOT NULL DEFAULT 'Esploratore',
+          referral_code TEXT NOT NULL UNIQUE,
           invited_by_user_id INTEGER,
           created_at INTEGER NOT NULL DEFAULT (unixepoch())
         );
@@ -103,7 +133,20 @@ export async function initDb() {
           created_at INTEGER NOT NULL DEFAULT (unixepoch())
         );
 
-        
+        CREATE TABLE IF NOT EXISTS venue_offerings (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          venue_id INTEGER NOT NULL REFERENCES venues(id),
+          benefit_type TEXT NOT NULL,
+          name TEXT NOT NULL,
+          description TEXT,
+          list_price_cents INTEGER NOT NULL DEFAULT 0,
+          accepts_welfare INTEGER NOT NULL DEFAULT 1,
+          daily_capacity INTEGER DEFAULT 10,
+          active INTEGER NOT NULL DEFAULT 1,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          UNIQUE(venue_id, benefit_type, name)
+        );
+
         CREATE TABLE IF NOT EXISTS grant_events (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           title TEXT NOT NULL,
@@ -113,17 +156,25 @@ export async function initDb() {
           city TEXT NOT NULL,
           region TEXT NOT NULL,
           description TEXT NOT NULL,
+          starts_at INTEGER,
+          capacity INTEGER NOT NULL DEFAULT 50,
           grant_amount_cents INTEGER NOT NULL DEFAULT 5000,
+          confirmation_send_days INTEGER NOT NULL DEFAULT 7,
+          confirmation_deadline_days INTEGER NOT NULL DEFAULT 3,
           artist_meetup_included INTEGER NOT NULL DEFAULT 1,
           active INTEGER NOT NULL DEFAULT 1,
           created_at INTEGER NOT NULL DEFAULT (unixepoch())
         );
+
         CREATE TABLE IF NOT EXISTS vouchers (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
+          plan_id INTEGER REFERENCES welfare_plans(id),
           user_id INTEGER NOT NULL REFERENCES users(id),
           company_id INTEGER NOT NULL REFERENCES companies(id),
           type TEXT NOT NULL,
           status TEXT NOT NULL DEFAULT 'available',
+          origin TEXT NOT NULL DEFAULT 'base',
+          extra_allocation_id INTEGER REFERENCES plan_extra_allocations(id),
           slot_index INTEGER NOT NULL DEFAULT 1,
           amount_cents INTEGER NOT NULL DEFAULT 0,
           venue_id INTEGER REFERENCES venues(id),
@@ -133,11 +184,63 @@ export async function initDb() {
           created_at INTEGER NOT NULL DEFAULT (unixepoch())
         );
 
+        CREATE TABLE IF NOT EXISTS voucher_selections (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          voucher_id INTEGER NOT NULL UNIQUE REFERENCES vouchers(id),
+          venue_id INTEGER NOT NULL REFERENCES venues(id),
+          offering_id INTEGER REFERENCES venue_offerings(id),
+          service_date TEXT NOT NULL,
+          selected_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          attendance_status TEXT NOT NULL DEFAULT 'pending',
+          checked_in_at INTEGER,
+          checked_in_by_user_id INTEGER REFERENCES users(id),
+          notes TEXT,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch())
+        );
+
+        CREATE TABLE IF NOT EXISTS matching_grants (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          voucher_id INTEGER NOT NULL UNIQUE REFERENCES vouchers(id),
+          event_id INTEGER NOT NULL REFERENCES grant_events(id),
+          amount_cents INTEGER NOT NULL DEFAULT 5000,
+          seats_requested INTEGER NOT NULL DEFAULT 2,
+          status TEXT NOT NULL DEFAULT 'assigned',
+          assigned_at INTEGER NOT NULL DEFAULT (unixepoch()),
+          confirmed_at INTEGER,
+          attended_at INTEGER,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch())
+        );
+
+        CREATE TABLE IF NOT EXISTS grant_seats (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          matching_grant_id INTEGER NOT NULL REFERENCES matching_grants(id),
+          holder_role TEXT NOT NULL,
+          holder_name TEXT,
+          holder_email TEXT,
+          value_cents INTEGER NOT NULL DEFAULT 2500,
+          attended INTEGER NOT NULL DEFAULT 0,
+          checked_in_at INTEGER,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch())
+        );
+
+        CREATE TABLE IF NOT EXISTS grant_confirmations (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          matching_grant_id INTEGER NOT NULL REFERENCES matching_grants(id),
+          token TEXT NOT NULL UNIQUE,
+          scheduled_for INTEGER NOT NULL,
+          respond_by INTEGER NOT NULL,
+          sent_at INTEGER,
+          response TEXT,
+          responded_at INTEGER,
+          reminder_count INTEGER NOT NULL DEFAULT 0,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch())
+        );
+
         CREATE TABLE IF NOT EXISTS invites (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           inviter_id INTEGER NOT NULL REFERENCES users(id),
-          first_name TEXT NOT NULL,
-          last_name TEXT NOT NULL,
+          firstName TEXT NOT NULL,
+          lastName TEXT NOT NULL,
           email TEXT NOT NULL,
           code TEXT NOT NULL UNIQUE,
           status TEXT NOT NULL DEFAULT 'pending',
@@ -200,32 +303,52 @@ export async function initDb() {
         );
       `);
 
-      // Safe migration for users table
+      // Migrations per tabelle esistenti
       try {
-        const userCols = sqlite.prepare("PRAGMA table_info(users)").all() as Array<{ name: string }>;
-        if (!userCols.some((col) => col.name === "referral_code")) {
-          sqlite.exec("ALTER TABLE users ADD COLUMN referral_code TEXT;");
+        const vCols = sqlite.prepare("PRAGMA table_info(vouchers)").all() as Array<{ name: string }>;
+        if (!vCols.some((col) => col.name === "plan_id")) {
+          sqlite.exec("ALTER TABLE vouchers ADD COLUMN plan_id INTEGER REFERENCES welfare_plans(id);");
         }
-        if (!userCols.some((col) => col.name === "invited_by_user_id")) {
-          sqlite.exec("ALTER TABLE users ADD COLUMN invited_by_user_id INTEGER;");
+        if (!vCols.some((col) => col.name === "origin")) {
+          sqlite.exec("ALTER TABLE vouchers ADD COLUMN origin TEXT NOT NULL DEFAULT 'base';");
+        }
+        if (!vCols.some((col) => col.name === "extra_allocation_id")) {
+          sqlite.exec("ALTER TABLE vouchers ADD COLUMN extra_allocation_id INTEGER REFERENCES plan_extra_allocations(id);");
         }
       } catch (e) {
-        console.warn("Migration users warning:", e);
+        console.warn("Migration vouchers warning:", e);
       }
 
-      // Safe migration in case vouchers table already exists without theater_venue_id
       try {
-        const columns = sqlite.prepare("PRAGMA table_info(vouchers)").all() as Array<{ name: string }>;
-        const hasTheater = columns.some((col) => col.name === "theater_venue_id");
-        
-        if (!columns.some((col) => col.name === "grant_event_id")) {
-          sqlite.exec("ALTER TABLE vouchers ADD COLUMN grant_event_id INTEGER REFERENCES grant_events(id);");
+        const geCols = sqlite.prepare("PRAGMA table_info(grant_events)").all() as Array<{ name: string }>;
+        if (!geCols.some((col) => col.name === "starts_at")) {
+          sqlite.exec("ALTER TABLE grant_events ADD COLUMN starts_at INTEGER;");
         }
-        if (!hasTheater) {
-          sqlite.exec("ALTER TABLE vouchers ADD COLUMN theater_venue_id INTEGER REFERENCES venues(id);");
+        if (!geCols.some((col) => col.name === "capacity")) {
+          sqlite.exec("ALTER TABLE grant_events ADD COLUMN capacity INTEGER NOT NULL DEFAULT 50;");
+        }
+        if (!geCols.some((col) => col.name === "confirmation_send_days")) {
+          sqlite.exec("ALTER TABLE grant_events ADD COLUMN confirmation_send_days INTEGER NOT NULL DEFAULT 7;");
+        }
+        if (!geCols.some((col) => col.name === "confirmation_deadline_days")) {
+          sqlite.exec("ALTER TABLE grant_events ADD COLUMN confirmation_deadline_days INTEGER NOT NULL DEFAULT 3;");
         }
       } catch (e) {
-        console.warn("Migration theater_venue_id warning:", e);
+        console.warn("Migration grant_events warning:", e);
+      }
+
+      // Safe index creation
+      try {
+        sqlite.exec(`
+          CREATE INDEX IF NOT EXISTS ix_vouchers_user ON vouchers(user_id, status);
+          CREATE INDEX IF NOT EXISTS ix_vouchers_plan ON vouchers(plan_id, status);
+          CREATE INDEX IF NOT EXISTS ix_tx_venue ON transactions(venue_id, created_at);
+          CREATE INDEX IF NOT EXISTS ix_notifications_venue ON notifications(venue_id, read);
+          CREATE INDEX IF NOT EXISTS ix_sessions_user ON sessions(user_id);
+          CREATE INDEX IF NOT EXISTS ix_offerings_venue ON venue_offerings(venue_id, benefit_type);
+        `);
+      } catch (e) {
+        console.warn("Index creation warning:", e);
       }
 
       // Run seeding
