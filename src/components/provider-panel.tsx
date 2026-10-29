@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Bell, Receipt, Stamp } from "lucide-react";
+import { Bell, CheckCircle2, Receipt, Stamp, UserX } from "lucide-react";
 import type { companies, notifications, transactions, users, venues } from "@/db/schema";
 import { formatDateTime, formatEuro } from "@/lib/utils";
 
@@ -26,6 +26,17 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows 
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "confirm" }),
+    });
+    setPending(null);
+    router.refresh();
+  }
+
+  async function registerAttendance(voucherId: number, status: "attended" | "no_show") {
+    setPending(voucherId);
+    await fetch("/api/provider/attendance", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ voucherId, status }),
     });
     setPending(null);
     router.refresh();
@@ -102,6 +113,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows 
                 <th className="pb-3">Canale</th>
                 <th className="pb-3">Importo</th>
                 <th className="pb-3">Stato</th>
+                <th className="pb-3 text-right">Presenza Ospite</th>
               </tr>
             </thead>
             <tbody>
@@ -117,6 +129,32 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows 
                   <td>{transaction.type === "welfare_redeem" ? "Welfare B2B" : "Consumer B2C"}</td>
                   <td>{formatEuro(transaction.amountCents)}</td>
                   <td className="capitalize">{transaction.status}</td>
+                  <td className="text-right">
+                    {transaction.voucherId ? (
+                      <div className="inline-flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          disabled={pending === transaction.voucherId}
+                          onClick={() => registerAttendance(transaction.voucherId!, "attended")}
+                          className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-2.5 py-1 text-[11px] font-medium text-forest hover:bg-forest/20 transition disabled:opacity-50"
+                          title="Segna presenza fisica dell'ospite"
+                        >
+                          <CheckCircle2 size={12} /> Presente
+                        </button>
+                        <button
+                          type="button"
+                          disabled={pending === transaction.voucherId}
+                          onClick={() => registerAttendance(transaction.voucherId!, "no_show")}
+                          className="inline-flex items-center gap-1 rounded-full bg-terracotta/10 px-2.5 py-1 text-[11px] font-medium text-terracotta hover:bg-terracotta/20 transition disabled:opacity-50"
+                          title="Segna mancato arrivo (no-show)"
+                        >
+                          <UserX size={12} /> Assente
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-olive">—</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
