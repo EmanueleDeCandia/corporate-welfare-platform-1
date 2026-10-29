@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { clearClientSession } from "@/lib/session-client";
 
 export function LogoutButton({ className }: { className?: string }) {
   const router = useRouter();
@@ -10,9 +11,13 @@ export function LogoutButton({ className }: { className?: string }) {
       type="button"
       className={className}
       onClick={async () => {
-        await fetch("/api/auth/logout", { method: "POST" });
-        router.push("/");
-        router.refresh();
+        try {
+          await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+        } finally {
+          clearClientSession();
+          router.push("/");
+          router.refresh();
+        }
       }}
     >
       Esci

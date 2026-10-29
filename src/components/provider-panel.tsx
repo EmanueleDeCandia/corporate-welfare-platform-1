@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { apiFetch } from "@/lib/session-client";
 import { Bell, Receipt, Stamp } from "lucide-react";
 import type { companies, notifications, transactions, users, venues } from "@/db/schema";
 import { formatDateTime, formatEuro, grantStatusLabel, voucherTypeLabel } from "@/lib/utils";
@@ -49,7 +50,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
 
   async function confirm(id: number) {
     setPending(`n-${id}`);
-    await fetch(`/api/provider/notifications/${id}`, {
+    await apiFetch(`/api/provider/notifications/${id}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "confirm" }),
@@ -60,7 +61,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
 
   async function attendance(kind: "selection" | "grant", id: number, status: "attended" | "no_show") {
     setPending(`${kind}-${id}-${status}`);
-    await fetch("/api/provider/attendance", {
+    await apiFetch("/api/provider/attendance", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(

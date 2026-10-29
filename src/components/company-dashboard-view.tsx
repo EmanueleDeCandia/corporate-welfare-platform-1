@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { apiFetch } from "@/lib/session-client";
 import {
   Users,
   Ticket,
@@ -73,7 +74,7 @@ export function CompanyDashboardView({ data }: Props) {
   async function addEmployee() {
     setPending(true);
     setMessage("");
-    const response = await fetch("/api/company/employees", {
+    const response = await apiFetch("/api/company/employees", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(empForm),
@@ -90,7 +91,7 @@ export function CompanyDashboardView({ data }: Props) {
   async function allocateExtra() {
     setPending(true);
     setMessage("");
-    const response = await fetch("/api/company/extra-allocations", {
+    const response = await apiFetch("/api/company/extra-allocations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ benefitType: extraType, userIds: extraIds }),

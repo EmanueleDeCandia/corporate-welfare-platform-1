@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { apiFetch } from "@/lib/session-client";
 
 export function ProviderCheckin({
   kind,
@@ -21,7 +22,7 @@ export function ProviderCheckin({
 
   async function mark(next: "attended" | "no_show") {
     setPending(true);
-    const response = await fetch("/api/provider/attendance", {
+    const response = await apiFetch("/api/provider/attendance", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(

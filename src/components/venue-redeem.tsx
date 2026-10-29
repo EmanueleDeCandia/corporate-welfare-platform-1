@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { apiFetch } from "@/lib/session-client";
 import type { VenueOffering, vouchers } from "@/db/schema";
 import { voucherTypeLabel } from "@/lib/utils";
 
@@ -69,7 +70,7 @@ export function VenueRedeem({
         onClick={async () => {
           setPending(true);
           setMessage("");
-          const response = await fetch("/api/vouchers/select", {
+          const response = await apiFetch("/api/vouchers/select", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ voucherId, venueId, offeringId, serviceDate }),

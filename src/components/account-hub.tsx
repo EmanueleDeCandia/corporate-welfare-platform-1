@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiFetch } from "@/lib/session-client";
 import {
   BadgeCheck,
   Copy,
@@ -184,7 +185,7 @@ function WalletTab(props: Props) {
   async function selectVoucher(voucherId: number, venueId: number, offeringId: number, serviceDate: string) {
     setPendingId(`${voucherId}-${offeringId}`);
     setMessage("");
-    const response = await fetch("/api/vouchers/select", {
+    const response = await apiFetch("/api/vouchers/select", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ voucherId, venueId, offeringId, serviceDate }),
@@ -208,7 +209,7 @@ function WalletTab(props: Props) {
   }) {
     setPendingId(`grant-${payload.voucherId}`);
     setMessage("");
-    const response = await fetch("/api/grants/claim", {
+    const response = await apiFetch("/api/grants/claim", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -225,7 +226,7 @@ function WalletTab(props: Props) {
 
   async function confirmGrant(token: string, responseValue: "confirmed" | "declined") {
     setPendingId(`cnf-${token}`);
-    const response = await fetch(`/api/grants/confirm/${token}`, {
+    const response = await apiFetch(`/api/grants/confirm/${token}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ response: responseValue }),
@@ -668,7 +669,7 @@ function KitTab({ user, company, venues, shares, certificates }: Props) {
   }
 
   async function confirmShare() {
-    const response = await fetch("/api/shares", {
+    const response = await apiFetch("/api/shares", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ venueId: venue?.id, caption }),
@@ -807,7 +808,7 @@ function FriendsTab({ user, invites }: Props) {
   async function createInvite() {
     setPending(true);
     setError("");
-    const response = await fetch("/api/invites", {
+    const response = await apiFetch("/api/invites", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),

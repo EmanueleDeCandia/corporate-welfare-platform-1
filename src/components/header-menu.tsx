@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { apiFetch, clearClientSession } from "@/lib/session-client";
 
 type Props = {
   dark?: boolean;
@@ -28,10 +29,14 @@ export function HeaderMenu({ dark, user }: Props) {
           : "/account";
 
   async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setOpen(false);
-    router.push("/");
-    router.refresh();
+    try {
+      await apiFetch("/api/auth/logout", { method: "POST" });
+    } finally {
+      clearClientSession();
+      setOpen(false);
+      router.push("/");
+      router.refresh();
+    }
   }
 
   return (

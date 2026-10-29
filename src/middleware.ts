@@ -5,7 +5,8 @@ import { SESSION_COOKIE, SESSION_HEADER, cookieOptionsFromHeaders } from "@/lib/
 export function middleware(request: NextRequest) {
   const sid = request.nextUrl.searchParams.get("sid");
   const cookieToken = request.cookies.get(SESSION_COOKIE)?.value;
-  const token = sid || cookieToken;
+  const headerToken = request.headers.get(SESSION_HEADER);
+  const token = sid || cookieToken || headerToken;
 
   const requestHeaders = new Headers(request.headers);
   if (token) requestHeaders.set(SESSION_HEADER, token);

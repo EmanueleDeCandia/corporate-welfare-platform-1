@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { apiFetch } from "@/lib/session-client";
 import type { VenueOffering } from "@/db/schema";
 import { formatEuro, voucherTypeLabel } from "@/lib/utils";
 
@@ -38,7 +39,7 @@ export function CheckinClient({
     event.preventDefault();
     setPending(true);
     setMessage("");
-    const response = await fetch("/api/payments/checkout", {
+    const response = await apiFetch("/api/payments/checkout", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

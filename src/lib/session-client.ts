@@ -1,0 +1,53 @@
+export const CLIENT_SESSION_KEY = "radici_session";
+export const SESSION_HEADER = "x-radici-session";
+
+export function readClientSessionToken() {
+  if (typeof window === "undefined") return "";
+  const fromUrl = new URLSearchParams(window.location.search).get("sid");
+  if (fromUrl) return fromUrl;
+  try {
+    return window.sessionStorage.getItem(CLIENT_SESSION_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+export function persistClientSession(token: string) {
+  if (typeof window === "undefined" || !token) return;
+  try {
+    window.sessionStorage.setItem(CLIENT_SESSION_KEY, token);
+  } catch {
+    /* ignore */
+  }
+  const secure = window.location.protocol === "https:";
+  const parts = [`${CLIENT_SESSION_KEY}=${token}`, "Path=/", `Max-Age=${14 * 24 * 60 * 60}`];
+  if (secure) parts.push("Secure", "SameSite=None", "Partitioned");
+  else parts.push("SameSite=Lax");
+  document.cookie = parts.join("; ");
+}
+
+export function clearClientSession() {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(CLIENT_SESSION_KEY);
+  } catch {
+    /* ignore */
+  }
+  document.cookie = `${CLIENT_SESSION_KEY}=; Path=/; Max-Age=0; SameSite=Lax`;
+  document.cookie = `${CLIENT_SESSION_KEY}=; Path=/; Max-Age=0; Secure; SameSite=None; Partitioned`;
+}
+
+export function sessionHeaders(init?: HeadersInit) {
+  const headers = new Headers(init);
+  const token = readClientSessionToken();
+  if (token && !headers.has(SESSION_HEADER)) headers.set(SESSION_HEADER, token);
+  return headers;
+}
+
+export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
+  return fetch(input, {
+    ...init,
+    credentials: init.credentials ?? "include",
+    headers: sessionHeaders(init.headers),
+  });
+}

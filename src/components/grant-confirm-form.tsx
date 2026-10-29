@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { apiFetch } from "@/lib/session-client";
 
 export function GrantConfirmForm({ token }: { token: string }) {
   const router = useRouter();
@@ -10,7 +11,7 @@ export function GrantConfirmForm({ token }: { token: string }) {
 
   async function respond(response: "confirmed" | "declined") {
     setPending(true);
-    const res = await fetch(`/api/grants/confirm/${token}`, {
+    const res = await apiFetch(`/api/grants/confirm/${token}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ response }),
