@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { CheckinClient } from "@/components/checkin-client";
 import { PublicShell } from "@/components/public-shell";
 import { getCurrentUser } from "@/lib/auth";
-import { getInviteByEmail, getVenueByCheckin } from "@/lib/data";
+import { getInviteByEmail, getUserVouchers, getVenueByCheckin } from "@/lib/data";
 import { venueTypeLabel } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +17,7 @@ export default async function CheckinPage({
   if (!row) notFound();
   const user = await getCurrentUser();
   const invite = user ? await getInviteByEmail(user.email) : null;
+  const userVouchers = user?.role === "employee" ? await getUserVouchers(user.id) : [];
 
   return (
     <PublicShell>
@@ -47,6 +48,7 @@ export default async function CheckinPage({
           loggedIn={Boolean(user)}
           role={user?.role}
           inviteCode={invite?.code}
+          userVouchers={userVouchers}
         />
       </main>
     </PublicShell>
