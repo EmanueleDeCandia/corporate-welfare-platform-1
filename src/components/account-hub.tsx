@@ -165,26 +165,18 @@ function WalletTab({ user, company, vouchers, venues, transactions }: Props) {
         ) : null}
       </section>
 
-      <Drawer
-        title="Sezione Welfare · Hotel"
-        subtitle="4 slot pernottamento · art. 51 TUIR"
+      <HotelDrawer
+        title="Sezione Welfare · Pernottamento"
+        subtitle="1 Voucher Pernottamento (50€) + Matching Grant Omaggio Promotori per 2 Persone (25€ + 25€)"
         items={groups.hotel}
         venues={venues}
         pendingId={pendingId}
         onRedeem={redeem}
       />
       <Drawer
-        title="Sezione Welfare · Aperitivo KM 0"
-        subtitle="4 slot degustazione · filiera agricola"
+        title="Sezione Welfare · Cena & Aperitivo KM 0"
+        subtitle="1 Voucher Degustazione (25€) · filiera agricola del territorio"
         items={groups.aperitivo}
-        venues={venues}
-        pendingId={pendingId}
-        onRedeem={redeem}
-      />
-      <Drawer
-        title="Sezione Loyalty / Omaggi"
-        subtitle="Buoni spettacolo / teatro da 15€ · cassetto fiscale distinto"
-        items={groups.theater}
         venues={venues}
         pendingId={pendingId}
         onRedeem={redeem}
@@ -271,11 +263,43 @@ function HotelDrawer({
                 : "border-mist bg-mist/40 text-olive line-through"
             }`}
           >
-            <p>Slot {item.slotIndex}</p>
+            <p>Slot {item.slotIndex} {item.status === "redeemed" ? "· Riscattato" : ""}</p>
             <p className="mt-1 font-medium">{formatEuro(item.amountCents)}</p>
           </div>
         ))}
       </div>
+
+      {/* DETTAGLIO SOGGIORNO PRENOTATO E TEATRO ASSEGNATO */}
+      {!available && items[0]?.status === "redeemed" ? (
+        (() => {
+          const bookedHotel = venues.find((v) => v.id === items[0].venueId);
+          const bookedTheater = venues.find((v) => v.id === items[0].theaterVenueId) || theaterVenues[0];
+          return (
+            <div className="mt-5 rounded-2xl border border-forest/20 bg-forest/5 p-5">
+              <div className="flex items-center justify-between">
+                <span className="rounded-full bg-forest px-3 py-1 text-xs font-medium text-cream">
+                  Pernottamento Confermato & Fiscale B2B Assegnato
+                </span>
+                <span className="text-xs text-olive">
+                  Prenotato il: {items[0].redeemedAt ? formatDateTime(items[0].redeemedAt) : "—"}
+                </span>
+              </div>
+              <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                <div className="rounded-xl border border-mist bg-white p-3.5">
+                  <span className="text-[11px] uppercase tracking-wider text-olive block">Struttura Ospitante</span>
+                  <strong className="text-base font-serif text-forest block mt-0.5">{bookedHotel?.name ?? "Struttura Convenzionata"}</strong>
+                  <p className="text-xs text-olive mt-0.5">{bookedHotel?.city} · Voucher Welfare 50€</p>
+                </div>
+                <div className="rounded-xl border border-gold/40 bg-cream p-3.5">
+                  <span className="text-[11px] uppercase tracking-wider text-terracotta block">Matching Grant Promotori (Attivo)</span>
+                  <strong className="text-base font-serif text-forest block mt-0.5">{bookedTheater?.name ?? "Teatro Lauro Rossi"}</strong>
+                  <p className="text-xs text-forest mt-0.5">{bookedTheater?.city} · Biglietto 2 Persone (25€ + 25€) + Incontro Artisti</p>
+                </div>
+              </div>
+            </div>
+          );
+        })()
+      ) : null}
 
       {available ? (
         <div className="mt-5 rounded-2xl border border-gold/30 bg-cream p-4">
