@@ -68,6 +68,7 @@ export function LoginForm() {
             ref={passwordRef}
             type="password"
             name="password"
+            autoComplete="current-password"
             defaultValue={DEMO_PASSWORD}
             className="mt-1 w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3 outline-none focus:border-gold"
             required

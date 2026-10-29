@@ -2,61 +2,24 @@ import { cookies, headers } from "next/headers";
 import { and, eq, gt } from "drizzle-orm";
 import { db, initDb, sqlite } from "@/db";
 import { companies, sessions, users, venues, type UserRole } from "@/db/schema";
+import {
+  SESSION_COOKIE,
+  SESSION_DAYS,
+  SESSION_HEADER,
+  cookieOptionsFromHeaders,
+} from "@/lib/session-cookie";
 import { randomToken, unixSeconds } from "@/lib/utils";
 
-export const SESSION_COOKIE = "radici_session";
-const SESSION_DAYS = 14;
-
-function firstHeader(h: Headers, name: string) {
-  return (h.get(name) ?? "").split(",")[0]?.trim() ?? "";
-}
-
-export function isHttpsRequest(h: Headers) {
-  const proto = firstHeader(h, "x-forwarded-proto").toLowerCase();
-  const host = firstHeader(h, "x-forwarded-host").toLowerCase() || firstHeader(h, "host").toLowerCase();
-  const origin = (h.get("origin") ?? "").toLowerCase();
-  const referer = (h.get("referer") ?? "").toLowerCase();
-  const forwarded = (h.get("forwarded") ?? "").toLowerCase();
-  return (
-    proto === "https" ||
-    forwarded.includes("proto=https") ||
-    origin.startsWith("https://") ||
-    referer.startsWith("https://") ||
-    host.includes("e2b.app") ||
-    process.env.NODE_ENV === "production"
-  );
-}
-
-export function publicOriginFromHeaders(h: Headers, fallbackUrl?: string) {
-  const origin = h.get("origin");
-  if (origin && origin.startsWith("http")) return origin.replace(/\/$/, "");
-  const referer = h.get("referer");
-  if (referer) {
-    try {
-      return new URL(referer).origin;
-    } catch {
-      /* ignore */
-    }
-  }
-  const host = firstHeader(h, "x-forwarded-host") || firstHeader(h, "host");
-  if (host) {
-    const proto = isHttpsRequest(h) ? "https" : firstHeader(h, "x-forwarded-proto") || "http";
-    return `${proto}://${host}`;
-  }
-  if (fallbackUrl) return new URL(fallbackUrl).origin;
-  return "";
-}
+export {
+  SESSION_COOKIE,
+  SESSION_HEADER,
+  cookieOptionsFromHeaders,
+  isHttpsRequest,
+  publicOriginFromHeaders,
+} from "@/lib/session-cookie";
 
 export async function sessionCookieOptions() {
-  const h = await headers();
-  const secure = isHttpsRequest(h);
-  return {
-    httpOnly: true as const,
-    path: "/",
-    secure,
-    sameSite: (secure ? "none" : "lax") as "lax" | "none",
-    partitioned: secure,
-  };
+  return cookieOptionsFromHeaders(await headers());
 }
 
 export type SessionUser = {
@@ -107,7 +70,8 @@ export async function destroySession() {
 export async function getCurrentUser(): Promise<SessionUser | null> {
   await initDb();
   const jar = await cookies();
-  const token = jar.get(SESSION_COOKIE)?.value;
+  const h = await headers();
+  const token = jar.get(SESSION_COOKIE)?.value || h.get(SESSION_HEADER) || undefined;
   if (!token) return null;
 
   const [row] = await db

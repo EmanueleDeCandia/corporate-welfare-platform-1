@@ -2,13 +2,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import {
-  SESSION_COOKIE,
-  createSession,
-  publicOriginFromHeaders,
-  safeNextPath,
-  sessionCookieOptions,
-} from "@/lib/auth";
+import { SESSION_COOKIE, createSession, safeNextPath, sessionCookieOptions } from "@/lib/auth";
 import { ensureSeeded } from "@/db/seed";
 import { verifyPassword } from "@/lib/utils";
 
@@ -42,14 +36,28 @@ async function readCredentials(request: Request) {
   };
 }
 
+function withSessionCookie(
+  response: NextResponse,
+  token: string,
+  expiresAt: Date,
+  cookie: Awaited<ReturnType<typeof sessionCookieOptions>>,
+) {
+  response.cookies.set(SESSION_COOKIE, token, { ...cookie, expires: expiresAt });
+  return response;
+}
+
+function relativeRedirect(path: string) {
+  return new NextResponse(null, {
+    status: 303,
+    headers: { Location: path },
+  });
+}
+
 function fail(request: Request, message: string, status: number) {
   if (isJsonRequest(request)) {
     return NextResponse.json({ error: message }, { status });
   }
-  const origin = publicOriginFromHeaders(request.headers, request.url);
-  const url = new URL("/login", origin || request.url);
-  url.searchParams.set("error", message);
-  return NextResponse.redirect(url, 303);
+  return relativeRedirect(`/login?error=${encodeURIComponent(message)}`);
 }
 
 export async function POST(request: Request) {
@@ -66,7 +74,9 @@ export async function POST(request: Request) {
   }
 
   const { token, expiresAt } = await createSession(user.id);
-  const redirectTo = safeNextPath(next) ?? defaultRedirect(user.role);
+  const destination = safeNextPath(next) ?? defaultRedirect(user.role);
+  const separator = destination.includes("?") ? "&" : "?";
+  const redirectTo = `${destination}${separator}sid=${encodeURIComponent(token)}`;
   const cookie = await sessionCookieOptions();
 
   if (isJsonRequest(request)) {
@@ -75,13 +85,8 @@ export async function POST(request: Request) {
       redirectTo,
       role: user.role,
     });
-    response.cookies.set(SESSION_COOKIE, token, { ...cookie, expires: expiresAt });
-    return response;
+    return withSessionCookie(response, token, expiresAt, cookie);
   }
 
-  const origin = publicOriginFromHeaders(request.headers, request.url);
-  const location = new URL(redirectTo, `${origin || new URL(request.url).origin}/`);
-  const response = NextResponse.redirect(location, 303);
-  response.cookies.set(SESSION_COOKIE, token, { ...cookie, expires: expiresAt });
-  return response;
+  return withSessionCookie(relativeRedirect(redirectTo), token, expiresAt, cookie);
 }
