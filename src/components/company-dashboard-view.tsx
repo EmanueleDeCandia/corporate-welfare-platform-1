@@ -165,22 +165,28 @@ export function CompanyDashboardView({ data }: Props) {
           <div className="grid gap-6 md:grid-cols-2">
             <ChannelCard
               title="Pernottamenti"
-              selected={budget.overnight_selected}
+              selected={budget.overnight_base_selected}
+              unused={budget.overnightUnused}
               base={budget.overnight_base}
               rate={budget.overnightSelectionRate}
               extraAllowed={budget.overnightExtraAllowed}
               extraRemaining={budget.overnightExtraRemaining}
               extraGranted={budget.overnight_extra_granted}
+              extraWindowOpen={budget.extraWindowOpen}
+              extraOpensOn={budget.extraOpensOn}
               icon={<Bed size={20} />}
             />
             <ChannelCard
               title="Cene KM 0"
-              selected={budget.dinner_selected}
+              selected={budget.dinner_base_selected}
+              unused={budget.dinnerUnused}
               base={budget.dinner_base}
               rate={budget.dinnerSelectionRate}
               extraAllowed={budget.dinnerExtraAllowed}
               extraRemaining={budget.dinnerExtraRemaining}
               extraGranted={budget.dinner_extra_granted}
+              extraWindowOpen={budget.extraWindowOpen}
+              extraOpensOn={budget.extraOpensOn}
               icon={<UtensilsCrossed size={20} />}
             />
           </div>
@@ -189,9 +195,9 @@ export function CompanyDashboardView({ data }: Props) {
               <ShieldCheck size={18} className="text-terracotta" /> Regolamento
             </h4>
             <ul className="mt-3 space-y-2 text-sm text-forest/90">
-              <li>• Ogni dipendente ha 1 pernottamento + 1 cena. Non due dello stesso tipo come base.</li>
+              <li>• Ogni addetto seleziona 1 pernottamento e 1 cena. Non due dello stesso tipo come base.</li>
               <li>• La selezione è irrevocabile e genera l&apos;addebito B2B, anche in caso di assenza.</li>
-              <li>• Extra (max 20%) solo se le selezioni di quel tipo sono sotto il 20%, e solo a chi ha già selezionato il base.</li>
+              <li>• Extra solo a ridosso della scadenza, se almeno il 20% dei voucher base è ancora inutilizzato. Il tetto è il 20% di quei residui, e va a chi ha già terminato i propri.</li>
               <li>• Il Matching Grant si attiva in un secondo passo, solo sul pernottamento, e non comporta esborso se l&apos;ospite non si presenta a teatro.</li>
             </ul>
           </div>
@@ -214,15 +220,17 @@ export function CompanyDashboardView({ data }: Props) {
           </section>
 
           <section className="rounded-[28px] border border-forest/10 bg-white p-6">
-            <h2 className="font-serif text-2xl text-forest">Riassegnazione extra (soglia 20%)</h2>
+            <h2 className="font-serif text-2xl text-forest">Riassegnazione extra da residui</h2>
             <div className="mt-3 flex gap-2">
               <button type="button" onClick={() => { setExtraType("overnight"); setExtraIds([]); }} className={`rounded-full px-3 py-1 text-xs ${extraType === "overnight" ? "bg-forest text-cream" : "bg-cream"}`}>Pernottamenti</button>
               <button type="button" onClick={() => { setExtraType("dinner"); setExtraIds([]); }} className={`rounded-full px-3 py-1 text-xs ${extraType === "dinner" ? "bg-forest text-cream" : "bg-cream"}`}>Cene</button>
             </div>
             <p className="mt-2 text-xs text-olive">
               {extraAllowed
-                ? `Consentita. Residuo ${extraRemaining}. Solo chi ha già selezionato il voucher base.`
-                : "Non consentita: selezioni ≥ 20% oppure tetto extra esaurito."}
+                ? `Finestra extra aperta. Puoi assegnare fino a ${extraRemaining} voucher (20% dei residui) a chi ha già usato il proprio.`
+                : budget && !budget.extraWindowOpen
+                  ? `Chiusa fino al ${budget.extraOpensOn}: prima ogni addetto resta su 1 pernottamento e 1 cena.`
+                  : "Chiusa: i non selezionati sono sotto il 20%, oppure il tetto sui residui è esaurito."}
             </p>
             <div className="mt-3 space-y-2">
               {eligible.map((user) => (
@@ -239,7 +247,7 @@ export function CompanyDashboardView({ data }: Props) {
                   {user.firstName} {user.lastName}
                 </label>
               ))}
-              {eligible.length === 0 ? <p className="text-sm text-olive">Nessun dipendente ha ancora selezionato questo tipo.</p> : null}
+              {eligible.length === 0 ? <p className="text-sm text-olive">Nessun addetto ha ancora terminato il voucher base di questo tipo, oppure ha già ricevuto l&apos;extra.</p> : null}
             </div>
             <button type="button" disabled={!extraAllowed || extraIds.length === 0 || pending} onClick={allocateExtra} className="mt-4 rounded-full bg-terracotta px-4 py-2 text-xs font-semibold uppercase text-cream disabled:bg-mist disabled:text-olive">
               Assegna extra
@@ -351,20 +359,26 @@ function Metric({ label, value, hint, icon }: { label: string; value: string; hi
 function ChannelCard({
   title,
   selected,
+  unused,
   base,
   rate,
   extraAllowed,
   extraRemaining,
   extraGranted,
+  extraWindowOpen,
+  extraOpensOn,
   icon,
 }: {
   title: string;
   selected: number;
+  unused: number;
   base: number;
   rate: number;
   extraAllowed: boolean;
   extraRemaining: number;
   extraGranted: number;
+  extraWindowOpen: boolean;
+  extraOpensOn: string;
   icon: ReactNode;
 }) {
   return (
@@ -373,11 +387,12 @@ function ChannelCard({
         <div className="grid h-10 w-10 place-items-center rounded-xl bg-sage/20">{icon}</div>
         <div>
           <h3 className="font-serif text-xl">{title}</h3>
-          <p className="text-xs text-olive">{selected} selezionati su {base} base ({rate}%)</p>
+          <p className="text-xs text-olive">{selected} usati su {base} base ({rate}%) · {unused} ancora disponibili</p>
         </div>
       </div>
       <p className="mt-4 text-sm text-forest">
-        Extra: {extraGranted} emessi · residuo {extraRemaining} · {extraAllowed ? "consentiti" : "bloccati"}
+        Extra: {extraGranted} emessi · tetto residui {extraRemaining} ·{" "}
+        {extraAllowed ? "aperti" : extraWindowOpen ? "bloccati" : `chiusi fino al ${extraOpensOn}`}
       </p>
     </div>
   );

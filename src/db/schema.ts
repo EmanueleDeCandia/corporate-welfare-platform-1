@@ -125,6 +125,7 @@ export const welfarePlans = sqliteTable(
     overnightExtraCapBps: integer("overnight_extra_cap_bps").notNull().default(2000),
     dinnerExtraThresholdBps: integer("dinner_extra_threshold_bps").notNull().default(2000),
     dinnerExtraCapBps: integer("dinner_extra_cap_bps").notNull().default(2000),
+    extraWindowDays: integer("extra_window_days").notNull().default(30),
     status: text("status").$type<PlanStatus>().notNull().default("active"),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
@@ -494,7 +495,7 @@ export const auditLog = sqliteTable("audit_log", {
     .$defaultFn(() => new Date()),
 });
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export type Company = typeof companies.$inferSelect;
 export type Destination = typeof destinations.$inferSelect;

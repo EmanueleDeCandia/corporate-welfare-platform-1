@@ -256,7 +256,7 @@ function WalletTab(props: Props) {
 
       <BenefitDrawer
         title="Pernottamento"
-        subtitle="1 voucher base da 50 €. La selezione addebita l'impresa e sblocca il Matching Grant (secondo passo)."
+        subtitle="1 voucher base da 50 €. Un extra arriva solo a ridosso della scadenza, dai residui non usati da altri addetti."
         items={overnight}
         selections={selections}
         grants={grants}
@@ -271,7 +271,7 @@ function WalletTab(props: Props) {
       />
       <BenefitDrawer
         title="Cena KM 0"
-        subtitle="1 voucher base da 25 €. Nessun Matching Grant: solo selezione struttura, data e presenza."
+        subtitle="1 voucher base da 25 €. Extra solo a ridosso della scadenza, se restano residui inutilizzati."
         items={dinner}
         selections={selections}
         grants={grants}
@@ -401,7 +401,7 @@ function BenefitDrawer({
             }`}
           >
             <p>
-              {item.origin === "extra" ? "Extra" : "Base"} · {voucherStatusLabel(item.status)}
+              {item.origin === "extra" ? "Extra da residui" : "Base"} · {voucherStatusLabel(item.status)}
             </p>
             <p className="mt-1 font-medium text-forest">{formatEuro(item.amountCents)}</p>
           </div>

@@ -21,7 +21,7 @@ export default function HowItWorksPage() {
             },
             {
               title: "Il dipendente seleziona data e struttura",
-              text: "Sceglie offerta, data e struttura. La selezione è unica e non annullabile: nasce l'addebito B2B. Extra fino al 20% solo dopo che il voucher base dello stesso tipo è stato selezionato.",
+              text: "Sceglie offerta, data e struttura. Un pernottamento e una cena a testa. Extra solo a ridosso della scadenza, se resta circa il 20% inutilizzato, fino al 20% di quei residui e solo a chi ha già usato i propri.",
             },
             {
               title: "Matching Grant dopo il pernottamento",

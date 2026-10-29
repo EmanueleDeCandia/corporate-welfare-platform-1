@@ -624,6 +624,7 @@ async function seedDatabase() {
       eligibleEmployees: 100,
       overnightAmountCents: 5000,
       dinnerAmountCents: 2500,
+      extraWindowDays: 30,
       status: "active",
     })
     .returning();
@@ -637,6 +638,7 @@ async function seedDatabase() {
       eligibleEmployees: 260,
       overnightAmountCents: 5000,
       dinnerAmountCents: 2500,
+      extraWindowDays: 30,
       status: "active",
     })
     .returning();

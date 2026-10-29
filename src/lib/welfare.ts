@@ -17,12 +17,16 @@ type PlanBudgetRow = {
   year: number;
   status: string;
   eligible_employees: number;
+  valid_until: string;
+  extra_window_days: number;
   overnight_amount_cents: number;
   dinner_amount_cents: number;
   overnight_base: number;
   dinner_base: number;
   vouchers_available: number;
   virtual_budget_cents: number;
+  overnight_base_selected: number;
+  dinner_base_selected: number;
   overnight_selected: number;
   dinner_selected: number;
   real_budget_cents: number;
@@ -35,6 +39,10 @@ type PlanBudgetRow = {
 };
 
 export type PlanBudget = PlanBudgetRow & {
+  extraWindowOpen: boolean;
+  extraOpensOn: string;
+  overnightUnused: number;
+  dinnerUnused: number;
   overnightExtraAllowed: boolean;
   dinnerExtraAllowed: boolean;
   overnightExtraRemaining: number;
@@ -43,15 +51,39 @@ export type PlanBudget = PlanBudgetRow & {
   dinnerSelectionRate: number;
 };
 
-function extraRule(selected: number, base: number, thresholdBps: number, granted: number, capBps: number) {
-  const threshold = Math.floor((base * thresholdBps) / 10000);
-  const cap = Math.floor((base * capBps) / 10000);
-  const remaining = Math.max(0, cap - granted);
+export function extraWindowOpen(validUntil: string, windowDays: number, now = new Date()) {
+  const until = new Date(`${validUntil}T23:59:59`);
+  if (Number.isNaN(until.getTime())) return false;
+  const start = new Date(`${validUntil}T00:00:00`);
+  start.setDate(start.getDate() - Math.max(0, windowDays));
+  return now >= start && now <= until;
+}
+
+export function extraOpensOn(validUntil: string, windowDays: number) {
+  const until = new Date(`${validUntil}T00:00:00`);
+  if (Number.isNaN(until.getTime())) return validUntil;
+  until.setDate(until.getDate() - Math.max(0, windowDays));
+  return until.toISOString().slice(0, 10);
+}
+
+function leftoverExtraRule(input: {
+  base: number;
+  baseSelected: number;
+  extraGranted: number;
+  thresholdBps: number;
+  capBps: number;
+  nearDeadline: boolean;
+}) {
+  const unused = Math.max(0, input.base - input.baseSelected);
+  const minUnused = Math.floor((input.base * input.thresholdBps) / 10000);
+  const cap = Math.floor((unused * input.capBps) / 10000);
+  const remaining = Math.max(0, cap - input.extraGranted);
   return {
-    allowed: selected < threshold && remaining > 0,
-    remaining,
-    threshold,
+    unused,
+    minUnused,
     cap,
+    remaining,
+    allowed: input.nearDeadline && unused >= minUnused && remaining > 0,
   };
 }
 
@@ -74,6 +106,7 @@ export function getActivePlan(companyId: number) {
         overnight_extra_cap_bps: number;
         dinner_extra_threshold_bps: number;
         dinner_extra_cap_bps: number;
+        extra_window_days: number;
         status: string;
       }
     | undefined;
@@ -84,30 +117,37 @@ export function getPlanBudget(companyId: number): PlanBudget | null {
     .prepare(`SELECT * FROM v_plan_budget WHERE company_id = ? ORDER BY year DESC LIMIT 1`)
     .get(companyId) as PlanBudgetRow | undefined;
   if (!row) return null;
-  const overnight = extraRule(
-    row.overnight_selected,
-    row.overnight_base,
-    row.overnight_extra_threshold_bps,
-    row.overnight_extra_granted,
-    row.overnight_extra_cap_bps,
-  );
-  const dinner = extraRule(
-    row.dinner_selected,
-    row.dinner_base,
-    row.dinner_extra_threshold_bps,
-    row.dinner_extra_granted,
-    row.dinner_extra_cap_bps,
-  );
+  const nearDeadline = extraWindowOpen(row.valid_until, row.extra_window_days);
+  const overnight = leftoverExtraRule({
+    base: row.overnight_base,
+    baseSelected: row.overnight_base_selected,
+    extraGranted: row.overnight_extra_granted,
+    thresholdBps: row.overnight_extra_threshold_bps,
+    capBps: row.overnight_extra_cap_bps,
+    nearDeadline,
+  });
+  const dinner = leftoverExtraRule({
+    base: row.dinner_base,
+    baseSelected: row.dinner_base_selected,
+    extraGranted: row.dinner_extra_granted,
+    thresholdBps: row.dinner_extra_threshold_bps,
+    capBps: row.dinner_extra_cap_bps,
+    nearDeadline,
+  });
   return {
     ...row,
+    extraWindowOpen: nearDeadline,
+    extraOpensOn: extraOpensOn(row.valid_until, row.extra_window_days),
+    overnightUnused: overnight.unused,
+    dinnerUnused: dinner.unused,
     overnightExtraAllowed: overnight.allowed,
     dinnerExtraAllowed: dinner.allowed,
     overnightExtraRemaining: overnight.remaining,
     dinnerExtraRemaining: dinner.remaining,
     overnightSelectionRate:
-      row.overnight_base > 0 ? Number(((row.overnight_selected / row.overnight_base) * 100).toFixed(1)) : 0,
+      row.overnight_base > 0 ? Number(((row.overnight_base_selected / row.overnight_base) * 100).toFixed(1)) : 0,
     dinnerSelectionRate:
-      row.dinner_base > 0 ? Number(((row.dinner_selected / row.dinner_base) * 100).toFixed(1)) : 0,
+      row.dinner_base > 0 ? Number(((row.dinner_base_selected / row.dinner_base) * 100).toFixed(1)) : 0,
   };
 }
 
@@ -171,12 +211,19 @@ export function addCompanyEmployee(input: {
 export function extraEligibleUserIds(planId: number, benefitType: BenefitType) {
   const rows = sqlite
     .prepare(
-      `SELECT DISTINCT user_id AS userId
-       FROM vouchers
-       WHERE plan_id = ?
-         AND benefit_type = ?
-         AND origin = 'base'
-         AND status IN ('selected','attended','no_show')`,
+      `SELECT DISTINCT v.user_id AS userId
+       FROM vouchers v
+       WHERE v.plan_id = ?
+         AND v.benefit_type = ?
+         AND v.origin = 'base'
+         AND v.status IN ('selected','attended','no_show')
+         AND NOT EXISTS (
+           SELECT 1 FROM vouchers e
+           WHERE e.plan_id = v.plan_id
+             AND e.user_id = v.user_id
+             AND e.benefit_type = v.benefit_type
+             AND e.origin = 'extra'
+         )`,
     )
     .all(planId, benefitType) as Array<{ userId: number }>;
   return rows.map((row) => row.userId);
@@ -200,8 +247,13 @@ export function allocateExtra(input: {
       input.benefitType === "overnight" ? budget.overnightExtraRemaining : budget.dinnerExtraRemaining;
     const allowed = input.benefitType === "overnight" ? budget.overnightExtraAllowed : budget.dinnerExtraAllowed;
     if (!allowed) {
+      if (!budget.extraWindowOpen) {
+        throw new WelfareError(
+          `Gli extra si aprono a ridosso della scadenza, dal ${budget.extraOpensOn}. Ogni addetto resta su 1 pernottamento e 1 cena fino ad allora.`,
+        );
+      }
       throw new WelfareError(
-        "Riassegnazione extra non consentita: la soglia del 20% non è rispettata oppure il tetto è esaurito.",
+        "Extra non consentiti: i voucher non selezionati sono sotto il 20%, oppure il tetto del 20% dei residui è esaurito.",
       );
     }
     if (uniqueIds.length > remaining) {
@@ -212,7 +264,7 @@ export function allocateExtra(input: {
     for (const userId of uniqueIds) {
       if (!eligible.has(userId)) {
         throw new WelfareError(
-          "Gli extra si assegnano solo a chi ha già selezionato il voucher base dello stesso tipo.",
+          "Gli extra si assegnano solo a chi ha già terminato il voucher base dello stesso tipo e non ne ha già uno extra.",
         );
       }
       const belongs = sqlite
@@ -224,7 +276,8 @@ export function allocateExtra(input: {
     const amount =
       input.benefitType === "overnight" ? plan.overnight_amount_cents : plan.dinner_amount_cents;
     const selectedAtTime =
-      input.benefitType === "overnight" ? budget.overnight_selected : budget.dinner_selected;
+      input.benefitType === "overnight" ? budget.overnight_base_selected : budget.dinner_base_selected;
+    const unusedAtTime = input.benefitType === "overnight" ? budget.overnightUnused : budget.dinnerUnused;
 
     const alloc = sqlite
       .prepare(
@@ -236,7 +289,7 @@ export function allocateExtra(input: {
         input.actorUserId,
         input.benefitType,
         selectedAtTime,
-        plan.eligible_employees,
+        unusedAtTime,
         uniqueIds.length,
         unixSeconds(),
       );

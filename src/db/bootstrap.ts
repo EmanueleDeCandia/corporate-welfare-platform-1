@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 export const BOOTSTRAP_SQL = `
 CREATE TABLE IF NOT EXISTS companies (
@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS welfare_plans (
   overnight_extra_cap_bps INTEGER NOT NULL DEFAULT 2000,
   dinner_extra_threshold_bps INTEGER NOT NULL DEFAULT 2000,
   dinner_extra_cap_bps INTEGER NOT NULL DEFAULT 2000,
+  extra_window_days INTEGER NOT NULL DEFAULT 30 CHECK (extra_window_days >= 0),
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('draft','active','closed')),
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   UNIQUE (company_id, year)
@@ -305,6 +306,8 @@ CREATE TABLE IF NOT EXISTS audit_log (
 
 CREATE UNIQUE INDEX IF NOT EXISTS ux_voucher_base
   ON vouchers(plan_id, user_id, benefit_type) WHERE origin = 'base';
+CREATE UNIQUE INDEX IF NOT EXISTS ux_voucher_extra
+  ON vouchers(plan_id, user_id, benefit_type) WHERE origin = 'extra';
 CREATE UNIQUE INDEX IF NOT EXISTS ux_tx_welfare_voucher
   ON transactions(voucher_id) WHERE voucher_id IS NOT NULL AND kind = 'welfare_charge';
 CREATE INDEX IF NOT EXISTS ix_vouchers_user ON vouchers(user_id, status);
@@ -338,12 +341,16 @@ SELECT
   p.year,
   p.status,
   p.eligible_employees,
+  p.valid_until,
+  p.extra_window_days,
   p.overnight_amount_cents,
   p.dinner_amount_cents,
   p.eligible_employees AS overnight_base,
   p.eligible_employees AS dinner_base,
   p.eligible_employees * 2 AS vouchers_available,
   p.eligible_employees * (p.overnight_amount_cents + p.dinner_amount_cents) AS virtual_budget_cents,
+  (SELECT COUNT(*) FROM vouchers v WHERE v.plan_id = p.id AND v.benefit_type = 'overnight' AND v.origin = 'base' AND v.status IN ('selected','attended','no_show')) AS overnight_base_selected,
+  (SELECT COUNT(*) FROM vouchers v WHERE v.plan_id = p.id AND v.benefit_type = 'dinner' AND v.origin = 'base' AND v.status IN ('selected','attended','no_show')) AS dinner_base_selected,
   (SELECT COUNT(*) FROM vouchers v WHERE v.plan_id = p.id AND v.benefit_type = 'overnight' AND v.status IN ('selected','attended','no_show')) AS overnight_selected,
   (SELECT COUNT(*) FROM vouchers v WHERE v.plan_id = p.id AND v.benefit_type = 'dinner' AND v.status IN ('selected','attended','no_show')) AS dinner_selected,
   (SELECT COALESCE(SUM(v.amount_cents), 0) FROM vouchers v WHERE v.plan_id = p.id AND v.status IN ('selected','attended','no_show')) AS real_budget_cents,
