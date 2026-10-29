@@ -266,9 +266,10 @@ function HotelDrawer({
   // Filtra i teatri convenzionati con i Promotori
   const theaterVenues = venues.filter((v) => v.type === "theater");
 
-  const [selectedTheaterId, setSelectedTheaterId] = useState<number>(
-    theaterVenues[0]?.id ?? 0
-  );
+  // Step 1: struttura ricettiva selezionata
+  const [selectedHotelVenue, setSelectedHotelVenue] = useState<VenueLite | null>(null);
+  // Step 2: teatro scelto per il Matching Grant (preimpostato sul primo teatro convenzionato)
+  const [selectedTheaterId, setSelectedTheaterId] = useState<number>(theaterVenues[0]?.id ?? 0);
 
   return (
     <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/10">
@@ -333,68 +334,129 @@ function HotelDrawer({
         })()
       ) : null}
 
+      {/* FLUSSO DI SELEZIONE: STEP 1 (STRUTTURA) -> STEP 2 (TEATRO) */}
       {available ? (
-        <div className="mt-5 rounded-2xl border border-gold/30 bg-cream p-4">
-          <p className="text-xs uppercase tracking-[0.14em] font-semibold text-terracotta">
-            Seleziona il Teatro Convenzionato dei Promotori
-          </p>
-          <p className="mt-1 text-xs text-olive leading-relaxed">
-            I Promotori stanziano 50€ (25€ per te + 25€ per il tuo accompagnatore). Scegli il teatro dove assistere allo spettacolo:
-          </p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            {theaterVenues.map((th) => (
-              <label
-                key={th.id}
-                className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-xs transition ${
-                  selectedTheaterId === th.id
-                    ? "border-forest bg-forest/5 font-medium text-forest"
-                    : "border-mist bg-white text-ink/75 hover:border-gold/40"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="selectedTheater"
-                  value={th.id}
-                  checked={selectedTheaterId === th.id}
-                  onChange={() => setSelectedTheaterId(th.id)}
-                  className="mt-0.5 accent-forest"
-                />
+        <div className="mt-5 space-y-4">
+          {/* STEP 1: Scelta Struttura Ricettiva */}
+          <div>
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-[0.14em] font-semibold text-forest">
+                1. Seleziona la struttura per il pernottamento
+              </p>
+              {selectedHotelVenue ? (
+                <button
+                  type="button"
+                  onClick={() => setSelectedHotelVenue(null)}
+                  className="text-xs text-terracotta hover:underline"
+                >
+                  Cambia struttura
+                </button>
+              ) : null}
+            </div>
+
+            {selectedHotelVenue ? (
+              <div className="mt-2 flex items-center justify-between rounded-2xl border-2 border-forest bg-forest/5 px-4 py-3">
                 <div>
-                  <strong className="block text-forest text-sm font-serif">{th.name}</strong>
-                  <span className="text-[11px] text-olive">{th.city} ({th.region}) · Omaggio 2 Persone</span>
+                  <span className="text-[10px] uppercase tracking-wider font-semibold text-forest block">Struttura Selezionata</span>
+                  <strong className="text-base font-serif text-forest">{selectedHotelVenue.name}</strong>
+                  <p className="text-xs text-olive">{selectedHotelVenue.city} · Voucher Welfare 50€</p>
                 </div>
-              </label>
-            ))}
+                <span className="rounded-full bg-forest text-cream text-xs px-3 py-1 font-medium">
+                  ✓ Selezionato
+                </span>
+              </div>
+            ) : (
+              <div className="mt-2 space-y-2">
+                {hotelVenues.map((venue) => (
+                  <div
+                    key={venue.id}
+                    className="flex flex-col gap-3 rounded-2xl border border-mist px-4 py-3 md:flex-row md:items-center md:justify-between hover:bg-sand/20 transition"
+                  >
+                    <div>
+                      <p className="font-medium text-forest">{venue.name}</p>
+                      <p className="text-xs text-olive">
+                        {venue.city} · {venueTypeLabel(venue.type)} · Voucher Pernottamento (50€)
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedHotelVenue(venue)}
+                      className="rounded-full border border-forest bg-white px-5 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-forest hover:bg-forest hover:text-cream transition"
+                    >
+                      Seleziona Pernottamento
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
+
+          {/* STEP 2: Scelta del Teatro Convenzionato (sbloccata una volta selezionato l'hotel) */}
+          {selectedHotelVenue ? (
+            <div className="rounded-2xl border border-gold/40 bg-cream p-5 animate-in fade-in duration-300">
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-gold/20 px-2.5 py-0.5 text-xs font-semibold text-terracotta">
+                  Passo 2 di 2
+                </span>
+                <p className="text-xs uppercase tracking-[0.14em] font-semibold text-terracotta">
+                  Scegli il Teatro per il Matching Grant dei Promotori
+                </p>
+              </div>
+              <p className="mt-2 text-xs text-olive leading-relaxed">
+                Avendo selezionato il pernottamento presso <strong>{selectedHotelVenue.name}</strong>, i Promotori coprono il Matching Grant per 2 persone (25€ + 25€). Scegli a quale teatro assistere allo spettacolo:
+              </p>
+
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                {theaterVenues.map((th) => (
+                  <label
+                    key={th.id}
+                    className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3.5 text-xs transition ${
+                      selectedTheaterId === th.id
+                        ? "border-forest bg-white font-medium text-forest shadow-sm"
+                        : "border-mist bg-white/70 text-ink/75 hover:border-gold/40"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="selectedTheater"
+                      value={th.id}
+                      checked={selectedTheaterId === th.id}
+                      onChange={() => setSelectedTheaterId(th.id)}
+                      className="mt-0.5 accent-forest"
+                    />
+                    <div>
+                      <strong className="block text-forest text-sm font-serif">{th.name}</strong>
+                      <span className="text-[11px] text-olive">{th.city} ({th.region}) · Omaggio 2 Persone (50€)</span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+
+              {/* CONFERMA E RISCATTO DEFINITIVO */}
+              <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-gold/20 pt-4">
+                <div>
+                  <p className="text-xs text-olive">
+                    Riepilogo: <strong>{selectedHotelVenue.name}</strong> + <strong>{theaterVenues.find(t => t.id === selectedTheaterId)?.name ?? "Teatro"}</strong>
+                  </p>
+                  <p className="text-[11px] text-terracotta mt-0.5">
+                    Alla conferma il voucher viene riscattato ai fini fiscali.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={pendingId === `${available.id}-${selectedHotelVenue.id}`}
+                  onClick={() => onRedeem(available.id, selectedHotelVenue.id, selectedTheaterId)}
+                  className="rounded-full bg-forest px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-cream hover:bg-forest/90 disabled:opacity-50 transition shadow-sm"
+                >
+                  {pendingId === `${available.id}-${selectedHotelVenue.id}`
+                    ? "Registrazione in corso..."
+                    : "Conferma Prenotazione & Riscatta"}
+                </button>
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
-
-      <div className="mt-5 space-y-2">
-        <p className="text-xs uppercase tracking-[0.14em] text-olive">
-          Seleziona la struttura ricettiva per il pernottamento
-        </p>
-        {hotelVenues.map((venue) => (
-          <div
-            key={venue.id}
-            className="flex flex-col gap-3 rounded-2xl border border-mist px-4 py-3 md:flex-row md:items-center md:justify-between hover:bg-sand/20 transition"
-          >
-            <div>
-              <p className="font-medium text-forest">{venue.name}</p>
-              <p className="text-xs text-olive">
-                {venue.city} · {venueTypeLabel(venue.type)} · Voucher Pernottamento (50€)
-              </p>
-            </div>
-            <button
-              type="button"
-              disabled={!available || pendingId === `${available?.id}-${venue.id}`}
-              onClick={() => available && onRedeem(available.id, venue.id, selectedTheaterId)}
-              className="rounded-full bg-forest px-5 py-2 text-xs font-semibold uppercase tracking-[0.12em] text-cream hover:bg-forest/90 disabled:bg-mist disabled:text-olive transition"
-            >
-              {available ? "Riscatta Pernottamento" : "Esaurito"}
-            </button>
-          </div>
-        ))}
-      </div>
     </section>
   );
 }
