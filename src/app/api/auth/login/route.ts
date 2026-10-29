@@ -15,6 +15,22 @@ function defaultRedirect(role: string) {
   return "/account";
 }
 
+function redirectForRole(role: string, next?: string | null) {
+  const fallback = defaultRedirect(role);
+  const safe = safeNextPath(next);
+  if (!safe) return fallback;
+  if (role === "csr" && safe.startsWith("/azienda")) return safe;
+  if (role === "provider" && safe.startsWith("/fornitore")) return safe;
+  if ((role === "promoter" || role === "admin") && safe.startsWith("/promotori")) return safe;
+  if (
+    (role === "employee" || role === "friend") &&
+    (safe.startsWith("/account") || safe.startsWith("/strutture") || safe.startsWith("/checkin") || safe.startsWith("/esplora"))
+  ) {
+    return safe;
+  }
+  return fallback;
+}
+
 function isJsonRequest(request: Request) {
   return (request.headers.get("content-type") ?? "").includes("application/json");
 }
@@ -74,7 +90,7 @@ export async function POST(request: Request) {
   }
 
   const { token, expiresAt } = await createSession(user.id);
-  const destination = safeNextPath(next) ?? defaultRedirect(user.role);
+  const destination = redirectForRole(user.role, next);
   const separator = destination.includes("?") ? "&" : "?";
   const redirectTo = `${destination}${separator}sid=${encodeURIComponent(token)}`;
   const cookie = await sessionCookieOptions();

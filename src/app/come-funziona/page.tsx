@@ -53,8 +53,11 @@ export default function HowItWorksPage() {
           <p className="mt-2 text-sm text-olive">Password unica: radici2026</p>
           <ul className="mt-3 space-y-1 text-sm">
             <li>mario.rossi@acme.it — dipendente ACME</li>
+            <li>luca.bianchi@acme.it — dipendente ACME</li>
+            <li>luigi.bianchi@email.it — amico / consumer</li>
+            <li>elena.martini@acme.it — CSR impresa</li>
             <li>elena@lavalle.it — fornitrice Agriturismo La Valle</li>
-            <li>luigi.bianchi@email.it — amico consumer</li>
+            <li>chiara.promotori@radici.it — promotori</li>
           </ul>
           <Link href="/login" className="mt-5 inline-block rounded-full bg-forest px-5 py-2 text-sm text-cream">
             Prova la piattaforma
