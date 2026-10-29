@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useRef } from "react";
 
 const DEMO_PASSWORD = "radici2026";
 
@@ -34,54 +34,30 @@ const demos = [
 ];
 
 export function LoginForm() {
-  const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next");
-  const [email, setEmail] = useState("mario.rossi@acme.it");
-  const [password, setPassword] = useState(DEMO_PASSWORD);
-  const [error, setError] = useState("");
-  const [pending, setPending] = useState(false);
+  const next = params.get("next") ?? "";
+  const error = params.get("error") ?? "";
+  const formRef = useRef<HTMLFormElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
 
-  async function loginWith(nextEmail: string, nextPassword: string) {
-    setEmail(nextEmail);
-    setPassword(nextPassword);
-    setPending(true);
-    setError("");
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email: nextEmail, password: nextPassword, next }),
-      });
-      const data = (await response.json()) as { error?: string; redirectTo?: string };
-      if (!response.ok) {
-        setError(data.error ?? "Accesso non riuscito.");
-        return;
-      }
-      router.push(next || data.redirectTo || "/account");
-      router.refresh();
-    } catch {
-      setError("Connessione non riuscita. Riprova.");
-    } finally {
-      setPending(false);
-    }
-  }
-
-  async function onSubmit(event: FormEvent) {
-    event.preventDefault();
-    await loginWith(email, password);
+  function enterAs(email: string) {
+    if (emailRef.current) emailRef.current.value = email;
+    if (passwordRef.current) passwordRef.current.value = DEMO_PASSWORD;
+    formRef.current?.requestSubmit();
   }
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onSubmit} className="space-y-4">
+      <form ref={formRef} method="post" action="/api/auth/login" className="space-y-4">
+        {next ? <input type="hidden" name="next" value={next} /> : null}
         <label className="block text-sm">
           Email
           <input
+            ref={emailRef}
             type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            name="email"
+            defaultValue="mario.rossi@acme.it"
             className="mt-1 w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3 outline-none focus:border-gold"
             required
           />
@@ -89,20 +65,17 @@ export function LoginForm() {
         <label className="block text-sm">
           Password
           <input
+            ref={passwordRef}
             type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            name="password"
+            defaultValue={DEMO_PASSWORD}
             className="mt-1 w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3 outline-none focus:border-gold"
             required
           />
         </label>
         {error ? <p className="text-sm text-wine">{error}</p> : null}
-        <button
-          type="submit"
-          disabled={pending}
-          className="w-full rounded-2xl bg-forest py-3 text-sm font-medium text-cream disabled:opacity-60"
-        >
-          {pending ? "Accesso in corso…" : "Entra nel tuo spazio"}
+        <button type="submit" className="w-full rounded-2xl bg-forest py-3 text-sm font-medium text-cream">
+          Entra nel tuo spazio
         </button>
       </form>
       <div>
@@ -113,9 +86,8 @@ export function LoginForm() {
             <button
               key={demo.email}
               type="button"
-              disabled={pending}
-              onClick={() => loginWith(demo.email, DEMO_PASSWORD)}
-              className="rounded-2xl border border-forest/10 px-4 py-3 text-left hover:border-gold disabled:opacity-60"
+              onClick={() => enterAs(demo.email)}
+              className="rounded-2xl border border-forest/10 px-4 py-3 text-left hover:border-gold"
             >
               <span className="block text-sm font-medium text-forest">{demo.label}</span>
               <span className="text-xs text-olive">{demo.hint}</span>

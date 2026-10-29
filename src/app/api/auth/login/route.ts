@@ -2,7 +2,13 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { createSession, safeNextPath } from "@/lib/auth";
+import {
+  SESSION_COOKIE,
+  createSession,
+  publicOriginFromHeaders,
+  safeNextPath,
+  sessionCookieOptions,
+} from "@/lib/auth";
 import { ensureSeeded } from "@/db/seed";
 import { verifyPassword } from "@/lib/utils";
 
@@ -15,26 +21,67 @@ function defaultRedirect(role: string) {
   return "/account";
 }
 
+function isJsonRequest(request: Request) {
+  return (request.headers.get("content-type") ?? "").includes("application/json");
+}
+
+async function readCredentials(request: Request) {
+  if (isJsonRequest(request)) {
+    const body = (await request.json()) as { email?: string; password?: string; next?: string };
+    return {
+      email: body.email?.trim().toLowerCase() ?? "",
+      password: body.password ?? "",
+      next: body.next,
+    };
+  }
+  const form = await request.formData();
+  return {
+    email: String(form.get("email") ?? "").trim().toLowerCase(),
+    password: String(form.get("password") ?? ""),
+    next: String(form.get("next") ?? "") || null,
+  };
+}
+
+function fail(request: Request, message: string, status: number) {
+  if (isJsonRequest(request)) {
+    return NextResponse.json({ error: message }, { status });
+  }
+  const origin = publicOriginFromHeaders(request.headers, request.url);
+  const url = new URL("/login", origin || request.url);
+  url.searchParams.set("error", message);
+  return NextResponse.redirect(url, 303);
+}
+
 export async function POST(request: Request) {
   await ensureSeeded();
-  const body = (await request.json()) as { email?: string; password?: string; next?: string };
-  const email = body.email?.trim().toLowerCase();
-  const password = body.password ?? "";
+  const { email, password, next } = await readCredentials(request);
 
   if (!email || !password) {
-    return NextResponse.json({ error: "Inserisci email e password." }, { status: 400 });
+    return fail(request, "Inserisci email e password.", 400);
   }
 
   const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
   if (!user || !verifyPassword(password, user.passwordHash)) {
-    return NextResponse.json({ error: "Credenziali non valide." }, { status: 401 });
+    return fail(request, "Credenziali non valide.", 401);
   }
 
-  await createSession(user.id);
-  const redirectTo = safeNextPath(body.next) ?? defaultRedirect(user.role);
-  return NextResponse.json({
-    ok: true,
-    redirectTo,
-    role: user.role,
-  });
+  const { token, expiresAt } = await createSession(user.id);
+  const redirectTo = safeNextPath(next) ?? defaultRedirect(user.role);
+  const cookie = await sessionCookieOptions();
+
+  if (isJsonRequest(request)) {
+    const response = NextResponse.json({
+      ok: true,
+      redirectTo,
+      role: user.role,
+    });
+    response.cookies.set(SESSION_COOKIE, token, { ...cookie, expires: expiresAt });
+    return response;
+  }
+
+  const origin = publicOriginFromHeaders(request.headers, request.url);
+  const location = new URL(redirectTo, `${origin || new URL(request.url).origin}/`);
+  const response = NextResponse.redirect(location, 303);
+  response.cookies.set(SESSION_COOKIE, token, { ...cookie, expires: expiresAt });
+  return response;
 }
