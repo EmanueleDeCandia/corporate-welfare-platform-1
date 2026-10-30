@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
-import { persistClientSession, readClientSessionToken } from "@/lib/session-client";
+import { installClientSession } from "@/lib/session-client";
+
+installClientSession();
 
 export function SessionBootstrap() {
   useEffect(() => {
-    const token = readClientSessionToken();
-    if (token) persistClientSession(token);
+    installClientSession();
   }, []);
   return null;
 }

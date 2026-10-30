@@ -35,6 +35,21 @@ export function randomCode(prefix: string) {
 }
 
 const DISPLAY_TIME_ZONE = "Europe/Rome";
+const MONTHS_IT_SHORT = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"];
+const MONTHS_IT_LONG = [
+  "gennaio",
+  "febbraio",
+  "marzo",
+  "aprile",
+  "maggio",
+  "giugno",
+  "luglio",
+  "agosto",
+  "settembre",
+  "ottobre",
+  "novembre",
+  "dicembre",
+];
 
 function asDate(value: Date | string | number) {
   if (value instanceof Date) return value;
@@ -42,34 +57,47 @@ function asDate(value: Date | string | number) {
   return new Date(value);
 }
 
-export function formatEuro(cents: number) {
-  const negative = cents < 0;
-  const abs = Math.abs(Math.round(cents));
-  const euros = Math.floor(abs / 100);
-  const rest = String(abs % 100).padStart(2, "0");
-  const grouped = String(euros).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return `${negative ? "-" : ""}${grouped},${rest} €`;
-}
-
-export function formatDate(date: Date | string | number) {
-  return new Intl.DateTimeFormat("it-IT", {
+function romeParts(value: Date | string | number) {
+  const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: DISPLAY_TIME_ZONE,
     day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(asDate(date));
-}
-
-export function formatDateTime(date: Date | string | number) {
-  return new Intl.DateTimeFormat("it-IT", {
-    timeZone: DISPLAY_TIME_ZONE,
-    day: "numeric",
-    month: "short",
+    month: "numeric",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-    hour12: false,
-  }).format(asDate(date));
+    hourCycle: "h23",
+  }).formatToParts(asDate(value));
+  const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
+  return {
+    day: get("day"),
+    month: Number(get("month")),
+    year: get("year"),
+    hour: get("hour").padStart(2, "0"),
+    minute: get("minute").padStart(2, "0"),
+  };
+}
+
+export function formatEuro(cents: number) {
+  const amount = Number(cents);
+  if (!Number.isFinite(amount)) return "0,00\u00A0\u20AC";
+  const negative = amount < 0;
+  const abs = Math.abs(Math.round(amount));
+  const euros = Math.floor(abs / 100);
+  const rest = String(abs % 100).padStart(2, "0");
+  const grouped = String(euros).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${negative ? "-" : ""}${grouped},${rest}\u00A0\u20AC`;
+}
+
+export function formatDate(date: Date | string | number) {
+  const parts = romeParts(date);
+  const month = MONTHS_IT_LONG[parts.month - 1] ?? "";
+  return `${parts.day} ${month} ${parts.year}`;
+}
+
+export function formatDateTime(date: Date | string | number) {
+  const parts = romeParts(date);
+  const month = MONTHS_IT_SHORT[parts.month - 1] ?? "";
+  return `${parts.day} ${month} ${parts.year}, ${parts.hour}:${parts.minute}`;
 }
 
 export function badgeForPoints(points: number) {

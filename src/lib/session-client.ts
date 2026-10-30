@@ -51,3 +51,21 @@ export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
     headers: sessionHeaders(init.headers),
   });
 }
+
+let fetchPatched = false;
+
+/** Runs in the browser bundle (no <script> in layout). Safe to call more than once. */
+export function installClientSession() {
+  if (typeof window === "undefined") return;
+  const token = readClientSessionToken();
+  if (token) persistClientSession(token);
+  if (fetchPatched) return;
+  fetchPatched = true;
+  const orig = window.fetch.bind(window);
+  window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+    const nextInit: RequestInit = init ? { ...init } : {};
+    nextInit.headers = sessionHeaders(nextInit.headers);
+    if (!nextInit.credentials) nextInit.credentials = "include";
+    return orig(input, nextInit);
+  };
+}
