@@ -155,7 +155,7 @@ export async function getInviteByEmail(email: string) {
   return row ?? null;
 }
 
-export async function getUserTransactions(userId: number) {
+export async function getUserTransactions(userId: number, limit: number = 5) {
   await initDb();
   const rows = await db
     .select({
@@ -165,7 +165,8 @@ export async function getUserTransactions(userId: number) {
     .from(transactions)
     .innerJoin(venues, eq(transactions.venueId, venues.id))
     .where(eq(transactions.userId, userId))
-    .orderBy(desc(transactions.createdAt));
+    .orderBy(desc(transactions.createdAt))
+    .limit(limit);
   return rows;
 }
 

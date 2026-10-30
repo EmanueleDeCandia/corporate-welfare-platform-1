@@ -185,15 +185,19 @@ function WalletTab(props: Props & { grantEvents?: GrantEventLite[] }) {
           cesti della filiera corta con il 10% di sconto garantito e far crescere i Punti Impatto di chi ti ha invitato.
         </p>
         <div className="mt-6 grid gap-3">
-          {transactions.map(({ transaction, venue }) => (
-            <div key={transaction.id} className="rounded-2xl border border-mist px-4 py-3">
-              <p className="font-medium text-forest">{venue.name}</p>
-              <p className="text-sm text-olive">
-                {transaction.serviceLabel} · {formatEuro(transaction.amountCents)} ·{" "}
-                {formatDateTime(transaction.createdAt)}
-              </p>
-            </div>
-          ))}
+          {transactions.length === 0 ? (
+            <p className="text-sm text-olive">Nessun movimento registrato.</p>
+          ) : (
+            transactions.slice(0, 5).map(({ transaction, venue }) => (
+              <div key={transaction.id} className="rounded-2xl border border-mist px-4 py-3">
+                <p className="font-medium text-forest">{venue.name}</p>
+                <p className="text-sm text-olive">
+                  {transaction.serviceLabel} · {formatEuro(transaction.amountCents)} ·{" "}
+                  {formatDateTime(transaction.createdAt)}
+                </p>
+              </div>
+            ))
+          )}
         </div>
       </section>
     );
@@ -250,12 +254,19 @@ function WalletTab(props: Props & { grantEvents?: GrantEventLite[] }) {
       ) : null}
 
       <section className="rounded-[28px] bg-white p-6">
-        <h3 className="font-serif text-2xl text-forest">Movimenti recenti</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="font-serif text-2xl text-forest">Movimenti recenti</h3>
+          {transactions.length > 5 ? (
+            <span className="text-xs text-olive font-medium">
+              Ultimi 5 movimenti (di {transactions.length})
+            </span>
+          ) : null}
+        </div>
         <div className="mt-4 space-y-3">
           {transactions.length === 0 ? (
             <p className="text-sm text-olive">Nessun movimento. Il primo riscatto apparirà qui.</p>
           ) : (
-            transactions.map(({ transaction, venue }) => (
+            transactions.slice(0, 5).map(({ transaction, venue }) => (
               <div key={transaction.id} className="flex items-center justify-between gap-4 border-b border-mist pb-3">
                 <div>
                   <p className="font-medium text-forest">{venue.name}</p>
@@ -263,7 +274,7 @@ function WalletTab(props: Props & { grantEvents?: GrantEventLite[] }) {
                     {transaction.serviceLabel} · {formatDateTime(transaction.createdAt)}
                   </p>
                 </div>
-                <p className="text-sm">{formatEuro(transaction.amountCents)}</p>
+                <p className="text-sm font-semibold text-forest">{formatEuro(transaction.amountCents)}</p>
               </div>
             ))
           )}
