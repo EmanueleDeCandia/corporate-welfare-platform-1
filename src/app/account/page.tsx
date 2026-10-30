@@ -5,6 +5,7 @@ import { PublicShell } from "@/components/public-shell";
 import { getCurrentUser } from "@/lib/auth";
 import {
   getGrantEvents,
+  getUserBookings,
   getUserCertificates,
   getUserInvites,
   getUserShares,
@@ -25,7 +26,7 @@ export default async function AccountPage() {
   if (user.role === "csr") redirect("/azienda");
   if (user.role === "provider") redirect("/fornitore");
 
-  const [vouchers, venues, grantEventsList, invites, transactions, shares, certificates] = await Promise.all([
+  const [vouchers, venues, grantEventsList, invites, transactions, shares, certificates, userBookings] = await Promise.all([
     getUserVouchers(user.id),
     getVenues(),
     getGrantEvents(),
@@ -33,6 +34,7 @@ export default async function AccountPage() {
     getUserTransactions(user.id),
     getUserShares(user.id),
     getUserCertificates(user.id),
+    getUserBookings(user.id),
   ]);
 
   const badge = badgeForPoints(user.impactPoints);
@@ -72,6 +74,7 @@ export default async function AccountPage() {
             transactions={transactions}
             shares={shares}
             certificates={certificates}
+            bookings={userBookings}
           />
         </div>
       </main>

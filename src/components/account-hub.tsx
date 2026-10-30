@@ -3,12 +3,18 @@
 import { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  AlertTriangle,
   Award,
   BadgeCheck,
+  Calendar,
+  CalendarCheck,
+  CheckCircle2,
+  Clock,
   Copy,
   Download,
   FileText,
   Leaf,
+  Plus,
   QrCode,
   Share2,
   ShieldCheck,
@@ -16,6 +22,7 @@ import {
   Ticket,
   Users,
   Wallet,
+  XCircle,
 } from "lucide-react";
 import type {
   certificates,
@@ -26,7 +33,10 @@ import type {
   venues,
   vouchers,
   grantEvents,
+  bookings,
+  venueOfferings,
 } from "@/db/schema";
+import type { UserBookingRow } from "@/lib/data";
 import {
   badgeForPoints,
   formatDate,
@@ -60,29 +70,33 @@ type Props = {
   transactions: TxRow[];
   shares: Array<typeof shares.$inferSelect>;
   certificates: Array<typeof certificates.$inferSelect>;
+  bookings?: UserBookingRow[];
 };
 
-type Tab = "wallet" | "kit" | "friends";
+type Tab = "wallet" | "bookings" | "kit" | "friends";
 
 export function AccountHub(props: Props) {
-  const [tab, setTab] = useState<Tab>(props.user.role === "friend" ? "friends" : "wallet");
+  const [tab, setTab] = useState<Tab>(props.user.role === "friend" ? "bookings" : "wallet");
+
+  const availableTabs = [
+    ...(props.user.role === "employee"
+      ? [{ id: "wallet" as const, label: "Portafoglio Welfare", icon: Wallet }]
+      : []),
+    { id: "bookings" as const, label: "Prenotazioni & Sconti", icon: CalendarCheck },
+    { id: "friends" as const, label: "Hub Amici & Referral", icon: Users },
+    { id: "kit" as const, label: "Kit & Certificati", icon: Share2 },
+  ];
 
   return (
     <div>
       <div className="tab-shadow flex gap-2 overflow-x-auto pb-3">
-        {(
-          [
-            { id: "wallet", label: "Portafoglio", icon: Wallet },
-            { id: "kit", label: "Kit e certificati", icon: Share2 },
-            { id: "friends", label: "Hub amici", icon: Users },
-          ] as const
-        ).map((item) => (
+        {availableTabs.map((item) => (
           <button
             key={item.id}
             type="button"
             onClick={() => setTab(item.id)}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm ${
-              tab === item.id ? "bg-forest text-cream" : "bg-white text-forest"
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
+              tab === item.id ? "bg-forest text-cream shadow-sm" : "bg-white text-forest hover:bg-cream"
             }`}
           >
             <item.icon size={16} />
@@ -92,6 +106,7 @@ export function AccountHub(props: Props) {
       </div>
       <div className="mt-6">
         {tab === "wallet" ? <WalletTab {...props} grantEvents={props.grantEvents ?? []} /> : null}
+        {tab === "bookings" ? <BookingsTab {...props} /> : null}
         {tab === "kit" ? <KitTab {...props} /> : null}
         {tab === "friends" ? <FriendsTab {...props} /> : null}
       </div>
@@ -964,4 +979,505 @@ function loadImage(src: string) {
     image.onerror = reject;
     image.src = src;
   });
+}
+
+function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
+  const router = useRouter();
+  const [showForm, setShowForm] = useState(false);
+  const [targetKind, setTargetKind] = useState<"venue" | "event">("venue");
+  const [selectedVenueId, setSelectedVenueId] = useState<number>(venues[0]?.id || 1);
+  const [selectedEventId, setSelectedEventId] = useState<number>(grantEvents[0]?.id || 1);
+  const [bookingDate, setBookingDate] = useState<string>(
+    new Date(Date.now() + 86400000 * 3).toISOString().split("T")[0]
+  );
+  const [timeSlot, setTimeSlot] = useState<string>("20:00");
+  const [partySize, setPartySize] = useState<number>(2);
+  const [guestPhone, setGuestPhone] = useState<string>("");
+  const [notes, setNotes] = useState<string>("");
+
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [actionPendingId, setActionPendingId] = useState<number | null>(null);
+
+  // Calcolo prezzi live
+  const activeVenue = venues.find((v) => v.id === selectedVenueId) || venues[0];
+  const activeEvent = grantEvents.find((e) => e.id === selectedEventId) || grantEvents[0];
+
+  let unitListPriceCents = 0;
+  if (targetKind === "event" && activeEvent) {
+    unitListPriceCents = 2500; // Valore convenzione evento 25€ a biglietto
+  } else if (activeVenue) {
+    unitListPriceCents =
+      activeVenue.type === "hotel" || activeVenue.type === "agriturismo"
+        ? activeVenue.priceHotelCents || 6000
+        : activeVenue.priceAperitivoCents || 3000;
+  }
+
+  const discountPercent = 10;
+  const totalListCents = unitListPriceCents * partySize;
+  const discountCents = Math.round((totalListCents * discountPercent) / 100);
+  const finalPriceCents = totalListCents - discountCents;
+
+  async function handleCreateBooking(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    try {
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          venueId: targetKind === "event" && activeEvent?.venueId ? activeEvent.venueId : selectedVenueId,
+          grantEventId: targetKind === "event" ? selectedEventId : null,
+          bookingType: targetKind === "event" ? "theater_event" : activeVenue?.type === "restaurant" ? "dinner" : "hospitality",
+          bookingDate,
+          timeSlot,
+          partySize,
+          guestPhone,
+          notes,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setErrorMsg(data.error || "Errore durante la creazione della prenotazione.");
+      } else {
+        setSuccessMsg(data.message || "Prenotazione registrata con successo!");
+        setShowForm(false);
+        router.refresh();
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || "Impossibile contattare il server.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function updateBookingStatus(bookingId: number, newStatus: "presence_confirmed" | "cancelled") {
+    setActionPendingId(bookingId);
+    setErrorMsg("");
+    try {
+      const res = await fetch("/api/bookings/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId, status: newStatus }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Errore durante l'aggiornamento.");
+      } else {
+        router.refresh();
+      }
+    } catch (err: any) {
+      alert("Errore di connessione.");
+    } finally {
+      setActionPendingId(null);
+    }
+  }
+
+  return (
+    <div className="space-y-8">
+      {/* Intestazione Sezione */}
+      <div className="rounded-[28px] bg-gradient-to-br from-forest to-[#0d221a] p-6 text-cream shadow-sm md:p-8">
+        <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-gold">
+              <CalendarCheck size={14} /> Circuito Convenzioni & Sconti
+            </div>
+            <h2 className="mt-2 font-serif text-3xl font-normal text-cream md:text-4xl">
+              Prenotazioni & Spettacoli nei Borghi
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-cream/80">
+              Come membro della community RADICI hai accesso a uno sconto garantito del <strong>10%</strong> su
+              tutte le strutture e gli eventi convenzionati. Prenota in anticipo e conferma la tua presenza
+              per permettere ai borghi di gestire i posti senza rischio di overbooking.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowForm(!showForm)}
+            className="inline-flex items-center justify-center gap-2 rounded-full bg-gold px-6 py-3 font-semibold text-forest shadow-md transition hover:bg-gold/90"
+          >
+            {showForm ? <XCircle size={18} /> : <Plus size={18} />}
+            {showForm ? "Chiudi Modulo" : "Nuova Prenotazione"}
+          </button>
+        </div>
+      </div>
+
+      {/* Messaggi di Alert */}
+      {successMsg && (
+        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-50 p-4 text-emerald-900 shadow-sm flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 size={18} className="text-emerald-600" />
+            <span className="text-sm font-medium">{successMsg}</span>
+          </div>
+          <button onClick={() => setSuccessMsg("")} className="text-xs text-emerald-700 underline">
+            Chiudi
+          </button>
+        </div>
+      )}
+
+      {/* Modulo Nuova Prenotazione (a comparsa) */}
+      {showForm && (
+        <form onSubmit={handleCreateBooking} className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm md:p-8">
+          <div className="flex items-center justify-between border-b border-forest/10 pb-4">
+            <div>
+              <h3 className="font-serif text-2xl text-forest">Effettua una Nuova Prenotazione Convenzionata</h3>
+              <p className="mt-1 text-xs text-olive">Sconto 10% applicato automaticamente al saldo presso la struttura.</p>
+            </div>
+            <span className="rounded-full bg-forest/5 px-3 py-1 text-xs font-semibold text-forest">
+              Sconto 10% Community
+            </span>
+          </div>
+
+          <div className="mt-6 grid gap-6 md:grid-cols-2">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-forest">
+                Cosa desideri prenotare?
+              </label>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTargetKind("venue")}
+                  className={`rounded-2xl py-3 text-sm font-medium transition ${
+                    targetKind === "venue"
+                      ? "bg-forest text-cream shadow-sm"
+                      : "border border-forest/10 bg-cream text-forest hover:bg-forest/5"
+                  }`}
+                >
+                  Struttura o Ristorante
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTargetKind("event")}
+                  className={`rounded-2xl py-3 text-sm font-medium transition ${
+                    targetKind === "event"
+                      ? "bg-forest text-cream shadow-sm"
+                      : "border border-forest/10 bg-cream text-forest hover:bg-forest/5"
+                  }`}
+                >
+                  Spettacolo Teatrale / Evento
+                </button>
+              </div>
+
+              {targetKind === "venue" ? (
+                <div className="mt-4">
+                  <label className="block text-xs font-semibold text-forest">Seleziona la Struttura Convenzionata</label>
+                  <select
+                    value={selectedVenueId}
+                    onChange={(e) => setSelectedVenueId(Number(e.target.value))}
+                    className="mt-1.5 w-full rounded-2xl border border-forest/15 bg-cream px-4 py-3 text-sm text-forest"
+                  >
+                    {venues.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name} ({venueTypeLabel(v.type)}) · {v.city} ({v.province})
+                      </option>
+                    ))}
+                  </select>
+                  {activeVenue && (
+                    <p className="mt-1.5 text-xs text-olive">
+                      {activeVenue.description.slice(0, 100)}...
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <div className="mt-4">
+                  <label className="block text-xs font-semibold text-forest">Seleziona lo Spettacolo Culturale</label>
+                  <select
+                    value={selectedEventId}
+                    onChange={(e) => setSelectedEventId(Number(e.target.value))}
+                    className="mt-1.5 w-full rounded-2xl border border-forest/15 bg-cream px-4 py-3 text-sm text-forest"
+                  >
+                    {grantEvents.map((ev) => (
+                      <option key={ev.id} value={ev.id}>
+                        {ev.title} @ {ev.venueName} · {ev.city} (Capienza: {ev.capacity} posti)
+                      </option>
+                    ))}
+                  </select>
+                  {activeEvent && (
+                    <div className="mt-2 rounded-2xl bg-gold/10 p-3 text-xs text-forest">
+                      <p className="font-semibold text-gold-darker">{activeEvent.title}</p>
+                      <p className="mt-1 text-ink/80">{activeEvent.description}</p>
+                      <p className="mt-1 text-olive">
+                        {activeEvent.startsAt ? `Data: ${formatDate(activeEvent.startsAt)} · ` : ""}
+                        Capienza massima: {activeEvent.capacity} posti
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-forest">Data Prenotazione</label>
+                  <input
+                    type="date"
+                    required
+                    value={bookingDate}
+                    onChange={(e) => setBookingDate(e.target.value)}
+                    className="mt-1.5 w-full rounded-2xl border border-forest/15 bg-cream px-4 py-2.5 text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-forest">Orario / Fascia</label>
+                  <input
+                    type="text"
+                    placeholder="es. 20:30 o Check-in"
+                    value={timeSlot}
+                    onChange={(e) => setTimeSlot(e.target.value)}
+                    className="mt-1.5 w-full rounded-2xl border border-forest/15 bg-cream px-4 py-2.5 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-forest">Numero Ospiti / Posti</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={partySize}
+                    onChange={(e) => setPartySize(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                    className="mt-1.5 w-full rounded-2xl border border-forest/15 bg-cream px-4 py-2.5 text-sm font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-forest">Telefono Contatto</label>
+                  <input
+                    type="tel"
+                    placeholder="+39 340 0000000"
+                    value={guestPhone}
+                    onChange={(e) => setGuestPhone(e.target.value)}
+                    className="mt-1.5 w-full rounded-2xl border border-forest/15 bg-cream px-4 py-2.5 text-sm"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-xs font-semibold text-forest">Note o Richieste Speciali</label>
+                <textarea
+                  rows={2}
+                  placeholder="Es. arrivo in tarda serata, intolleranze alimentari, preferenze camera..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  className="mt-1.5 w-full rounded-2xl border border-forest/15 bg-cream px-4 py-2.5 text-sm"
+                />
+              </div>
+
+              {/* Box Riepilogo Costi & Sconto Community */}
+              <div className="mt-4 rounded-2xl bg-cream/70 p-4 border border-forest/10">
+                <p className="text-xs font-bold uppercase tracking-wider text-forest">Riepilogo Tariffa Convenzionata</p>
+                <div className="mt-2 space-y-1.5 text-xs text-ink/80">
+                  <div className="flex justify-between">
+                    <span>Listino ufficiale ({partySize} {partySize === 1 ? "persona" : "persone"}):</span>
+                    <span className="font-medium line-through text-olive">{formatEuro(totalListCents)}</span>
+                  </div>
+                  <div className="flex justify-between text-terracotta">
+                    <span>Sconto Esclusivo Community RADICI (-10%):</span>
+                    <span className="font-semibold">-{formatEuro(discountCents)}</span>
+                  </div>
+                  <div className="flex justify-between border-t border-forest/10 pt-2 text-sm font-bold text-forest">
+                    <span>Importo Netto da corrispondere al check-in:</span>
+                    <span className="text-base text-forest">{formatEuro(finalPriceCents)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {errorMsg && <p className="mt-3 text-xs font-medium text-wine">{errorMsg}</p>}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="mt-4 w-full rounded-full bg-forest py-3.5 text-sm font-semibold text-cream shadow-md transition hover:bg-forest/90 disabled:opacity-50"
+              >
+                {loading ? "Registrazione prenotazione in corso..." : "Invia Prenotazione con Sconto 10%"}
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
+
+      {/* Elenco Prenotazioni dell'Utente */}
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-serif text-2xl text-forest">Le Tue Prenotazioni</h3>
+          <span className="text-xs font-semibold text-olive">
+            {bookings.length} {bookings.length === 1 ? "prenotazione registrata" : "prenotazioni registrate"}
+          </span>
+        </div>
+
+        {bookings.length === 0 ? (
+          <div className="rounded-[28px] border-2 border-dashed border-forest/15 bg-white p-10 text-center">
+            <Calendar className="mx-auto text-forest/30" size={48} />
+            <h4 className="mt-3 font-serif text-xl text-forest">Nessuna prenotazione attiva</h4>
+            <p className="mt-1 text-sm text-olive max-w-md mx-auto">
+              Non hai ancora prenotato soggiorni, cene o spettacoli convenzionati. Utilizza il pulsante
+              sopra per prenotare con il 10% di sconto.
+            </p>
+            <button
+              onClick={() => setShowForm(true)}
+              className="mt-4 rounded-full bg-forest px-6 py-2.5 text-sm font-semibold text-cream"
+            >
+              Prenota Adesso
+            </button>
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2">
+            {bookings.map(({ booking: b, venue: v, grantEvent: ge }) => {
+              const isPending = b.status === "pending";
+              const isConfirmed = b.status === "confirmed";
+              const isPresenceConfirmed = b.status === "presence_confirmed";
+              const isAttended = b.status === "attended";
+              const isCancelled = b.status === "cancelled" || b.status === "rejected";
+
+              return (
+                <div
+                  key={b.id}
+                  className={`relative flex flex-col justify-between rounded-[26px] border p-6 transition-all ${
+                    isPresenceConfirmed
+                      ? "border-emerald-300 bg-emerald-50/40 shadow-sm"
+                      : isConfirmed
+                      ? "border-blue-200 bg-blue-50/30 shadow-sm"
+                      : isCancelled
+                      ? "border-forest/10 bg-cream/30 opacity-70"
+                      : "border-forest/10 bg-white shadow-sm"
+                  }`}
+                >
+                  <div>
+                    {/* Header Card */}
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <span className="inline-block rounded-full bg-forest/5 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-forest">
+                          {b.bookingType === "theater_event"
+                            ? "Spettacolo Teatrale"
+                            : b.bookingType === "dinner"
+                            ? "Cena & Sapori"
+                            : "Pernottamento"}
+                        </span>
+                        <h4 className="mt-1 font-serif text-xl font-bold text-forest">{v.name}</h4>
+                        <p className="text-xs text-olive">
+                          {v.city} ({v.province}) · {v.region}
+                        </p>
+                      </div>
+
+                      {/* Badge di Stato */}
+                      <div>
+                        {isPending && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
+                            <Clock size={12} /> In Attesa di Accettazione
+                          </span>
+                        )}
+                        {isConfirmed && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">
+                            <CheckCircle2 size={12} /> Confermata dal Gestore
+                          </span>
+                        )}
+                        {isPresenceConfirmed && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
+                            <CheckCircle2 size={12} /> Presenza Riconfermata ✓
+                          </span>
+                        )}
+                        {isAttended && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-800">
+                            <Sparkles size={12} /> Completata (Check-in effettuato)
+                          </span>
+                        )}
+                        {b.status === "rejected" && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-800">
+                            <XCircle size={12} /> Non Disponibile
+                          </span>
+                        )}
+                        {b.status === "cancelled" && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                            <XCircle size={12} /> Annullata
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Dettagli Evento o Servizio */}
+                    {ge && (
+                      <div className="mt-3 rounded-2xl bg-gold/10 p-3 text-xs text-forest border border-gold/20">
+                        <p className="font-bold text-forest">Spettacolo: {ge.title}</p>
+                        <p className="text-olive">
+                          Posti riservati all&apos;evento per {b.partySize} persone
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Dettagli Prenotazione */}
+                    <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl bg-cream/60 p-3 text-xs">
+                      <div>
+                        <span className="block text-olive font-medium">Data di Arrivo:</span>
+                        <span className="font-bold text-forest">{formatDate(b.bookingDate)}</span>
+                      </div>
+                      <div>
+                        <span className="block text-olive font-medium">Orario / Fascia:</span>
+                        <span className="font-bold text-forest">{b.timeSlot || "Standard"}</span>
+                      </div>
+                      <div>
+                        <span className="block text-olive font-medium">Numero Ospiti:</span>
+                        <span className="font-bold text-forest">{b.partySize} {b.partySize === 1 ? "persona" : "persone"}</span>
+                      </div>
+                      <div>
+                        <span className="block text-olive font-medium">Prezzo Netto Convenzione:</span>
+                        <span className="font-bold text-forest">{formatEuro(b.finalPriceCents)} (-10%)</span>
+                      </div>
+                    </div>
+
+                    {b.notes && (
+                      <p className="mt-2 text-xs text-olive italic">
+                        Note: &ldquo;{b.notes}&rdquo;
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Azioni Interattive per l'Ospite */}
+                  {(isPending || isConfirmed) && (
+                    <div className="mt-5 border-t border-forest/10 pt-4 flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        {!isPresenceConfirmed ? (
+                          <button
+                            type="button"
+                            disabled={actionPendingId === b.id}
+                            onClick={() => updateBookingStatus(b.id, "presence_confirmed")}
+                            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-700 px-4 py-2 text-xs font-semibold text-cream shadow-sm hover:bg-emerald-800 transition disabled:opacity-50"
+                          >
+                            <CheckCircle2 size={14} /> Conferma la tua Presenza
+                          </button>
+                        ) : (
+                          <span className="text-xs text-emerald-800 font-semibold">
+                            ✓ Hai confermato l&apos;arrivo
+                          </span>
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled={actionPendingId === b.id}
+                        onClick={() => {
+                          if (confirm("Vuoi davvero annullare questa prenotazione? I posti verranno liberati.")) {
+                            updateBookingStatus(b.id, "cancelled");
+                          }
+                        }}
+                        className="rounded-full border border-forest/20 px-3.5 py-2 text-xs font-medium text-forest hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition disabled:opacity-50"
+                      >
+                        Annulla Prenotazione
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    </div>
+  );
 }

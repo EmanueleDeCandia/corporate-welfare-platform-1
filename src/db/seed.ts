@@ -18,6 +18,7 @@ import {
   matchingGrants,
   grantSeats,
   grantConfirmations,
+  bookings,
 } from "@/db/schema";
 import { badgeForPoints, hashPassword } from "@/lib/utils";
 
@@ -1420,6 +1421,47 @@ export async function seedDatabase() {
         "Stima della CO₂ non emessa scegliendo prodotti KM 0 e soggiorni in strutture agricole rispetto a una filiera extra-regionale.",
       impactValue: "18,4",
       unitLabel: "kg di CO₂eq evitati",
+    },
+  ]);
+
+  // Prenotazioni dimostrative per l'Ospite Community (Luigi Bianchi)
+  await db.insert(bookings).values([
+    {
+      userId: luigi.id,
+      venueId: insertedVenues[5].id, // Osteria del Tiglio
+      bookingType: "dinner",
+      bookingDate: "2026-11-21",
+      timeSlot: "20:30",
+      partySize: 2,
+      discountPercent: 10,
+      totalAmountCents: 6000,
+      discountCents: 600,
+      finalPriceCents: 5400,
+      status: "presence_confirmed",
+      confirmationToken: "bkg-luigi-cena-001",
+      guestName: "Luigi Bianchi",
+      guestEmail: "luigi.bianchi@email.it",
+      guestPhone: "+39 333 4455667",
+      notes: "Tavolo all'aperto se possibile. Arrivo previsto per le 20:30.",
+    },
+    {
+      userId: luigi.id,
+      venueId: teatroLauro.id,
+      grantEventId: insertedGrantEvents[0].id, // Spettacolo Teatro Lauro Rossi
+      bookingType: "theater_event",
+      bookingDate: "2026-11-28",
+      timeSlot: "21:00",
+      partySize: 2,
+      discountPercent: 10,
+      totalAmountCents: 5000,
+      discountCents: 500,
+      finalPriceCents: 4500,
+      status: "confirmed",
+      confirmationToken: "bkg-luigi-teatro-002",
+      guestName: "Luigi Bianchi",
+      guestEmail: "luigi.bianchi@email.it",
+      guestPhone: "+39 333 4455667",
+      notes: "Due posti vicini.",
     },
   ]);
 }

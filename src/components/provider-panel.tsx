@@ -2,9 +2,24 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Bell, CheckCircle2, Clock, FileText, Info, Receipt, Stamp, UserCheck, UserX } from "lucide-react";
+import {
+  Bell,
+  CalendarCheck,
+  CheckCircle2,
+  Clock,
+  FileText,
+  Info,
+  Receipt,
+  Sparkles,
+  Stamp,
+  UserCheck,
+  Users,
+  UserX,
+  XCircle,
+} from "lucide-react";
 import type { companies, notifications, transactions, users, venues } from "@/db/schema";
-import { formatDateTime, formatEuro } from "@/lib/utils";
+import type { VenueBookingRow } from "@/lib/data";
+import { formatDate, formatDateTime, formatEuro } from "@/lib/utils";
 
 type Props = {
   venue: typeof venues.$inferSelect;
@@ -16,10 +31,12 @@ type Props = {
     attendanceStatus?: string;
     checkedInAt?: Date | null;
   }>;
+  bookings?: VenueBookingRow[];
 };
 
-export function ProviderPanel({ venue, notifications: items, transactions: rows }: Props) {
+export function ProviderPanel({ venue, notifications: items, transactions: rows, bookings = [] }: Props) {
   const router = useRouter();
+  const [panelTab, setPanelTab] = useState<"welfare" | "community">("welfare");
   const [pending, setPending] = useState<number | null>(null);
 
   // Stato per l'editing degli estremi fattura inline
@@ -27,6 +44,20 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows 
   const [invNum, setInvNum] = useState("");
   const [invDate, setInvDate] = useState("");
   const [invNotes, setInvNotes] = useState("");
+
+  async function updateBookingStatus(bookingId: number, status: string) {
+    setPending(bookingId);
+    try {
+      await fetch("/api/bookings/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookingId, status }),
+      });
+      router.refresh();
+    } finally {
+      setPending(null);
+    }
+  }
 
   async function confirmNotification(id: number) {
     setPending(id);
@@ -131,22 +162,52 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows 
         </div>
       </section>
 
-      {/* Regola Fiscale Chiave (Art. 51 TUIR) */}
-      <section className="rounded-2xl border border-gold/40 bg-sand/15 p-5">
-        <div className="flex items-start gap-3">
-          <Info className="mt-0.5 text-forest shrink-0" size={20} />
-          <div className="text-sm leading-relaxed text-forest">
-            <strong className="block text-base font-serif mb-1">Regola Fondamentale di Pagamento Welfare (Art. 51 TUIR)</strong>
-            Ogni voucher selezionato dal lavoratore costituisce un <strong>debito certo ed esigibile</strong> a carico dell&apos;Impresa CSR committente:
-            il compenso a tuo favore è <strong>dovuto per legge al momento del riscatto</strong>, sia che l&apos;ospite si presenti sia in caso di mancato arrivo (no-show).
-            Emetti la fattura dal tuo gestionale contabile intestandola all&apos;azienda indicata e segna qui il numero di fattura e l&apos;avvenuto saldo.
-            La rilevazione della presenza fisica serve unicamente al monitoraggio statistico ed ESG territoriale.
-          </div>
-        </div>
-      </section>
+      {/* Navigazione Tab del Pannello Fornitore */}
+      <div className="flex gap-2 border-b border-forest/10 pb-3">
+        <button
+          type="button"
+          onClick={() => setPanelTab("welfare")}
+          className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+            panelTab === "welfare"
+              ? "bg-forest text-cream shadow-sm"
+              : "bg-white text-forest hover:bg-cream border border-forest/10"
+          }`}
+        >
+          <FileText size={16} />
+          Distinta Welfare B2B ({rows.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setPanelTab("community")}
+          className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+            panelTab === "community"
+              ? "bg-forest text-cream shadow-sm"
+              : "bg-white text-forest hover:bg-cream border border-forest/10"
+          }`}
+        >
+          <CalendarCheck size={16} />
+          Prenotazioni Community & Spettacoli ({bookings.length})
+        </button>
+      </div>
 
-      {/* Registro Prestazioni & Controllo Eventi Fiscale */}
-      <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/5">
+      {panelTab === "welfare" ? (
+        <>
+          {/* Regola Fiscale Chiave (Art. 51 TUIR) */}
+          <section className="rounded-2xl border border-gold/40 bg-sand/15 p-5">
+            <div className="flex items-start gap-3">
+              <Info className="mt-0.5 text-forest shrink-0" size={20} />
+              <div className="text-sm leading-relaxed text-forest">
+                <strong className="block text-base font-serif mb-1">Regola Fondamentale di Pagamento Welfare (Art. 51 TUIR)</strong>
+                Ogni voucher selezionato dal lavoratore costituisce un <strong>debito certo ed esigibile</strong> a carico dell&apos;Impresa CSR committente:
+                il compenso a tuo favore è <strong>dovuto per legge al momento del riscatto</strong>, sia che l&apos;ospite si presenti sia in caso di mancato arrivo (no-show).
+                Emetti la fattura dal tuo gestionale contabile intestandola all&apos;azienda indicata e segna qui il numero di fattura e l&apos;avvenuto saldo.
+                La rilevazione della presenza fisica serve unicamente al monitoraggio statistico ed ESG territoriale.
+              </div>
+            </div>
+          </section>
+
+          {/* Registro Prestazioni & Controllo Eventi Fiscale */}
+          <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/5">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-serif text-2xl text-forest">Distinta Prestazioni & Eventi di Pagamento</h2>
@@ -401,6 +462,190 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows 
           </table>
         </div>
       </section>
+        </>
+      ) : (
+        /* Sezione Prenotazioni Community & Spettacoli Teatrali */
+        <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/5">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between border-b border-forest/10 pb-4">
+            <div>
+              <h2 className="font-serif text-2xl text-forest">Gestione Prenotazioni Community & Ospiti</h2>
+              <p className="text-xs text-olive mt-0.5">
+                Accetta o gestisci le prenotazioni convenzionate (sconto 10%), richiedi o ricevi la riconferma di presenza ed evita l&apos;overbooking.
+              </p>
+            </div>
+            <span className="text-xs rounded-full bg-forest/5 px-3 py-1 font-mono text-forest">
+              {bookings.length} {bookings.length === 1 ? "prenotazione" : "prenotazioni"}
+            </span>
+          </div>
+
+          {bookings.length === 0 ? (
+            <div className="py-12 text-center">
+              <CalendarCheck className="mx-auto text-forest/25" size={44} />
+              <h3 className="mt-3 font-serif text-xl text-forest">Nessuna prenotazione community ricevuta</h3>
+              <p className="mt-1 text-xs text-olive max-w-sm mx-auto">
+                Le prenotazioni inviate dagli amici della community con convenzione 10% appariranno qui.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full min-w-[700px] text-left text-xs">
+                <thead>
+                  <tr className="border-b border-forest/10 text-olive uppercase tracking-wider text-[10px]">
+                    <th className="pb-3">Data & Orario</th>
+                    <th className="pb-3">Ospite</th>
+                    <th className="pb-3">Servizio / Evento</th>
+                    <th className="pb-3 text-center">Posti</th>
+                    <th className="pb-3 text-right">Totale Convenzione</th>
+                    <th className="pb-3 text-center">Stato Presenza</th>
+                    <th className="pb-3 text-right">Azioni Struttura</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-forest/5">
+                  {bookings.map(({ booking: b, user: u, grantEvent: ge }) => {
+                    const isPending = b.status === "pending";
+                    const isConfirmed = b.status === "confirmed";
+                    const isPresenceConfirmed = b.status === "presence_confirmed";
+                    const isAttended = b.status === "attended";
+                    const isNoShow = b.status === "no_show";
+
+                    return (
+                      <tr key={b.id} className="hover:bg-sand/10 transition">
+                        <td className="py-3.5 align-top">
+                          <p className="font-bold text-forest">{formatDate(b.bookingDate)}</p>
+                          <p className="text-[11px] text-olive">{b.timeSlot || "Orario standard"}</p>
+                        </td>
+
+                        <td className="py-3.5 align-top">
+                          <p className="font-semibold text-forest">{b.guestName}</p>
+                          <p className="text-olive">{b.guestEmail}</p>
+                          {b.guestPhone && <p className="text-[10px] text-ink/70">Tel: {b.guestPhone}</p>}
+                          {b.notes && <p className="mt-1 text-[10px] italic text-olive">Note: {b.notes}</p>}
+                        </td>
+
+                        <td className="py-3.5 align-top">
+                          {ge ? (
+                            <div>
+                              <span className="inline-block rounded-full bg-gold/15 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-forest">
+                                Spettacolo
+                              </span>
+                              <p className="mt-0.5 font-bold text-forest">{ge.title}</p>
+                            </div>
+                          ) : (
+                            <span className="font-medium text-forest capitalize">
+                              {b.bookingType === "dinner" ? "Cena tipica" : "Pernottamento"}
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="py-3.5 align-top text-center">
+                          <span className="inline-block rounded-full bg-cream px-2.5 py-1 font-bold text-forest border border-forest/10">
+                            {b.partySize} {b.partySize === 1 ? "posto" : "posti"}
+                          </span>
+                        </td>
+
+                        <td className="py-3.5 align-top text-right font-medium">
+                          <p className="font-bold text-forest">{formatEuro(b.finalPriceCents)}</p>
+                          <p className="text-[10px] text-terracotta">Sconto 10% applicato</p>
+                        </td>
+
+                        <td className="py-3.5 align-top text-center">
+                          {isPending && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
+                              <Clock size={11} /> In attesa
+                            </span>
+                          )}
+                          {isConfirmed && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-semibold text-blue-800">
+                              <CheckCircle2 size={11} /> Accettata
+                            </span>
+                          )}
+                          {isPresenceConfirmed && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 shadow-sm border border-emerald-300">
+                              <Sparkles size={11} /> Presenza Riconfermata ✓
+                            </span>
+                          )}
+                          {isAttended && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-1 text-[11px] font-semibold text-purple-800">
+                              ✓ Presente
+                            </span>
+                          )}
+                          {isNoShow && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-semibold text-rose-800">
+                              ✗ No-Show
+                            </span>
+                          )}
+                          {b.status === "cancelled" && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
+                              Annullata
+                            </span>
+                          )}
+                          {b.status === "rejected" && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-semibold text-rose-800">
+                              Rifiutata
+                            </span>
+                          )}
+                        </td>
+
+                        <td className="py-3.5 align-top text-right">
+                          <div className="flex flex-col items-end gap-1.5">
+                            {isPending && (
+                              <div className="flex gap-1">
+                                <button
+                                  type="button"
+                                  disabled={pending === b.id}
+                                  onClick={() => updateBookingStatus(b.id, "confirmed")}
+                                  className="rounded-full bg-forest px-3 py-1 text-[10px] font-bold text-cream hover:bg-forest/90 transition"
+                                >
+                                  Accetta
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={pending === b.id}
+                                  onClick={() => updateBookingStatus(b.id, "rejected")}
+                                  className="rounded-full border border-forest/20 px-2.5 py-1 text-[10px] font-medium text-forest hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 transition"
+                                >
+                                  Rifiuta
+                                </button>
+                              </div>
+                            )}
+
+                            {(isConfirmed || isPresenceConfirmed) && (
+                              <div className="flex gap-1">
+                                <button
+                                  type="button"
+                                  disabled={pending === b.id}
+                                  onClick={() => updateBookingStatus(b.id, "attended")}
+                                  className="inline-flex items-center gap-1 rounded-full bg-emerald-700 px-3 py-1 text-[10px] font-bold text-cream hover:bg-emerald-800 transition"
+                                >
+                                  <UserCheck size={11} /> Segna Presente
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={pending === b.id}
+                                  onClick={() => updateBookingStatus(b.id, "no_show")}
+                                  className="inline-flex items-center gap-1 rounded-full border border-rose-200 px-2 py-1 text-[10px] font-medium text-rose-700 hover:bg-rose-50 transition"
+                                >
+                                  <UserX size={11} /> No-Show
+                                </button>
+                              </div>
+                            )}
+
+                            {(isAttended || isNoShow) && (
+                              <span className="text-[10px] text-olive font-medium">
+                                Check-in registrato
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Sezione Notifiche Operative */}
       <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/5">

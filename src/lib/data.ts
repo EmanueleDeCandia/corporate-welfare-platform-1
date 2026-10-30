@@ -13,6 +13,10 @@ import {
   vouchers,
   voucherSelections,
   grantEvents,
+  venueOfferings,
+  bookings,
+  matchingGrants,
+  type Booking,
   type GrantEvent,
   type VoucherType,
 } from "@/db/schema";
@@ -258,4 +262,119 @@ export async function getUsersByIds(ids: number[]) {
 export async function getGrantEvents() {
   await initDb();
   return db.select().from(grantEvents).where(eq(grantEvents.active, true));
+}
+
+export type UserBookingRow = {
+  booking: typeof bookings.$inferSelect;
+  venue: typeof venues.$inferSelect;
+  grantEvent: typeof grantEvents.$inferSelect | null;
+  offering: typeof venueOfferings.$inferSelect | null;
+};
+
+export async function getUserBookings(userId: number): Promise<UserBookingRow[]> {
+  await initDb();
+  const rows = await db
+    .select({
+      booking: bookings,
+      venue: venues,
+      grantEvent: grantEvents,
+      offering: venueOfferings,
+    })
+    .from(bookings)
+    .innerJoin(venues, eq(bookings.venueId, venues.id))
+    .leftJoin(grantEvents, eq(bookings.grantEventId, grantEvents.id))
+    .leftJoin(venueOfferings, eq(bookings.offeringId, venueOfferings.id))
+    .where(eq(bookings.userId, userId))
+    .orderBy(desc(bookings.createdAt));
+
+  return rows;
+}
+
+export type VenueBookingRow = {
+  booking: typeof bookings.$inferSelect;
+  user: typeof users.$inferSelect;
+  grantEvent: typeof grantEvents.$inferSelect | null;
+  offering: typeof venueOfferings.$inferSelect | null;
+};
+
+export async function getVenueBookings(venueId: number): Promise<VenueBookingRow[]> {
+  await initDb();
+  const rows = await db
+    .select({
+      booking: bookings,
+      user: users,
+      grantEvent: grantEvents,
+      offering: venueOfferings,
+    })
+    .from(bookings)
+    .innerJoin(users, eq(bookings.userId, users.id))
+    .leftJoin(grantEvents, eq(bookings.grantEventId, grantEvents.id))
+    .leftJoin(venueOfferings, eq(bookings.offeringId, venueOfferings.id))
+    .where(eq(bookings.venueId, venueId))
+    .orderBy(desc(bookings.createdAt));
+
+  return rows;
+}
+
+export async function getAllPlatformBookings() {
+  await initDb();
+  return db
+    .select({
+      booking: bookings,
+      user: users,
+      venue: venues,
+      grantEvent: grantEvents,
+      offering: venueOfferings,
+    })
+    .from(bookings)
+    .innerJoin(users, eq(bookings.userId, users.id))
+    .innerJoin(venues, eq(bookings.venueId, venues.id))
+    .leftJoin(grantEvents, eq(bookings.grantEventId, grantEvents.id))
+    .leftJoin(venueOfferings, eq(bookings.offeringId, venueOfferings.id))
+    .orderBy(desc(bookings.createdAt));
+}
+
+export async function getEventCapacityStats(eventId: number) {
+  await initDb();
+  const [event] = await db.select().from(grantEvents).where(eq(grantEvents.id, eventId)).limit(1);
+  if (!event) return null;
+
+  // Posti Welfare Matching Grant
+  const grants = await db
+    .select()
+    .from(matchingGrants)
+    .where(eq(matchingGrants.eventId, eventId));
+
+  const activeGrants = grants.filter(
+    (g) => g.status !== "declined" && g.status !== "expired"
+  );
+  const welfareSeats = activeGrants.reduce((sum, g) => sum + (g.seatsRequested || 2), 0);
+
+  // Posti Community Bookings (Amici / Ospiti)
+  const eventBookings = await db
+    .select()
+    .from(bookings)
+    .where(eq(bookings.grantEventId, eventId));
+
+  const activeBookings = eventBookings.filter(
+    (b) => b.status !== "rejected" && b.status !== "cancelled"
+  );
+  const communitySeats = activeBookings.reduce((sum, b) => sum + (b.partySize || 1), 0);
+
+  const totalOccupied = welfareSeats + communitySeats;
+  const availableSeats = Math.max(0, event.capacity - totalOccupied);
+  const occupancyPercent = event.capacity > 0 ? Math.round((totalOccupied / event.capacity) * 100) : 0;
+  const isOverbookingRisk = availableSeats <= Math.max(2, Math.round(event.capacity * 0.15));
+
+  return {
+    eventId,
+    title: event.title,
+    capacity: event.capacity,
+    welfareSeats,
+    communitySeats,
+    totalOccupied,
+    availableSeats,
+    occupancyPercent,
+    isOverbookingRisk,
+  };
 }

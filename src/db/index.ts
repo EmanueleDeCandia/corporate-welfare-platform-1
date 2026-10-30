@@ -309,6 +309,32 @@ export async function initDb() {
           expires_at INTEGER NOT NULL,
           created_at INTEGER NOT NULL DEFAULT (unixepoch())
         );
+
+        CREATE TABLE IF NOT EXISTS bookings (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id INTEGER NOT NULL REFERENCES users(id),
+          venue_id INTEGER NOT NULL REFERENCES venues(id),
+          offering_id INTEGER REFERENCES venue_offerings(id),
+          grant_event_id INTEGER REFERENCES grant_events(id),
+          booking_type TEXT NOT NULL DEFAULT 'hospitality',
+          booking_date TEXT NOT NULL,
+          time_slot TEXT,
+          party_size INTEGER NOT NULL DEFAULT 1,
+          discount_percent INTEGER NOT NULL DEFAULT 10,
+          total_amount_cents INTEGER NOT NULL DEFAULT 0,
+          discount_cents INTEGER NOT NULL DEFAULT 0,
+          final_price_cents INTEGER NOT NULL DEFAULT 0,
+          status TEXT NOT NULL DEFAULT 'pending',
+          confirmation_token TEXT NOT NULL UNIQUE,
+          confirmed_at INTEGER,
+          presence_confirmed_at INTEGER,
+          attended_at INTEGER,
+          guest_name TEXT NOT NULL,
+          guest_email TEXT NOT NULL,
+          guest_phone TEXT,
+          notes TEXT,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch())
+        );
       `);
 
       // Migrations per tabelle esistenti
@@ -391,6 +417,9 @@ export async function initDb() {
           CREATE INDEX IF NOT EXISTS ix_notifications_venue ON notifications(venue_id, read);
           CREATE INDEX IF NOT EXISTS ix_sessions_user ON sessions(user_id);
           CREATE INDEX IF NOT EXISTS ix_offerings_venue ON venue_offerings(venue_id, benefit_type);
+          CREATE INDEX IF NOT EXISTS ix_bookings_user ON bookings(user_id, status);
+          CREATE INDEX IF NOT EXISTS ix_bookings_venue ON bookings(venue_id, status);
+          CREATE INDEX IF NOT EXISTS ix_bookings_event ON bookings(grant_event_id);
         `);
       } catch (e) {
         console.warn("Index creation warning:", e);

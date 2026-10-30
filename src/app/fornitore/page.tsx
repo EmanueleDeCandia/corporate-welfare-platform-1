@@ -3,7 +3,7 @@ import { LogoutButton } from "@/components/logout-button";
 import { ProviderPanel } from "@/components/provider-panel";
 import { PublicShell } from "@/components/public-shell";
 import { getCurrentUser } from "@/lib/auth";
-import { getProviderNotifications, getProviderTransactions } from "@/lib/data";
+import { getProviderNotifications, getProviderTransactions, getVenueBookings } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 
@@ -12,9 +12,10 @@ export default async function ProviderPage() {
   if (!user) redirect("/login?next=/fornitore");
   if (user.role !== "provider" || !user.venue) redirect("/account");
 
-  const [items, rows] = await Promise.all([
+  const [items, rows, venueBookings] = await Promise.all([
     getProviderNotifications(user.venue.id),
     getProviderTransactions(user.venue.id),
+    getVenueBookings(user.venue.id),
   ]);
 
   return (
@@ -23,7 +24,12 @@ export default async function ProviderPage() {
         <div className="mb-6 flex justify-end">
           <LogoutButton className="rounded-full border border-forest/15 px-4 py-2 text-sm" />
         </div>
-        <ProviderPanel venue={user.venue} notifications={items} transactions={rows} />
+        <ProviderPanel
+          venue={user.venue}
+          notifications={items}
+          transactions={rows}
+          bookings={venueBookings}
+        />
         <section className="mt-6 rounded-[28px] bg-white p-6">
           <h2 className="font-serif text-2xl text-forest">QR della struttura</h2>
           <p className="mt-2 text-sm text-olive">

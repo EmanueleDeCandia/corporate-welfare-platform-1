@@ -406,5 +406,50 @@ export type Share = typeof shares.$inferSelect;
 export type Certificate = typeof certificates.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 
+export type BookingType = "hospitality" | "dinner" | "theater_event" | "experience";
+export type BookingStatus =
+  | "pending"
+  | "confirmed"
+  | "presence_confirmed"
+  | "rejected"
+  | "cancelled"
+  | "attended"
+  | "no_show";
+
+export const bookings = sqliteTable("bookings", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  venueId: integer("venue_id")
+    .notNull()
+    .references(() => venues.id),
+  offeringId: integer("offering_id").references(() => venueOfferings.id),
+  grantEventId: integer("grant_event_id").references(() => grantEvents.id),
+  bookingType: text("booking_type").$type<BookingType>().notNull().default("hospitality"),
+  bookingDate: text("booking_date").notNull(), // YYYY-MM-DD
+  timeSlot: text("time_slot"), // es: "20:30", "14:00"
+  partySize: integer("party_size").notNull().default(1),
+  discountPercent: integer("discount_percent").notNull().default(10), // sconto community convenzione
+  totalAmountCents: integer("total_amount_cents").notNull().default(0),
+  discountCents: integer("discount_cents").notNull().default(0),
+  finalPriceCents: integer("final_price_cents").notNull().default(0),
+  status: text("status").$type<BookingStatus>().notNull().default("pending"),
+  confirmationToken: text("confirmation_token").notNull().unique(),
+  confirmedAt: integer("confirmed_at", { mode: "timestamp" }),
+  presenceConfirmedAt: integer("presence_confirmed_at", { mode: "timestamp" }),
+  attendedAt: integer("attended_at", { mode: "timestamp" }),
+  guestName: text("guest_name").notNull(),
+  guestEmail: text("guest_email").notNull(),
+  guestPhone: text("guest_phone"),
+  notes: text("notes"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+export type Booking = typeof bookings.$inferSelect;
+export type NewBooking = typeof bookings.$inferInsert;
+
 export type GrantEvent = typeof grantEvents.$inferSelect;
 export type NewGrantEvent = typeof grantEvents.$inferInsert;

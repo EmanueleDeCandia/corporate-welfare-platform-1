@@ -21,9 +21,10 @@ import {
   UserX,
   FileText,
   BadgeEuro,
+  AlertTriangle,
 } from "lucide-react";
 import type { PromoterDashboardData } from "@/lib/promoters";
-import { formatDateTime, formatEuro } from "@/lib/utils";
+import { formatDate, formatDateTime, formatEuro } from "@/lib/utils";
 
 type Props = {
   data: PromoterDashboardData;
@@ -31,7 +32,7 @@ type Props = {
 
 export function PromotersDashboardView({ data }: Props) {
   const [activeTab, setActiveTab] = useState<
-    "economics" | "companies" | "venues" | "vouchers" | "grants"
+    "economics" | "companies" | "venues" | "vouchers" | "grants" | "bookings"
   >("economics");
 
   return (
@@ -155,6 +156,22 @@ export function PromotersDashboardView({ data }: Props) {
           }`}
         >
           Matching Grant Culturale ({data.totalGrantsAssigned})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("bookings")}
+          className={`inline-flex items-center gap-1.5 px-4 py-3 text-sm font-medium transition ${
+            activeTab === "bookings"
+              ? "border-b-2 border-forest font-semibold text-forest"
+              : "text-olive hover:text-forest"
+          }`}
+        >
+          <span>Prenotazioni & Overbooking Teatri ({data.totalCommunityBookingsCount})</span>
+          {data.overbookingAlertsCount > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-xs animate-pulse">
+              <AlertTriangle size={10} /> {data.overbookingAlertsCount} a rischio
+            </span>
+          )}
         </button>
       </div>
 
@@ -475,6 +492,208 @@ export function PromotersDashboardView({ data }: Props) {
                 </tbody>
               </table>
             </div>
+          </div>
+        </section>
+      )}
+
+      {/* TAB 6: PRENOTAZIONI COMMUNITY & CONTROLLO OVERBOOKING TEATRI */}
+      {activeTab === "bookings" && (
+        <section className="space-y-8">
+          {/* KPI Prenotazioni Community */}
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="rounded-[24px] border border-forest/10 bg-white p-5 shadow-xs">
+              <p className="text-xs font-semibold uppercase tracking-wider text-olive">Prenotazioni Totali</p>
+              <p className="mt-2 font-serif text-3xl text-forest">{data.totalCommunityBookingsCount}</p>
+              <p className="text-xs text-olive mt-1">Ospiti ed eventi convenzionati</p>
+            </div>
+            <div className="rounded-[24px] border border-forest/10 bg-white p-5 shadow-xs">
+              <p className="text-xs font-semibold uppercase tracking-wider text-olive">Posti Riservati Community</p>
+              <p className="mt-2 font-serif text-3xl text-forest">{data.totalCommunityBookingsSeats}</p>
+              <p className="text-xs text-olive mt-1">Posti occupati in totale</p>
+            </div>
+            <div className="rounded-[24px] border border-forest/10 bg-white p-5 shadow-xs">
+              <p className="text-xs font-semibold uppercase tracking-wider text-olive">Presenze Riconfermate</p>
+              <p className="mt-2 font-serif text-3xl text-emerald-700">{data.totalCommunityConfirmedCount}</p>
+              <p className="text-xs text-olive mt-1">Confermate da ospiti o strutture</p>
+            </div>
+            <div className="rounded-[24px] border border-rose-200 bg-rose-50/50 p-5 shadow-xs">
+              <p className="text-xs font-semibold uppercase tracking-wider text-rose-800">Spettacoli a Rischio Overbooking</p>
+              <p className="mt-2 font-serif text-3xl text-rose-700">{data.overbookingAlertsCount}</p>
+              <p className="text-xs text-rose-800/80 mt-1">Capienza residua ≤ 15%</p>
+            </div>
+          </div>
+
+          {/* Sezione Monitoraggio Capienza Spettacoli Culturali & Anti-Overbooking */}
+          <div className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-mist pb-4">
+              <div>
+                <h3 className="font-serif text-2xl text-forest">Monitoraggio Capienza Spettacoli & Teatri</h3>
+                <p className="text-xs text-olive">
+                  Visione aggregata in tempo reale: posti assegnati al Welfare Matching Grant + posti prenotati dalla Community Amici.
+                </p>
+              </div>
+              <span className="rounded-full bg-forest/5 px-3 py-1 text-xs font-mono text-forest">
+                {data.events.length} eventi programmati
+              </span>
+            </div>
+
+            <div className="mt-6 grid gap-6 md:grid-cols-2">
+              {data.events.map((ev) => (
+                <div
+                  key={ev.id}
+                  className={`rounded-2xl border p-5 transition-all ${
+                    ev.isOverbookingRisk
+                      ? "border-rose-300 bg-rose-50/30 shadow-sm"
+                      : "border-forest/10 bg-cream/30"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <span className="inline-block rounded-full bg-forest/5 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-forest">
+                        {ev.category}
+                      </span>
+                      <h4 className="mt-1 font-serif text-xl font-bold text-forest">{ev.title}</h4>
+                      <p className="text-xs text-olive">{ev.venueName} · {ev.city}</p>
+                    </div>
+                    {ev.isOverbookingRisk ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-800 animate-pulse">
+                        <AlertTriangle size={12} /> Rischio Overbooking
+                      </span>
+                    ) : (
+                      <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                        Capienza Regolare
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Barra visuale occupazione capienza */}
+                  <div className="mt-4">
+                    <div className="flex justify-between text-xs text-ink/80 mb-1.5 font-medium">
+                      <span>Occupati: {ev.seatsOccupied} / {ev.capacity} posti</span>
+                      <span className="font-bold">{ev.occupancyPercent}%</span>
+                    </div>
+                    <div className="h-3 w-full overflow-hidden rounded-full bg-gray-200 flex">
+                      {/* Porzione Welfare Grant */}
+                      <div
+                        style={{ width: `${Math.min(100, Math.round((ev.welfareSeats / ev.capacity) * 100))}%` }}
+                        className="bg-gold h-full"
+                        title={`Welfare Matching Grant: ${ev.welfareSeats} posti`}
+                      />
+                      {/* Porzione Community Bookings */}
+                      <div
+                        style={{ width: `${Math.min(100 - Math.round((ev.welfareSeats / ev.capacity) * 100), Math.round((ev.communitySeats / ev.capacity) * 100))}%` }}
+                        className="bg-emerald-600 h-full"
+                        title={`Community Bookings: ${ev.communitySeats} posti`}
+                      />
+                    </div>
+                    <div className="mt-2 flex items-center justify-between text-[11px] text-olive">
+                      <div className="flex items-center gap-3">
+                        <span className="inline-flex items-center gap-1">
+                          <span className="h-2 w-2 rounded-full bg-gold" /> Welfare Grant ({ev.welfareSeats})
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <span className="h-2 w-2 rounded-full bg-emerald-600" /> Community ({ev.communitySeats})
+                        </span>
+                      </div>
+                      <span className="font-bold text-forest">
+                        {ev.seatsAvailable} posti liberi
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Registro Globale Territoriale delle Prenotazioni */}
+          <div className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-mist pb-4">
+              <div>
+                <h3 className="font-serif text-2xl text-forest">Registro Territoriale delle Prenotazioni</h3>
+                <p className="text-xs text-olive">
+                  Tutte le prenotazioni effettuate dagli amici della community verso agriturismi, hotel, cene e teatri convenzionati.
+                </p>
+              </div>
+            </div>
+
+            {data.communityBookings.length === 0 ? (
+              <div className="py-12 text-center text-olive text-sm">
+                Nessuna prenotazione community registrata sul circuito al momento.
+              </div>
+            ) : (
+              <div className="mt-4 overflow-x-auto">
+                <table className="w-full min-w-[750px] text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-mist text-olive uppercase tracking-wider text-[10px]">
+                      <th className="pb-3">Data & Orario</th>
+                      <th className="pb-3">Ospite</th>
+                      <th className="pb-3">Struttura / Teatro</th>
+                      <th className="pb-3">Evento / Servizio</th>
+                      <th className="pb-3 text-center">Posti</th>
+                      <th className="pb-3 text-right">Importo Netto</th>
+                      <th className="pb-3 text-center">Stato</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-mist">
+                    {data.communityBookings.map((b) => (
+                      <tr key={b.id} className="hover:bg-cream/40 transition">
+                        <td className="py-3 font-medium text-forest">
+                          {formatDate(b.bookingDate)}
+                          <span className="block text-[11px] text-olive">{b.timeSlot || "Standard"}</span>
+                        </td>
+                        <td className="py-3 text-forest">
+                          <p className="font-semibold">{b.guestName}</p>
+                          <p className="text-[11px] text-olive">{b.guestEmail}</p>
+                          {b.guestPhone && <p className="text-[10px] text-ink/70">Tel: {b.guestPhone}</p>}
+                        </td>
+                        <td className="py-3 text-forest">
+                          <p className="font-medium">{b.venueName}</p>
+                          <p className="text-[11px] text-olive">{b.venueCity} ({b.venueType})</p>
+                        </td>
+                        <td className="py-3 text-forest">
+                          {b.eventTitle ? (
+                            <span className="font-bold text-forest">🎭 {b.eventTitle}</span>
+                          ) : (
+                            <span className="text-olive capitalize">{b.venueType}</span>
+                          )}
+                        </td>
+                        <td className="py-3 text-center">
+                          <span className="rounded-full bg-cream px-2.5 py-0.5 font-bold text-forest border border-forest/10">
+                            {b.partySize} {b.partySize === 1 ? "posto" : "posti"}
+                          </span>
+                        </td>
+                        <td className="py-3 text-right font-serif text-sm font-bold text-forest">
+                          {formatEuro(b.finalPriceCents)}
+                        </td>
+                        <td className="py-3 text-center">
+                          {b.status === "presence_confirmed" ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800">
+                              ✓ Presenza Riconfermata
+                            </span>
+                          ) : b.status === "confirmed" ? (
+                            <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-[11px] font-semibold text-blue-800">
+                              Accettata dal gestore
+                            </span>
+                          ) : b.status === "pending" ? (
+                            <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
+                              In attesa
+                            </span>
+                          ) : b.status === "attended" ? (
+                            <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-[11px] font-semibold text-purple-800">
+                              Completata
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700 capitalize">
+                              {b.status}
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </section>
       )}

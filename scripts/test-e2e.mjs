@@ -1,4 +1,6 @@
 // scripts/test-e2e.mjs
+import Database from 'better-sqlite3';
+
 const BASE_URL = 'http://localhost:3000';
 
 async function request(path, options = {}) {
@@ -276,6 +278,18 @@ async function testNewRegistrations() {
 
 async function testEmployeeVoucherRedeem() {
   console.log('\n--- Test 6: Riscatto Voucher Dipendente & Creazione Matching Grant ---');
+  
+  // Ripristina voucher 3 come available per idempotenza del test
+  try {
+    const db = new Database('radici.db');
+    db.prepare("UPDATE vouchers SET status = 'available', venue_id = NULL WHERE id = 3").run();
+    db.prepare("DELETE FROM grant_confirmations WHERE matching_grant_id IN (SELECT id FROM matching_grants WHERE voucher_id = 3)").run();
+    db.prepare("DELETE FROM grant_seats WHERE matching_grant_id IN (SELECT id FROM matching_grants WHERE voucher_id = 3)").run();
+    db.prepare("DELETE FROM matching_grants WHERE voucher_id = 3").run();
+    db.prepare("DELETE FROM voucher_selections WHERE voucher_id = 3").run();
+    db.close();
+  } catch (e) {}
+
   const token = await login('giulia.verdi@acme.it');
   assert(!!token, 'Login Giulia Verdi (dipendente con voucher disponibili)');
   if (!token) return;
@@ -307,6 +321,99 @@ async function testEmployeeVoucherRedeem() {
   );
 }
 
+async function testCommunityBookingsAndOverbookingPrevention() {
+  console.log('\n--- Test 7: Prenotazioni Amico Community, Riconferma Presenza & Anti-Overbooking ---');
+  
+  // 1. Login Luigi Bianchi (Amico Community da Referral)
+  const friendToken = await login('luigi.bianchi@email.it');
+  assert(!!friendToken, 'Login Luigi Bianchi (Ospite Community)');
+  if (!friendToken) return;
+
+  const friendHeaders = { Cookie: `radici_session=${friendToken}` };
+
+  // 2. Controllo che l'area /account mostri il tab Prenotazioni & Sconti e le prenotazioni attive
+  const accountRes = await request('/account', { headers: friendHeaders });
+  assert(
+    accountRes.status === 200 &&
+      accountRes.text.includes('Prenotazioni') &&
+      accountRes.text.includes('Sconti') &&
+      accountRes.text.includes('Osteria del Tiglio'),
+    'Area personale di Luigi Bianchi mostra il tab "Prenotazioni & Sconti" con le prenotazioni e sconto 10%'
+  );
+
+  // 3. Luigi Bianchi riconferma la presenza sulla sua prenotazione (booking id: 1)
+  const confirmPresRes = await request('/api/bookings/status', {
+    method: 'POST',
+    headers: friendHeaders,
+    body: JSON.stringify({
+      bookingId: 1,
+      status: 'presence_confirmed',
+    }),
+  });
+  assert(
+    confirmPresRes.status === 200 && confirmPresRes.json?.ok === true && confirmPresRes.json?.booking?.status === 'presence_confirmed',
+    'Luigi Bianchi riconferma la sua presenza per rassicurare la struttura (Status: presence_confirmed)'
+  );
+
+  // 4. Creazione nuova prenotazione convenzionata presso agriturismo con sconto 10%
+  const newBookingRes = await request('/api/bookings', {
+    method: 'POST',
+    headers: friendHeaders,
+    body: JSON.stringify({
+      venueId: 1,
+      bookingType: 'hospitality',
+      bookingDate: '2026-11-25',
+      timeSlot: 'Check-in 15:00',
+      partySize: 2,
+      guestPhone: '+39 347 1122334',
+      notes: 'Camera con vista panoramica',
+    }),
+  });
+  assert(
+    newBookingRes.status === 201 &&
+      newBookingRes.json?.ok === true &&
+      newBookingRes.json?.booking?.discountPercent === 10,
+    `Nuova prenotazione completata con sconto convenzione 10% (Prezzo netto: € ${(newBookingRes.json?.booking?.finalPriceCents / 100).toFixed(2)})`
+  );
+
+  // 5. Test ANTI-OVERBOOKING per Spettacoli Teatrali a Posti Limitati
+  const overbookingRes = await request('/api/bookings', {
+    method: 'POST',
+    headers: friendHeaders,
+    body: JSON.stringify({
+      venueId: 11,
+      grantEventId: 1, // Spettacolo con capienza 50
+      bookingType: 'theater_event',
+      bookingDate: '2026-12-10',
+      partySize: 150, // Richiesta assurda oltre capienza
+    }),
+  });
+  assert(
+    overbookingRes.status === 400 && overbookingRes.json?.error?.includes('Posti insufficienti per lo spettacolo'),
+    'Anti-Overbooking: richiesta di 150 posti respinta con HTTP 400 e blocco overbooking'
+  );
+
+  // 6. Monitoraggio da parte della Startup Promotrice (/promotori)
+  const promoterToken = await login('chiara.promotori@radici.it');
+  const promoterPage = await request('/promotori', { headers: { Cookie: `radici_session=${promoterToken}` } });
+  assert(
+    promoterPage.status === 200 &&
+      promoterPage.text.includes('Prenotazioni') &&
+      promoterPage.text.includes('Overbooking Teatri'),
+    'Cruscotto Promotori /promotori include la sezione e il tab per la gestione Prenotazioni & Overbooking Teatri'
+  );
+
+  // 7. Cruscotto Fornitore (/fornitore)
+  const provToken = await login('elena@lavalle.it');
+  const provPage = await request('/fornitore', { headers: { Cookie: `radici_session=${provToken}` } });
+  assert(
+    provPage.status === 200 &&
+      provPage.text.includes('Prenotazioni Community') &&
+      provPage.text.includes('Luigi Bianchi'),
+    'Cruscotto fornitore /fornitore mostra il tab dedicato alle prenotazioni community e la nuova prenotazione di Luigi Bianchi'
+  );
+}
+
 async function runAll() {
   console.log('=== AVVIO TEST INTEGRATI E2E RADICI SU HTTP://LOCALHOST:3000 ===');
   await testPublicPages();
@@ -315,6 +422,7 @@ async function runAll() {
   await testProviderAttendanceAndInvoice();
   await testNewRegistrations();
   await testEmployeeVoucherRedeem();
+  await testCommunityBookingsAndOverbookingPrevention();
 
   console.log('\n======================================================');
   console.log(`RISULTATI FINALI: ${passed} PASSATI, ${failed} FALLITI`);

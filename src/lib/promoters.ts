@@ -13,6 +13,8 @@ import {
   voucherSelections,
   transactions,
   welfarePlans,
+  bookings,
+  venueOfferings,
 } from "@/db/schema";
 
 export type PromoterGrantRow = {
@@ -136,8 +138,12 @@ export type PromoterDashboardData = {
     city: string;
     startsAt: Date | null;
     capacity: number;
+    welfareSeats: number;
+    communitySeats: number;
     seatsOccupied: number;
     seatsAvailable: number;
+    occupancyPercent: number;
+    isOverbookingRisk: boolean;
     grantsGeneratedCount: number;
   }>;
   theaters: Array<{
@@ -147,6 +153,30 @@ export type PromoterDashboardData = {
     region: string;
     grantsGeneratedCount: number;
   }>;
+
+  // Regia Globale Prenotazioni Community & Monitoraggio Overbooking
+  communityBookings: Array<{
+    id: number;
+    createdAt: Date;
+    bookingDate: string;
+    timeSlot: string | null;
+    partySize: number;
+    status: string;
+    guestName: string;
+    guestEmail: string;
+    guestPhone: string | null;
+    venueName: string;
+    venueCity: string;
+    venueType: string;
+    eventTitle: string | null;
+    finalPriceCents: number;
+    notes: string | null;
+  }>;
+  totalCommunityBookingsCount: number;
+  totalCommunityBookingsSeats: number;
+  totalCommunityConfirmedCount: number;
+  totalCommunityPendingCount: number;
+  overbookingAlertsCount: number;
 };
 
 export async function getPromotersDashboardData(promoterUserId: number): Promise<PromoterDashboardData | null> {
@@ -337,16 +367,75 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
   const grantFundCapacityCents = 2500000; // 25.000 € stanziati per il fondo matching grant iniziale
   const grantFundSpentCents = grants.reduce((sum, g) => sum + g.grantValueCents, 0);
 
+  // 4. Caricamento Prenotazioni Community per il controllo di capienza e overbooking
+  const allBookingsRows = await db
+    .select({
+      booking: bookings,
+      user: users,
+      venue: venues,
+      grantEvent: grantEvents,
+    })
+    .from(bookings)
+    .innerJoin(users, eq(bookings.userId, users.id))
+    .innerJoin(venues, eq(bookings.venueId, venues.id))
+    .leftJoin(grantEvents, eq(bookings.grantEventId, grantEvents.id))
+    .orderBy(desc(bookings.createdAt));
+
+  const communityBookings = allBookingsRows.map((r) => ({
+    id: r.booking.id,
+    createdAt: r.booking.createdAt,
+    bookingDate: r.booking.bookingDate,
+    timeSlot: r.booking.timeSlot,
+    partySize: r.booking.partySize,
+    status: r.booking.status,
+    guestName: r.booking.guestName,
+    guestEmail: r.booking.guestEmail,
+    guestPhone: r.booking.guestPhone,
+    venueName: r.venue.name,
+    venueCity: r.venue.city,
+    venueType: r.venue.type,
+    eventTitle: r.grantEvent?.title ?? null,
+    finalPriceCents: r.booking.finalPriceCents,
+    notes: r.booking.notes,
+  }));
+
+  const totalCommunityBookingsCount = communityBookings.length;
+  const totalCommunityBookingsSeats = communityBookings.reduce((sum, b) => sum + b.partySize, 0);
+  const totalCommunityConfirmedCount = communityBookings.filter(
+    (b) => b.status === "confirmed" || b.status === "presence_confirmed" || b.status === "attended"
+  ).length;
+  const totalCommunityPendingCount = communityBookings.filter((b) => b.status === "pending").length;
+
+  let overbookingAlertsCount = 0;
+
   const events = allGrantEvents.map((ge) => {
+    // Posti occupati da Welfare Matching Grants
     const eventGrants = grants.filter(
       (g) =>
         grantRows.find((r) => r.grant.id === g.grantId)?.grant.eventId === ge.id &&
         g.status !== "declined" &&
         g.status !== "expired"
     );
+    const welfareSeats = eventGrants.reduce((sum, g) => sum + g.seatsRequested, 0);
 
-    const seatsOccupied = eventGrants.reduce((sum, g) => sum + g.seatsRequested, 0);
+    // Posti occupati da Prenotazioni Community Amici
+    const eventCommunity = communityBookings.filter(
+      (b) =>
+        allBookingsRows.find((r) => r.booking.id === b.id)?.booking.grantEventId === ge.id &&
+        b.status !== "rejected" &&
+        b.status !== "cancelled"
+    );
+    const communitySeats = eventCommunity.reduce((sum, b) => sum + b.partySize, 0);
+
     const capacity = ge.capacity || 50;
+    const seatsOccupied = welfareSeats + communitySeats;
+    const seatsAvailable = Math.max(0, capacity - seatsOccupied);
+    const occupancyPercent = capacity > 0 ? Math.round((seatsOccupied / capacity) * 100) : 0;
+    const isOverbookingRisk = seatsAvailable <= Math.max(2, Math.round(capacity * 0.15));
+
+    if (isOverbookingRisk) {
+      overbookingAlertsCount++;
+    }
 
     return {
       id: ge.id,
@@ -356,8 +445,12 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       city: ge.city,
       startsAt: ge.startsAt,
       capacity,
+      welfareSeats,
+      communitySeats,
       seatsOccupied,
-      seatsAvailable: Math.max(0, capacity - seatsOccupied),
+      seatsAvailable,
+      occupancyPercent,
+      isOverbookingRisk,
       grantsGeneratedCount: eventGrants.length,
     };
   });
@@ -403,5 +496,11 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     grants,
     events,
     theaters,
+    communityBookings,
+    totalCommunityBookingsCount,
+    totalCommunityBookingsSeats,
+    totalCommunityConfirmedCount,
+    totalCommunityPendingCount,
+    overbookingAlertsCount,
   };
 }
