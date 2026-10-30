@@ -34,29 +34,42 @@ export function randomCode(prefix: string) {
   return `${prefix}-${randomBytes(4).toString("hex")}`;
 }
 
-export function formatEuro(cents: number) {
-  return new Intl.NumberFormat("it-IT", {
-    style: "currency",
-    currency: "EUR",
-  }).format(cents / 100);
+const DISPLAY_TIME_ZONE = "Europe/Rome";
+
+function asDate(value: Date | string | number) {
+  if (value instanceof Date) return value;
+  if (typeof value === "number") return new Date(value < 1e12 ? value * 1000 : value);
+  return new Date(value);
 }
 
-export function formatDate(date: Date | string) {
+export function formatEuro(cents: number) {
+  const negative = cents < 0;
+  const abs = Math.abs(Math.round(cents));
+  const euros = Math.floor(abs / 100);
+  const rest = String(abs % 100).padStart(2, "0");
+  const grouped = String(euros).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${negative ? "-" : ""}${grouped},${rest} €`;
+}
+
+export function formatDate(date: Date | string | number) {
   return new Intl.DateTimeFormat("it-IT", {
+    timeZone: DISPLAY_TIME_ZONE,
     day: "numeric",
     month: "long",
     year: "numeric",
-  }).format(typeof date === "string" ? new Date(date) : date);
+  }).format(asDate(date));
 }
 
-export function formatDateTime(date: Date | string) {
+export function formatDateTime(date: Date | string | number) {
   return new Intl.DateTimeFormat("it-IT", {
+    timeZone: DISPLAY_TIME_ZONE,
     day: "numeric",
     month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-  }).format(typeof date === "string" ? new Date(date) : date);
+    hour12: false,
+  }).format(asDate(date));
 }
 
 export function badgeForPoints(points: number) {

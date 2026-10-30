@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import Script from "next/script";
 import { SessionBootstrap } from "@/components/session-bootstrap";
 import "./globals.css";
 
@@ -38,10 +37,10 @@ const sessionBootScript = `(function(){
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="it">
+      <head>
+        <script id="radici-session" dangerouslySetInnerHTML={{ __html: sessionBootScript }} />
+      </head>
       <body className="bg-cream text-forest antialiased min-h-screen selection:bg-gold/30">
-        <Script id="radici-session" strategy="beforeInteractive">
-          {sessionBootScript}
-        </Script>
         <SessionBootstrap />
         {children}
       </body>
