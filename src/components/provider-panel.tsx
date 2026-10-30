@@ -541,11 +541,29 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
                           <span className="inline-block rounded-full bg-cream px-2.5 py-1 font-bold text-forest border border-forest/10">
                             {b.partySize} {b.partySize === 1 ? "posto" : "posti"}
                           </span>
+                          {b.voucherId ? (
+                            <span className="block mt-1 text-[10px] text-emerald-800 font-semibold">
+                              1 Quota Welfare (B2B)
+                            </span>
+                          ) : (
+                            <span className="block mt-1 text-[10px] text-olive font-medium">
+                              Privato Community
+                            </span>
+                          )}
                         </td>
 
                         <td className="py-3.5 align-top text-right font-medium">
-                          <p className="font-bold text-forest">{formatEuro(b.finalPriceCents)}</p>
-                          <p className="text-[10px] text-terracotta">Sconto 10% applicato</p>
+                          {b.voucherId ? (
+                            <div>
+                              <p className="font-bold text-emerald-800">0€ (Welfare)</p>
+                              <p className="text-[10px] text-olive">Addebito ad Impresa</p>
+                            </div>
+                          ) : (
+                            <div>
+                              <p className="font-bold text-forest">{formatEuro(b.finalPriceCents)}</p>
+                              <p className="text-[10px] text-terracotta">Sconto 10% Community</p>
+                            </div>
+                          )}
                         </td>
 
                         <td className="py-3.5 align-top text-center">

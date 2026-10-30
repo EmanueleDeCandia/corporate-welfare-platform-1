@@ -147,7 +147,7 @@ export async function getTheaterDashboardData(
       (b) => b.booking.grantEventId === e.id && b.booking.status !== "cancelled"
     );
     const seatsFromBookings = bookingsForEvent.reduce(
-      (acc, b) => acc + (b.booking.partySize || 2),
+      (acc, b) => acc + (b.booking.partySize || 1),
       0
     );
 
@@ -160,14 +160,18 @@ export async function getTheaterDashboardData(
         !bookingsForEvent.some((b) => b.booking.voucherId === g.grant.voucherId)
     );
     const seatsFromGrants = matchingForEvent.reduce(
-      (acc, g) => acc + (g.grant.seatsRequested || 2),
+      (acc, g) => acc + (g.grant.seatsRequested || 1),
       0
     );
 
     const totalReserved = seatsFromBookings + seatsFromGrants;
     const confirmedCount =
-      bookingsForEvent.filter((b) => b.booking.status === "presence_confirmed" || b.booking.status === "attended").length * 2 +
-      matchingForEvent.filter((g) => g.grant.status === "confirmed" || g.grant.status === "attended").length * 2;
+      bookingsForEvent
+        .filter((b) => b.booking.status === "presence_confirmed" || b.booking.status === "attended")
+        .reduce((acc, b) => acc + (b.booking.partySize || 1), 0) +
+      matchingForEvent
+        .filter((g) => g.grant.status === "confirmed" || g.grant.status === "attended")
+        .reduce((acc, g) => acc + (g.grant.seatsRequested || 1), 0);
 
     const availableSeats = Math.max(0, e.capacity - totalReserved);
 
@@ -235,7 +239,7 @@ export async function getTheaterDashboardData(
         : "Prenotazione Ospite Community",
       showId: show?.id || 0,
       showTitle: show?.title || "Spettacolo Teatrale",
-      seats: b.booking.partySize || 2,
+      seats: b.booking.partySize || 1,
       linkedStay,
       guestConfirmationStatus: guestStatus,
       attendanceStatus: attendance,
@@ -267,7 +271,7 @@ export async function getTheaterDashboardData(
       channelLabel: "Omaggio Matching Grant (Promotori RADICI)",
       showId: g.grant.eventId || 0,
       showTitle: g.event?.title || "Spettacolo Teatrale",
-      seats: g.grant.seatsRequested || 2,
+      seats: g.grant.seatsRequested || 1,
       linkedStay: stayVenueName || null,
       guestConfirmationStatus: isConfirmed ? "presence_confirmed" : "pending",
       attendanceStatus:

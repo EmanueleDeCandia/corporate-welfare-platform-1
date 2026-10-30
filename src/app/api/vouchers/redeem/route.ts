@@ -126,36 +126,27 @@ export async function POST(request: Request) {
     })
     .onConflictDoNothing();
 
-  // Se pernottamento: crea Matching Grant riservato (2 posti) e predispone la conferma
+  // Se pernottamento: crea Matching Grant riservato (1 posto per il dipendente beneficiario) e predispone la conferma
   if (isOvernightVoucher && selectedEvent) {
     const [grant] = await db
       .insert(matchingGrants)
       .values({
         voucherId: voucher.id,
         eventId: selectedEvent.id,
-        amountCents: 5000,
-        seatsRequested: 2,
+        amountCents: 2500,
+        seatsRequested: 1,
         status: "assigned",
         assignedAt: now,
       })
       .returning();
 
     if (grant) {
-      // Posto 1: Dipendente
+      // Posto 1: Dipendente Beneficiario
       await db.insert(grantSeats).values({
         matchingGrantId: grant.id,
         holderRole: "employee",
         holderName: `${me.firstName} ${me.lastName}`,
         holderEmail: me.email,
-        valueCents: 2500,
-      });
-
-      // Posto 2: Accompagnatore
-      await db.insert(grantSeats).values({
-        matchingGrantId: grant.id,
-        holderRole: "companion",
-        holderName: "Accompagnatore",
-        holderEmail: null,
         valueCents: 2500,
       });
 
@@ -226,7 +217,7 @@ export async function POST(request: Request) {
 
   // 3. Registra le prenotazioni in "bookings" per consentire al dipendente di gestire presenze e annullamenti come un utente amico
   if (isOvernightVoucher) {
-    // Prenotazione Struttura Ricettiva (Hotel / Agriturismo)
+    // Prenotazione Struttura Ricettiva (Hotel / Agriturismo) - 1 Persona Quota Welfare
     await db.insert(bookings).values({
       userId: me.id,
       venueId: venue.id,
@@ -234,7 +225,7 @@ export async function POST(request: Request) {
       bookingType: "hospitality",
       bookingDate: serviceDate,
       timeSlot: "Check-in standard",
-      partySize: 2,
+      partySize: 1, // 1 Persona: quota nominale welfare dipendente
       discountPercent: 0,
       totalAmountCents: amountCents,
       discountCents: amountCents, // 100% coperto da welfare aziendale
@@ -243,10 +234,10 @@ export async function POST(request: Request) {
       confirmationToken: randomCode("bkg-welfare"),
       guestName: `${me.firstName} ${me.lastName}`,
       guestEmail: me.email,
-      notes: `Pernottamento con Voucher Welfare (100% finanziato da ${company?.name ?? "Impresa CSR"})`,
+      notes: `Pernottamento Welfare (1 Persona / Quota Dipendente · 100% finanziato da ${company?.name ?? "Impresa CSR"})`,
     });
 
-    // Prenotazione Spettacolo Teatrale Matching Grant (Omaggio Promotori)
+    // Prenotazione Spettacolo Teatrale Matching Grant (Omaggio Promotori) - 1 Posto per il Dipendente
     if (selectedEvent) {
       await db.insert(bookings).values({
         userId: me.id,
@@ -258,20 +249,20 @@ export async function POST(request: Request) {
           ? selectedEvent.startsAt.toISOString().split("T")[0]
           : serviceDate,
         timeSlot: "Inizio Spettacolo",
-        partySize: 2,
+        partySize: 1, // 1 Posto: omaggio nominale per il dipendente beneficiario
         discountPercent: 0,
-        totalAmountCents: 5000,
-        discountCents: 5000, // 100% omaggio offerto dai Promotori
+        totalAmountCents: 2500,
+        discountCents: 2500, // 100% omaggio offerto dai Promotori
         finalPriceCents: 0,
         status: "confirmed",
         confirmationToken: randomCode("bkg-grant"),
         guestName: `${me.firstName} ${me.lastName}`,
         guestEmail: me.email,
-        notes: `Omaggio Matching Grant Promotori (2 posti riservati · ${selectedEvent.title})`,
+        notes: `Omaggio Matching Grant Promotori (1 posto platea · ${selectedEvent.title})`,
       });
     }
   } else {
-    // Prenotazione Cena / Degustazione KM 0
+    // Prenotazione Cena / Degustazione KM 0 - 1 Persona Quota Welfare
     await db.insert(bookings).values({
       userId: me.id,
       venueId: venue.id,
@@ -288,7 +279,7 @@ export async function POST(request: Request) {
       confirmationToken: randomCode("bkg-welfare"),
       guestName: `${me.firstName} ${me.lastName}`,
       guestEmail: me.email,
-      notes: `Cena & Degustazione KM 0 con Voucher Welfare (100% finanziato da ${company?.name ?? "Impresa CSR"})`,
+      notes: `Cena & Degustazione KM 0 con Voucher Welfare (1 Persona · 100% finanziato da ${company?.name ?? "Impresa CSR"})`,
     });
   }
 

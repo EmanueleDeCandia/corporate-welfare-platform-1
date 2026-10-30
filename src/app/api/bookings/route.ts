@@ -122,6 +122,8 @@ export async function POST(request: Request) {
       unitPriceCents = venue.priceBasketCents || 3800;
     } else if (body.grantEventId && grantEvent) {
       unitPriceCents = 2500; // Valore biglietto convenzionato evento (25€)
+    } else if (bookingType === "dinner") {
+      unitPriceCents = venue.priceAperitivoCents || 3000;
     } else if (bookingType === "hospitality" || venue.type === "hotel" || venue.type === "agriturismo") {
       unitPriceCents = venue.priceHotelCents || 6000;
     } else {

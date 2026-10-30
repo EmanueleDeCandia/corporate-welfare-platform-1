@@ -126,15 +126,15 @@ async function run() {
   assert(voucherAfter.status === 'selected', `Voucher status è '${voucherAfter.status}'`);
 
   const grantAfter = db.prepare("SELECT id, status, seats_requested FROM matching_grants WHERE voucher_id = ?").get(availableVoucher.id);
-  assert(!!grantAfter && grantAfter.status === 'assigned', `Matching grant assegnato (status=${grantAfter?.status}, seats=${grantAfter?.seats_requested})`);
+  assert(!!grantAfter && grantAfter.status === 'assigned' && grantAfter.seats_requested === 1, `Matching grant assegnato a Mario per 1 persona (status=${grantAfter?.status}, seats=${grantAfter?.seats_requested})`);
 
-  // Verifica creazione prenotazioni gemelle in bookings per Mario (come gli amici!)
+  // Verifica creazione prenotazioni gemelle in bookings per Mario (1 persona ciascuna, conformità Art. 51 TUIR)
   const marioBookings = db.prepare("SELECT id, booking_type, voucher_id, final_price_cents, party_size FROM bookings WHERE user_id = 2 AND voucher_id = ?").all(availableVoucher.id);
   assert(marioBookings.length === 2, `Create ${marioBookings.length} prenotazioni in 'bookings' per Mario (hotel e teatro)`);
   const bHotel = marioBookings.find(b => b.booking_type === 'hospitality');
   const bTheater = marioBookings.find(b => b.booking_type === 'theater_event');
-  assert(!!bHotel && bHotel.final_price_cents === 0, 'Prenotazione hotel presente in bookings con 0€ da pagare (coperto da welfare)');
-  assert(!!bTheater && bTheater.final_price_cents === 0 && bTheater.party_size === 2, 'Prenotazione spettacolo teatro presente in bookings con 2 posti omaggio');
+  assert(!!bHotel && bHotel.final_price_cents === 0 && bHotel.party_size === 1, 'Prenotazione hotel presente in bookings con 0€ da pagare per esattamente 1 persona (quota welfare)');
+  assert(!!bTheater && bTheater.final_price_cents === 0 && bTheater.party_size === 1, 'Prenotazione spettacolo teatro presente in bookings con 1 posto omaggio dipendente');
 
   // 4. Test Azioni Mario su Prenotazioni (Come un Amico: Riconferma Presenza)
   console.log('\n--- 4. Mario riconferma presenza su soggiorno e teatro ---');
@@ -229,6 +229,56 @@ async function run() {
     body: JSON.stringify({ bookingId, attendanceStatus: 'attended' }),
   });
   assert(attendRes.status === 200, 'Botteghino teatro: ingresso spettatore convalidato con successo');
+
+  // 10. Test Scelta Posti (1, 2, 3, 4, 5) & Separazione Netta Mario (Welfare) vs Moglie/Accompagnatrice (Community Privata)
+  console.log('\n--- 10. Test Scelta Posti (1, 2, 3, 4, 5) & Separazione Fiscale Mario vs Moglie ---');
+  const francescaCookie = await login('francesca.romani@email.it');
+  assert(!!francescaCookie, 'Login Francesca Romani (moglie/accompagnatrice con profilo Community separato)');
+
+  // Francesca prenota 1 posto presso la stessa struttura (Agriturismo La Valle)
+  const bkg1Res = await request('/api/bookings', {
+    method: 'POST',
+    headers: { Cookie: `radici_session=${francescaCookie}` },
+    body: JSON.stringify({
+      venueId: 2,
+      bookingType: 'hospitality',
+      bookingDate: '2026-11-20',
+      partySize: 1, // Scelta esatta 1 posto
+      notes: 'Soggiorno con mio marito Mario Rossi (lui ha quota welfare propria)',
+    }),
+  });
+  assert(bkg1Res.status === 201, 'Francesca ha prenotato 1 posto separatamente da Mario');
+  assert(bkg1Res.json.booking.partySize === 1, 'Posti registrati per Francesca: 1 (ATTESO: 1)');
+  assert(bkg1Res.json.booking.discountPercent === 10, 'Sconto community applicato a Francesca: 10%');
+  assert(bkg1Res.json.booking.voucherId === null, 'La prenotazione di Francesca non tocca il voucher welfare aziendale');
+
+  // Francesca prenota anche per 3 posti (test selettore 1, 2, 3, 4, 5) per una cena
+  const bkg3Res = await request('/api/bookings', {
+    method: 'POST',
+    headers: { Cookie: `radici_session=${francescaCookie}` },
+    body: JSON.stringify({
+      venueId: 2,
+      bookingType: 'dinner',
+      bookingDate: '2026-11-20',
+      partySize: 3, // Scelta esatta 3 posti
+      notes: 'Tavolo per 3 persone',
+    }),
+  });
+  assert(bkg3Res.status === 201, 'Francesca ha prenotato 3 posti per la cena');
+  assert(bkg3Res.json.booking.partySize === 3, 'Posti registrati per Francesca: 3 (ATTESO: 3)');
+  const venue2 = db.prepare("SELECT price_aperitivo_cents FROM venues WHERE id = 2").get();
+  const unitPrice = venue2?.price_aperitivo_cents || 2800;
+  const expectedCenaListino = unitPrice * 3;
+  const expectedCenaDiscount = Math.round((expectedCenaListino * 10) / 100);
+  assert(bkg3Res.json.booking.totalAmountCents === expectedCenaListino, `Listino calcolato esattamente per 3 posti: €${expectedCenaListino / 100}`);
+  assert(bkg3Res.json.booking.discountCents === expectedCenaDiscount, `Sconto calcolato esattamente per 3 posti: €${expectedCenaDiscount / 100}`);
+  assert(bkg3Res.json.booking.finalPriceCents === expectedCenaListino - expectedCenaDiscount, `Netto calcolato per 3 posti: €${(expectedCenaListino - expectedCenaDiscount) / 100}`);
+
+  // Verifica nel Database: separazione Mario (welfare ACME) vs Francesca (privato)
+  const bkgMario = db.prepare("SELECT user_id, voucher_id, party_size, final_price_cents FROM bookings WHERE user_id = 2 AND booking_type = 'hospitality'").get();
+  const bkgFrancesca = db.prepare("SELECT user_id, voucher_id, party_size, final_price_cents FROM bookings WHERE user_id = ? AND booking_type = 'hospitality'").get(bkg1Res.json.booking.userId);
+  assert(bkgMario && bkgMario.party_size === 1 && bkgMario.final_price_cents === 0 && bkgMario.voucher_id !== null, 'Mario: 1 persona, 0€ a carico, voucher welfare ACME registrato');
+  assert(bkgFrancesca && bkgFrancesca.party_size === 1 && bkgFrancesca.final_price_cents > 0 && bkgFrancesca.voucher_id === null, 'Francesca: 1 persona, paga quota propria separata con sconto 10%');
 
   console.log(`\n========================================`);
   console.log(`RISULTATO FINALE: ${passed} PASSATI, ${failed} FALLITI`);

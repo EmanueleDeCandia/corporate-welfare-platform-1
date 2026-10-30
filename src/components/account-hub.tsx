@@ -381,7 +381,7 @@ function HotelDrawer({
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <span className="rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold text-terracotta">
-            Matching Grant Attivo (2 Persone · 25€ + 25€)
+            Quota Welfare Dipendente (1 Persona · Art. 51 TUIR) + Matching Grant
           </span>
           <h3 className="mt-2 font-serif text-2xl text-forest">{title}</h3>
           <p className="text-sm text-olive">{subtitle}</p>
@@ -389,6 +389,11 @@ function HotelDrawer({
         <p className="text-sm font-medium text-forest">
           {items.length - used}/{items.length} disponibili
         </p>
+      </div>
+
+      {/* NOTA FISCALE DI CONFORMITÀ WELFARE */}
+      <div className="mt-3 rounded-2xl border border-forest/15 bg-sand/30 p-3.5 text-xs text-olive leading-relaxed">
+        <strong className="text-forest font-semibold">Regola Fiscale Welfare (Art. 51 TUIR):</strong> Il voucher copre strettamente <strong>1 quota individuale</strong> per il dipendente beneficiario. Se viaggi con la tua compagna/moglie o con la famiglia, invitali tramite il tuo <em>Codice Referral</em>: iscrivendosi come membri Community, avranno il proprio account distinto con lo sconto garantito del 10% e prenoteranno la loro quota separatamente, garantendo la totale separazione tra welfare aziendale e spesa privata.
       </div>
 
       <div className="mt-4 flex gap-2">
@@ -468,13 +473,13 @@ function HotelDrawer({
                         </span>
                       ) : (
                         <span className="rounded-full bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 font-bold">
-                          Assegnato (2 Posti)
+                          Assegnato (1 Posto Beneficiario)
                         </span>
                       )}
                     </div>
                     <strong className="text-base font-serif text-forest block mt-1">{bookedEvent?.title}</strong>
                     <p className="text-xs text-forest mt-0.5 font-medium">{bookedEvent?.venueName} ({bookedEvent?.city})</p>
-                    <p className="text-[11px] text-olive mt-0.5">Omaggio erogato dai Promotori RADICI per 2 Persone (25€ + 25€) · Non grava sull&apos;impresa CSR</p>
+                    <p className="text-[11px] text-olive mt-0.5">Omaggio erogato dai Promotori RADICI per il Dipendente Beneficiario (1 Posto Platea) · Fondo Promotori</p>
                   </div>
 
                   <div className="mt-4 pt-3 border-t border-gold/30 flex flex-wrap gap-2">
@@ -577,7 +582,7 @@ function HotelDrawer({
                 </p>
               </div>
               <p className="mt-2 text-xs text-olive leading-relaxed">
-                Avendo selezionato il soggiorno presso <strong>{selectedHotelVenue.name}</strong>, i Promotori attivano il Matching Grant di 50€ (25€ per te + 25€ per il tuo accompagnatore). Scegli a quale evento territoriale partecipare:
+                Avendo selezionato il soggiorno presso <strong>{selectedHotelVenue.name}</strong>, i Promotori attivano l&apos;Omaggio Culturale Matching Grant (1 posto riservato in platea). Scegli a quale evento o spettacolo territoriale partecipare:
               </p>
 
               <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
@@ -619,7 +624,7 @@ function HotelDrawer({
                     Riepilogo: <strong>{selectedHotelVenue.name}</strong> + <strong>{events.find(e => e.id === selectedEventId)?.venueName ?? "Evento Territoriale"}</strong>
                   </p>
                   <p className="text-[11px] text-terracotta mt-0.5">
-                    Fattura B2B intestata all'azienda per la struttura · Quota Evento 50€ (2 persone) coperta dai Promotori.
+                    Fattura B2B intestata all&apos;azienda per 1 quota dipendente (50€) · Omaggio teatrale 1 posto coperto dai Promotori.
                   </p>
                 </div>
                 <button
@@ -1535,17 +1540,36 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
             <div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-forest">
-                    {targetKind === "producer" ? "Numero di Cesti" : "Numero Ospiti / Posti"}
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={10}
-                    value={partySize}
-                    onChange={(e) => setPartySize(Math.max(1, parseInt(e.target.value, 10) || 1))}
-                    className="mt-1.5 w-full rounded-2xl border border-forest/15 bg-cream px-4 py-2.5 text-sm font-semibold"
-                  />
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-semibold text-forest">
+                      {targetKind === "producer" ? "Numero di Cesti" : "Numero di Posti / Ospiti"}
+                    </label>
+                    <span className="text-xs font-bold text-forest">
+                      {partySize} {targetKind === "producer" ? (partySize === 1 ? "cesto" : "cesti") : (partySize === 1 ? "persona" : "persone")}
+                    </span>
+                  </div>
+                  {/* Selettore rapido 1, 2, 3, 4, 5 posti */}
+                  <div className="mt-1.5 flex gap-1.5">
+                    {[1, 2, 3, 4, 5].map((num) => (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => setPartySize(num)}
+                        className={`flex-1 rounded-xl py-2 text-xs font-bold transition border ${
+                          partySize === num
+                            ? "bg-forest text-cream border-forest shadow-xs"
+                            : "bg-cream text-forest border-forest/20 hover:border-forest/50"
+                        }`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-[10px] text-olive">
+                    {targetKind === "producer"
+                      ? "Seleziona da 1 a 5 cesti da ordinare"
+                      : "Seleziona esattamente 1, 2, 3, 4 o 5 posti per te e i tuoi ospiti"}
+                  </p>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-forest">Telefono Contatto</label>
@@ -1742,7 +1766,7 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
                       <div className="mt-3 rounded-2xl bg-gold/10 p-3 text-xs text-forest border border-gold/20">
                         <p className="font-bold text-forest">Spettacolo: {ge.title}</p>
                         <p className="text-olive">
-                          Posti riservati all&apos;evento per {b.partySize} persone
+                          {b.partySize === 1 ? "1 posto riservato all'evento per il beneficiario" : `${b.partySize} posti riservati all'evento`}
                         </p>
                       </div>
                     )}
@@ -1763,20 +1787,20 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
                       </div>
                       <div>
                         <span className="block text-olive font-medium">
-                          {isBasket ? "Quantità Cesti:" : "Numero Ospiti:"}
+                          {isBasket ? "Quantità Cesti:" : "Numero Ospiti / Posti:"}
                         </span>
                         <span className="font-bold text-forest">
                           {b.partySize} {isBasket ? (b.partySize === 1 ? "cesto" : "cesti") : (b.partySize === 1 ? "persona" : "persone")}
                         </span>
                       </div>
                       <div>
-                        <span className="block text-olive font-medium">Prezzo Totale:</span>
+                        <span className="block text-olive font-medium">Importo Fiscale / Totale:</span>
                         <span className="font-bold text-forest">
                           {b.voucherId
                             ? b.bookingType === "theater_event"
-                              ? "Omaggio Promotori (0€ · 2 Posti)"
-                              : "Voucher Welfare (0€ · 100% Azienda)"
-                            : `${formatEuro(b.finalPriceCents)} ${b.discountCents > 0 ? "(-10%)" : ""}`}
+                              ? `Omaggio Promotori (0€ · ${b.partySize} ${b.partySize === 1 ? "Posto" : "Posti"})`
+                              : "Voucher Welfare (0€ · 1 Persona · 100% Azienda)"
+                            : `${formatEuro(b.finalPriceCents)} ${b.discountCents > 0 ? "(-10% Community)" : ""}`}
                         </span>
                       </div>
                     </div>
