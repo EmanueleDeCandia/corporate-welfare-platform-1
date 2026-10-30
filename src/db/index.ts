@@ -239,8 +239,8 @@ export async function initDb() {
         CREATE TABLE IF NOT EXISTS invites (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           inviter_id INTEGER NOT NULL REFERENCES users(id),
-          firstName TEXT NOT NULL,
-          lastName TEXT NOT NULL,
+          first_name TEXT NOT NULL,
+          last_name TEXT NOT NULL,
           email TEXT NOT NULL,
           code TEXT NOT NULL UNIQUE,
           status TEXT NOT NULL DEFAULT 'pending',
