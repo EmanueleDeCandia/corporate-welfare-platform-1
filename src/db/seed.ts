@@ -676,7 +676,7 @@ async function seedDatabase() {
     .insert(transactions)
     .values({
       kind: "welfare_charge",
-      status: "confirmed",
+      status: "invoiced",
       userId: mario.id,
       venueId: laValle.id,
       companyId: acme.id,
@@ -687,6 +687,13 @@ async function seedDatabase() {
       discountCents: 0,
       listPriceCents: 5000,
       serviceLabel: "Pernottamento · Camera Matrimoniale dei Cipressi",
+      invoiceNumber: "28",
+      invoiceDate: "2026-10-25",
+      paymentStatus: "pending",
+      commissionBps: 2000,
+      commissionCents: 1000,
+      providerNetCents: 4000,
+      invoiceRecordedAt: new Date("2026-10-25T16:00:00Z"),
       idempotencyKey: `welfare:${marioOvernight.id}`,
       createdAt: marioSelectedAt,
     })
@@ -719,6 +726,10 @@ async function seedDatabase() {
     discountCents: 0,
     listPriceCents: 5000,
     serviceLabel: "Pernottamento · Camera del Duca",
+    paymentStatus: "pending",
+    commissionBps: 2000,
+    commissionCents: 1000,
+    providerNetCents: 4000,
     idempotencyKey: `welfare:${annaOvernight.id}`,
     createdAt: annaSelectedAt,
   });
@@ -739,7 +750,7 @@ async function seedDatabase() {
     .returning();
   await db.insert(transactions).values({
     kind: "welfare_charge",
-    status: "confirmed",
+    status: "paid",
     userId: luca.id,
     venueId: tiglio.id,
     companyId: acme.id,
@@ -750,6 +761,14 @@ async function seedDatabase() {
     discountCents: 0,
     listPriceCents: 2500,
     serviceLabel: "Cena KM 0 · Aperitivo del Tiglio",
+    invoiceNumber: "12",
+    invoiceDate: "2026-10-20",
+    paymentStatus: "settled",
+    commissionBps: 6000,
+    commissionCents: 1500,
+    providerNetCents: 1000,
+    invoiceRecordedAt: new Date("2026-10-20T10:00:00Z"),
+    paymentSettledAt: new Date("2026-10-22T09:00:00Z"),
     idempotencyKey: `welfare:${lucaDinner.id}`,
     createdAt: lucaSelectedAt,
   });
@@ -874,6 +893,11 @@ async function seedDatabase() {
       discountCents: 250,
       listPriceCents: 2500,
       serviceLabel: "Cena amico · Tagliere dei Sibillini",
+      paymentStatus: "settled",
+      commissionBps: 0,
+      commissionCents: 0,
+      providerNetCents: 2250,
+      paymentSettledAt: new Date("2026-04-04T19:12:00Z"),
       createdAt: new Date("2026-04-04T19:12:00Z"),
     })
     .returning();
@@ -882,16 +906,19 @@ async function seedDatabase() {
     {
       venueId: laValle.id,
       type: "welfare",
-      title: "Selezione voucher: Pernottamento",
-      body: 'Mario Rossi ha selezionato Pernottamento per il 2026-10-29. Fattura da emettere all\'azienda ACME S.p.A.',
+      title: "Prospetto fattura: Pernottamento",
+      body: "Mario Rossi ha selezionato Pernottamento per il 2026-10-29. Committente ACME S.p.A. · Art. 51 TUIR · 50,00 € da fatturare. Fee RADICI 10,00 € · netto struttura 40,00 €.",
       payload: {
         guest: "Mario Rossi",
         company: "ACME S.p.A.",
         vat: "01234567890",
         amountCents: 5000,
+        commissionCents: 1000,
+        providerNetCents: 4000,
         serviceDate: "2026-10-29",
-        invoiceHint: "EMETTI FATTURA DIRETTA A: Impresa Cliente ACME S.p.A. (P.IVA: 01234567890)",
-        vatNote: "Importo da fatturare: € 50,00",
+        causale: "Welfare aziendale Art. 51 TUIR",
+        invoiceHint: "Fattura B2B intestata a ACME S.p.A. P.IVA 01234567890 · Art. 51 TUIR",
+        vatNote: "Lordo 50,00 € · Fee RADICI 10,00 € · Netto 40,00 €",
         transactionId: marioTx.id,
       },
       read: false,

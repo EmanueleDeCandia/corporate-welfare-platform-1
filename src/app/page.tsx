@@ -219,8 +219,8 @@ export default async function HomePage() {
                 </div>
                 <h3 className="mt-5 font-serif text-xl text-forest">Per le Strutture</h3>
                 <p className="mt-2 text-sm text-olive leading-relaxed">
-                  Pannello cassa dedicato: check-in tramite QR code, notifiche con estremi di
-                  fatturazione pronti e zero commissioni d&apos;intermediazione.
+                  Pannello cassa dedicato: check-in QR, prospetto Art. 51 TUIR, estremi fattura
+                  del tuo gestionale e fee RADICI visibile su ogni prestazione.
                 </p>
               </div>
               <Link href="/fornitore" className="mt-6 inline-flex items-center gap-1 text-xs font-semibold text-forest hover:text-gold transition-colors">

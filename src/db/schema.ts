@@ -9,6 +9,7 @@ export type AttendanceStatus = "pending" | "attended" | "no_show";
 export type PlanStatus = "draft" | "active" | "closed";
 export type TransactionKind = "welfare_charge" | "consumer_payment";
 export type TransactionStatus = "pending" | "confirmed" | "invoiced" | "paid" | "refunded" | "receipted";
+export type PaymentStatus = "pending" | "settled";
 export type GrantStatus =
   | "assigned"
   | "confirmation_sent"
@@ -371,6 +372,14 @@ export const transactions = sqliteTable(
     discountCents: integer("discount_cents").notNull().default(0),
     listPriceCents: integer("list_price_cents").notNull(),
     serviceLabel: text("service_label").notNull(),
+    invoiceNumber: text("invoice_number"),
+    invoiceDate: text("invoice_date"),
+    paymentStatus: text("payment_status").$type<PaymentStatus>().notNull().default("pending"),
+    commissionBps: integer("commission_bps").notNull().default(2000),
+    commissionCents: integer("commission_cents").notNull().default(0),
+    providerNetCents: integer("provider_net_cents").notNull().default(0),
+    invoiceRecordedAt: integer("invoice_recorded_at", { mode: "timestamp" }),
+    paymentSettledAt: integer("payment_settled_at", { mode: "timestamp" }),
     idempotencyKey: text("idempotency_key").unique(),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
@@ -495,7 +504,7 @@ export const auditLog = sqliteTable("audit_log", {
     .$defaultFn(() => new Date()),
 });
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export type Company = typeof companies.$inferSelect;
 export type Destination = typeof destinations.$inferSelect;

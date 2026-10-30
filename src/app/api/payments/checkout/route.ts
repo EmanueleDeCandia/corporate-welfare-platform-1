@@ -70,6 +70,11 @@ export async function POST(request: Request) {
       discountCents,
       listPriceCents: offering.listPriceCents,
       serviceLabel: `${voucherTypeLabel(offering.benefitType)} · ${offering.name} · pagamento ospite`,
+      paymentStatus: "settled",
+      commissionBps: 0,
+      commissionCents: 0,
+      providerNetCents: amountCents,
+      paymentSettledAt: new Date(),
     })
     .returning();
 

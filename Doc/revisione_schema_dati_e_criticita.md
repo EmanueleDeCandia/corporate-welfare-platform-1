@@ -240,7 +240,7 @@ CREATE INDEX ix_sessions_user ON sessions(user_id);
 
 ## 7. Domande aperte per il business — ✅ RISOLTE (29/10/2026)
 
-Le risposte sono recepite nel §8, che **prevale** sulle proposte dei §5 e §6 dove in contrasto (in particolare: niente `grant_funds`/`fund_movements`/liquidazione teatri, niente fatture come entità prioritaria, nessun esborso per grant non usati).
+Le risposte sono recepite nel §8, che **prevale** sulle proposte dei §5 e §6 dove in contrasto (in particolare: niente `grant_funds`/`fund_movements`/liquidazione teatri, nessun esborso per grant non usati). La fatturazione SDI non è in piattaforma: RADICI traccia solo estremi documento e stato pagamento sulla transazione (R12).
 
 ---
 
@@ -255,6 +255,7 @@ Le risposte sono recepite nel §8, che **prevale** sulle proposte dei §5 e §6 
 | R3 | **Selezione = riscatto normativo**: dal momento della selezione l'impresa paga il fornitore scelto, anche se il dipendente **non si presenta**. Il fornitore fattura dopo la selezione. | Separare nettamente **selezione** (evento fiscale, genera addebito) da **presenza** (evento operativo, solo monitoraggio). Il no-show non annulla l'addebito. |
 | R4 | Il dipendente può scegliere **solo 1 Pernottamento, 1 Cena o entrambi**. Mai due dello stesso tipo. | Vincolo `UNIQUE(plan_id, user_id, benefit_type)` sui voucher **base**. |
 | R5 | **Riassegnazione extra da residui, soglie separate per tipologia**: ogni addetto resta su 1 pernottamento e 1 cena. **A ridosso della scadenza**, se almeno il 20% dei voucher **base** di quel tipo è ancora inutilizzato, l'impresa può riassegnare extra di quel tipo **fino al 20% dei voucher ancora disponibili**, solo a chi ha già terminato i propri. | Voucher `origin = 'extra'` (al più uno per addetto/tipo), `plan_extra_allocations`; soglia sui **non selezionati**, tetto sul **residuo**, finestra `extra_window_days` prima di `valid_until`. |
+| R12 | **RADICI è intermediario tecnologico**, non emittente SDI: alla selezione genera il **prospetto** (committente, importo, Art. 51 TUIR, fee). Il fornitore fattura nel proprio gestionale e su RADICI registra solo `invoice_number` + `invoice_date`. Pagamento `pending` → `settled`. Fee snapshot: 20% pernottamento, 60% cena. | Campi su `transactions`: `invoice_number`, `invoice_date`, `payment_status`, `commission_bps`, `commission_cents`, `provider_net_cents`. Nessuna tabella `invoices` SDI. |
 | R6 | Il **Matching Grant (50 € = 25 € + 25 €, 2 persone)** spetta **solo a chi seleziona il Pernottamento**. Chi seleziona solo la Cena non ha grant. | `matching_grants.voucher_id` deve puntare a un voucher di tipo `overnight` (vincolo applicativo + trigger). |
 | R7 | Il grant è gestito dalla Startup (= promotori, entità unica). **Nessun esborso** se il beneficiario non si presenta: va solo gestita la **capienza** dei posti. | Nessun fondo/ledger contabile. Serve invece **capienza posti per evento** e **prenotazione posti**. |
 | R8 | Chi ha l'omaggio deve **confermare la presenza**; una **email di conferma** va inviata **almeno 7 giorni prima** dell'evento e la conferma deve arrivare **entro 3 giorni prima** dell'evento. Senza conferma entro T-3 i posti si liberano. | Stati del grant: `assigned → confirmation_sent → confirmed / declined / expired → attended / no_show`. Tabella `grant_confirmations` + coda email. |

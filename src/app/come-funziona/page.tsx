@@ -36,8 +36,8 @@ export default function HowItWorksPage() {
               text: "Invito + QR unico. L'amico si presenta in struttura, si registra, paga con carta e ottiene un micro-sconto. Tu ricevi +1 Punto Impatto.",
             },
             {
-              title: "Il fornitore ha due inbox in una",
-              text: "Notifica welfare: emetti fattura all'impresa. Notifica referral: incasso già ricevuto, emetti scontrino all'ospite. Presenze e no-show dal pannello o dal QR.",
+              title: "RADICI intermedia, il fornitore fattura",
+              text: "Alla selezione nasce il prospetto (committente, importo, Art. 51 TUIR). Il fornitore emette la fattura nel proprio gestionale e su RADICI inserisce solo numero e data, poi lo stato Da saldare → Saldato. Fee: 20% sul pernottamento, 60% sulla cena.",
             },
           ].map((step, index) => (
             <li key={step.title} className="rounded-[28px] bg-white p-6">

@@ -1,11 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { apiFetch } from "@/lib/session-client";
-import { Bell, Receipt, Stamp } from "lucide-react";
+import { Bell, Receipt, Stamp, Wallet } from "lucide-react";
 import type { companies, notifications, transactions, users, venues } from "@/db/schema";
-import { formatDateTime, formatEuro, grantStatusLabel, voucherTypeLabel } from "@/lib/utils";
+import { formatDateTime, formatEuro, grantStatusLabel, paymentStatusLabel, voucherTypeLabel } from "@/lib/utils";
 
 type SelectionRow = {
   id: number;
@@ -32,14 +32,16 @@ type GrantRow = {
   company_name: string | null;
 };
 
+type TxItem = {
+  transaction: typeof transactions.$inferSelect;
+  user: typeof users.$inferSelect;
+  company: typeof companies.$inferSelect | null;
+};
+
 type Props = {
   venue: typeof venues.$inferSelect;
   notifications: Array<typeof notifications.$inferSelect>;
-  transactions: Array<{
-    transaction: typeof transactions.$inferSelect;
-    user: typeof users.$inferSelect;
-    company: typeof companies.$inferSelect | null;
-  }>;
+  transactions: TxItem[];
   selections: SelectionRow[];
   grants: GrantRow[];
 };
@@ -47,6 +49,20 @@ type Props = {
 export function ProviderPanel({ venue, notifications: items, transactions: rows, selections, grants }: Props) {
   const router = useRouter();
   const [pending, setPending] = useState<string | null>(null);
+  const [invoiceDraft, setInvoiceDraft] = useState<Record<number, { number: string; date: string }>>({});
+  const [error, setError] = useState("");
+
+  const welfare = rows.filter((row) => row.transaction.kind === "welfare_charge");
+  const consumer = rows.filter((row) => row.transaction.kind === "consumer_payment");
+  const totals = useMemo(() => {
+    const gross = welfare.reduce((sum, row) => sum + row.transaction.amountCents, 0);
+    const fee = welfare.reduce((sum, row) => sum + row.transaction.commissionCents, 0);
+    const net = welfare.reduce((sum, row) => sum + row.transaction.providerNetCents, 0);
+    const pendingPay = welfare
+      .filter((row) => row.transaction.paymentStatus === "pending")
+      .reduce((sum, row) => sum + row.transaction.amountCents, 0);
+    return { gross, fee, net, pendingPay };
+  }, [welfare]);
 
   async function confirm(id: number) {
     setPending(`n-${id}`);
@@ -74,14 +90,155 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
     router.refresh();
   }
 
+  async function saveInvoice(transactionId: number) {
+    const draft = invoiceDraft[transactionId] ?? { number: "", date: "" };
+    setPending(`inv-${transactionId}`);
+    setError("");
+    const res = await apiFetch("/api/provider/settlements", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "invoice",
+        transactionId,
+        invoiceNumber: draft.number,
+        invoiceDate: draft.date,
+      }),
+    });
+    const json = (await res.json().catch(() => ({}))) as { error?: string };
+    setPending(null);
+    if (!res.ok) {
+      setError(json.error ?? "Estremi non salvati.");
+      return;
+    }
+    router.refresh();
+  }
+
+  async function settle(transactionId: number) {
+    setPending(`pay-${transactionId}`);
+    setError("");
+    const res = await apiFetch("/api/provider/settlements", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "settle", transactionId }),
+    });
+    const json = (await res.json().catch(() => ({}))) as { error?: string };
+    setPending(null);
+    if (!res.ok) {
+      setError(json.error ?? "Saldo non registrato.");
+      return;
+    }
+    router.refresh();
+  }
+
   return (
     <div className="space-y-6">
       <section className="rounded-[28px] bg-forest p-6 text-cream md:p-8">
         <p className="text-xs uppercase tracking-[0.18em] text-gold">Pannello fornitore</p>
         <h1 className="mt-2 font-serif text-4xl">{venue.name}</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-cream/75">
-          Selezioni welfare (fattura B2B anche in caso di no-show), presenze del giorno e incassi consumer.
+          RADICI ti consegna il prospetto (committente, importo, Art. 51 TUIR). Tu emetti la fattura
+          nel tuo gestionale e qui inserisci solo numero e data. Poi segni se l&apos;accredito è arrivato.
         </p>
+        <div className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <MiniStat label="Lordo fatturato" value={formatEuro(totals.gross)} />
+          <MiniStat label="Fee RADICI" value={formatEuro(totals.fee)} />
+          <MiniStat label="Netto struttura" value={formatEuro(totals.net)} />
+          <MiniStat label="In attesa di accredito" value={formatEuro(totals.pendingPay)} />
+        </div>
+      </section>
+
+      <section className="rounded-[28px] bg-white p-6">
+        <div className="flex items-center gap-2 text-forest">
+          <Wallet size={18} />
+          <h2 className="font-serif text-2xl">Distinta prestazioni erogate</h2>
+        </div>
+        <p className="mt-2 text-xs text-olive">
+          Fattura nel tuo gestionale all&apos;impresa committente. Su RADICI restano solo gli estremi e lo stato di pagamento.
+        </p>
+        {error ? <p className="mt-2 text-xs text-terracotta">{error}</p> : null}
+        <div className="mt-4 space-y-4">
+          {welfare.map(({ transaction, user, company }) => {
+            const draft = invoiceDraft[transaction.id] ?? {
+              number: transaction.invoiceNumber ?? "",
+              date: transaction.invoiceDate ?? "",
+            };
+            return (
+              <article key={transaction.id} className="rounded-2xl border border-mist p-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-forest">
+                      {user.firstName} {user.lastName}
+                    </p>
+                    <p className="text-xs text-olive">
+                      Committente: {company?.name ?? "—"}
+                      {company?.vatNumber ? ` · P.IVA ${company.vatNumber}` : ""}
+                    </p>
+                    <p className="mt-1 text-xs text-forest">
+                      {transaction.serviceLabel} · causale Art. 51 TUIR
+                    </p>
+                  </div>
+                  <span className={`rounded-full px-2.5 py-1 text-[11px] ${transaction.paymentStatus === "settled" ? "bg-sage/30 text-forest" : "bg-gold/20 text-terracotta"}`}>
+                    {transaction.paymentStatus === "settled" ? "Pagamento ricevuto / Saldato" : "In attesa di accredito"}
+                  </span>
+                </div>
+                <div className="mt-3 grid gap-2 text-xs sm:grid-cols-3">
+                  <p>Lordo {formatEuro(transaction.amountCents)}</p>
+                  <p>Fee RADICI {formatEuro(transaction.commissionCents)}</p>
+                  <p>Netto {formatEuro(transaction.providerNetCents)}</p>
+                </div>
+                {transaction.invoiceNumber ? (
+                  <p className="mt-3 text-sm text-forest">
+                    Fattura n. {transaction.invoiceNumber} del {transaction.invoiceDate}
+                  </p>
+                ) : (
+                  <div className="mt-3 grid gap-2 md:grid-cols-[1fr_1fr_auto]">
+                    <input
+                      placeholder="N. fattura (gestionale)"
+                      value={draft.number}
+                      onChange={(event) =>
+                        setInvoiceDraft((current) => ({
+                          ...current,
+                          [transaction.id]: { ...draft, number: event.target.value },
+                        }))
+                      }
+                      className="rounded-2xl border border-forest/10 bg-cream px-3 py-2 text-sm"
+                    />
+                    <input
+                      type="date"
+                      value={draft.date}
+                      onChange={(event) =>
+                        setInvoiceDraft((current) => ({
+                          ...current,
+                          [transaction.id]: { ...draft, date: event.target.value },
+                        }))
+                      }
+                      className="rounded-2xl border border-forest/10 bg-cream px-3 py-2 text-sm"
+                    />
+                    <button
+                      type="button"
+                      disabled={pending === `inv-${transaction.id}`}
+                      onClick={() => saveInvoice(transaction.id)}
+                      className="rounded-full bg-forest px-4 py-2 text-xs uppercase tracking-wider text-cream"
+                    >
+                      Salva estremi
+                    </button>
+                  </div>
+                )}
+                {transaction.invoiceNumber && transaction.paymentStatus === "pending" ? (
+                  <button
+                    type="button"
+                    disabled={pending === `pay-${transaction.id}`}
+                    onClick={() => settle(transaction.id)}
+                    className="mt-3 rounded-full border border-forest/20 px-4 py-2 text-xs uppercase tracking-wider text-forest"
+                  >
+                    Segna pagamento ricevuto
+                  </button>
+                ) : null}
+              </article>
+            );
+          })}
+          {welfare.length === 0 ? <p className="text-sm text-olive">Nessuna selezione welfare su questa struttura.</p> : null}
+        </div>
       </section>
 
       <section className="rounded-[28px] bg-white p-6">
@@ -149,7 +306,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
       <section className="rounded-[28px] bg-white p-6">
         <div className="flex items-center gap-2 text-forest">
           <Bell size={18} />
-          <h2 className="font-serif text-2xl">Notifiche di fatturazione e incasso</h2>
+          <h2 className="font-serif text-2xl">Prospetti e incassi consumer</h2>
         </div>
         <div className="mt-5 space-y-4">
           {items.map((item) => {
@@ -162,7 +319,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
                 }`}
               >
                 <p className="text-[11px] uppercase tracking-[0.16em] text-olive">
-                  {item.type === "welfare" ? "Notifica welfare" : "Notifica referral / consumer"}
+                  {item.type === "welfare" ? "Prospetto welfare" : "Incasso referral / consumer"}
                 </p>
                 <h3 className="mt-2 font-serif text-2xl text-forest">{item.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-forest/80">{item.body}</p>
@@ -172,15 +329,21 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
                 </div>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                   <p className="text-xs text-olive">{formatDateTime(item.createdAt)}</p>
-                  <button
-                    type="button"
-                    disabled={item.read || pending === `n-${item.id}`}
-                    onClick={() => confirm(item.id)}
-                    className="inline-flex items-center gap-2 rounded-full bg-forest px-4 py-2 text-xs uppercase tracking-[0.12em] text-cream disabled:bg-mist disabled:text-olive"
-                  >
-                    {item.type === "welfare" ? <Stamp size={14} /> : <Receipt size={14} />}
-                    {item.read ? "Segnato" : item.type === "welfare" ? "Segna fattura emessa" : "Segna scontrino emesso"}
-                  </button>
+                  {item.type !== "welfare" ? (
+                    <button
+                      type="button"
+                      disabled={item.read || pending === `n-${item.id}`}
+                      onClick={() => confirm(item.id)}
+                      className="inline-flex items-center gap-2 rounded-full bg-forest px-4 py-2 text-xs uppercase tracking-[0.12em] text-cream disabled:bg-mist disabled:text-olive"
+                    >
+                      <Receipt size={14} />
+                      {item.read ? "Scontrino segnato" : "Segna scontrino emesso"}
+                    </button>
+                  ) : (
+                    <span className="inline-flex items-center gap-2 text-xs text-olive">
+                      <Stamp size={14} /> Estremi nella distinta sopra
+                    </span>
+                  )}
                 </div>
               </article>
             );
@@ -188,36 +351,45 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
         </div>
       </section>
 
-      <section className="rounded-[28px] bg-white p-6">
-        <h2 className="font-serif text-2xl text-forest">Registro incassi</h2>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[640px] text-left text-sm">
-            <thead className="text-xs uppercase tracking-[0.12em] text-olive">
-              <tr>
-                <th className="pb-3">Data</th>
-                <th className="pb-3">Ospite</th>
-                <th className="pb-3">Canale</th>
-                <th className="pb-3">Importo</th>
-                <th className="pb-3">Stato</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map(({ transaction, user, company }) => (
-                <tr key={transaction.id} className="border-t border-mist">
-                  <td className="py-3">{formatDateTime(transaction.createdAt)}</td>
-                  <td>
-                    {user.firstName} {user.lastName}
-                    <span className="block text-xs text-olive">{company ? company.name : "Pagamento privato"}</span>
-                  </td>
-                  <td>{transaction.kind === "welfare_charge" ? "Welfare B2B" : "Consumer B2C"}</td>
-                  <td>{formatEuro(transaction.amountCents)}</td>
-                  <td className="capitalize">{transaction.status}</td>
+      {consumer.length > 0 ? (
+        <section className="rounded-[28px] bg-white p-6">
+          <h2 className="font-serif text-2xl text-forest">Incassi consumer già ricevuti</h2>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[640px] text-left text-sm">
+              <thead className="text-xs uppercase tracking-[0.12em] text-olive">
+                <tr>
+                  <th className="pb-3">Data</th>
+                  <th className="pb-3">Ospite</th>
+                  <th className="pb-3">Importo</th>
+                  <th className="pb-3">Stato</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+              </thead>
+              <tbody>
+                {consumer.map(({ transaction, user }) => (
+                  <tr key={transaction.id} className="border-t border-mist">
+                    <td className="py-3">{formatDateTime(transaction.createdAt)}</td>
+                    <td>
+                      {user.firstName} {user.lastName}
+                      <span className="block text-xs text-olive">Pagamento privato</span>
+                    </td>
+                    <td>{formatEuro(transaction.amountCents)}</td>
+                    <td>{paymentStatusLabel(transaction.paymentStatus)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
+    </div>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl bg-white/5 p-3">
+      <p className="text-[11px] uppercase tracking-wider text-cream/70">{label}</p>
+      <p className="mt-1 font-serif text-xl text-cream">{value}</p>
     </div>
   );
 }

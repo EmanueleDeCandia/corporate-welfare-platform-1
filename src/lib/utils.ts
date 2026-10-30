@@ -155,6 +155,17 @@ export function voucherStatusLabel(status: string) {
   }
 }
 
+export function paymentStatusLabel(status: string) {
+  switch (status) {
+    case "settled":
+      return "Saldato";
+    case "pending":
+      return "In attesa di pagamento";
+    default:
+      return status;
+  }
+}
+
 export function grantStatusLabel(status: string) {
   switch (status) {
     case "assigned":

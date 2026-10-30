@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import type { Company, User, Transaction, Venue, VenueOffering } from "@/db/schema";
-import { formatDateTime, formatEuro, initials, voucherTypeLabel } from "@/lib/utils";
+import { formatDateTime, formatEuro, initials, paymentStatusLabel, voucherTypeLabel } from "@/lib/utils";
 import type { PlanBudget } from "@/lib/welfare";
 
 type EmployeeRow = {
@@ -313,15 +313,18 @@ export function CompanyDashboardView({ data }: Props) {
       {activeTab === "invoices" && (
         <section className="rounded-[28px] border border-forest/10 bg-white p-6 overflow-x-auto">
           <h2 className="font-serif text-2xl text-forest">Addebiti B2B da selezione</h2>
-          <table className="mt-4 w-full text-left text-sm">
+          <p className="mt-1 text-xs text-olive">
+            L&apos;impresa paga il fornitore sul lordo. RADICI traccia estremi fattura e saldo; la fee di piattaforma è a carico del fornitore.
+          </p>
+          <table className="mt-4 w-full min-w-[720px] text-left text-sm">
             <thead className="text-xs uppercase text-olive">
               <tr>
                 <th className="py-3">Data</th>
                 <th className="py-3">Dipendente</th>
                 <th className="py-3">Fornitore</th>
-                <th className="py-3">Servizio</th>
-                <th className="py-3">Importo</th>
-                <th className="py-3">Stato</th>
+                <th className="py-3">Lordo</th>
+                <th className="py-3">Fattura</th>
+                <th className="py-3">Pagamento</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-mist">
@@ -330,9 +333,11 @@ export function CompanyDashboardView({ data }: Props) {
                   <td className="py-3 text-xs text-olive">{formatDateTime(transaction.createdAt)}</td>
                   <td>{user.firstName} {user.lastName}</td>
                   <td>{venue.name}</td>
-                  <td>{transaction.serviceLabel}</td>
                   <td>{formatEuro(transaction.amountCents)}</td>
-                  <td className="capitalize">{transaction.status}</td>
+                  <td className="text-xs">
+                    {transaction.invoiceNumber ? `n. ${transaction.invoiceNumber} del ${transaction.invoiceDate}` : "In attesa estremi"}
+                  </td>
+                  <td>{paymentStatusLabel(transaction.paymentStatus)}</td>
                 </tr>
               ))}
             </tbody>

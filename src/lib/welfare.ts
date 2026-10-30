@@ -1,5 +1,6 @@
 import { sqlite } from "@/db";
 import type { BenefitType } from "@/db/schema";
+import { commissionBpsFor, splitPlatformFee } from "@/lib/settlement";
 import { badgeForPoints, randomCode, unixSeconds } from "@/lib/utils";
 
 export class WelfareError extends Error {
@@ -381,10 +382,20 @@ export function selectVoucher(input: {
     const selectionId = Number(sel.lastInsertRowid);
 
     const label = voucher.benefit_type === "overnight" ? "Pernottamento" : "Cena KM 0";
+    const fee = splitPlatformFee(voucher.amount_cents, commissionBpsFor(voucher.benefit_type));
     const tx = sqlite
       .prepare(
-        `INSERT INTO transactions (kind, status, user_id, venue_id, company_id, voucher_id, selection_id, offering_id, amount_cents, discount_cents, list_price_cents, service_label, idempotency_key, created_at)
-         VALUES ('welfare_charge', 'confirmed', ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
+        `INSERT INTO transactions (
+           kind, status, user_id, venue_id, company_id, voucher_id, selection_id, offering_id,
+           amount_cents, discount_cents, list_price_cents, service_label,
+           invoice_number, invoice_date, payment_status, commission_bps, commission_cents, provider_net_cents,
+           idempotency_key, created_at
+         ) VALUES (
+           'welfare_charge', 'confirmed', ?, ?, ?, ?, ?, ?,
+           ?, 0, ?, ?,
+           NULL, NULL, 'pending', ?, ?, ?,
+           ?, ?
+         )`,
       )
       .run(
         input.userId,
@@ -396,10 +407,14 @@ export function selectVoucher(input: {
         voucher.amount_cents,
         voucher.amount_cents,
         `${label} · ${offering.name}`,
+        fee.commissionBps,
+        fee.commissionCents,
+        fee.providerNetCents,
         `welfare:${voucher.id}`,
         now,
       );
     const txId = Number(tx.lastInsertRowid);
+    const euro = (cents: number) => (cents / 100).toFixed(2).replace(".", ",");
 
     sqlite
       .prepare(
@@ -408,16 +423,19 @@ export function selectVoucher(input: {
       )
       .run(
         venue.id,
-        `Selezione voucher: ${label}`,
-        `${input.guestName} ha selezionato ${label} per il ${input.serviceDate}. Fattura da emettere all'azienda ${input.companyName}. Il no-show non annulla l'addebito.`,
+        `Prospetto fattura: ${label}`,
+        `${input.guestName} ha selezionato ${label} per il ${input.serviceDate}. Committente ${input.companyName} · Art. 51 TUIR · ${euro(voucher.amount_cents)} € da fatturare. Fee RADICI ${euro(fee.commissionCents)} € · netto struttura ${euro(fee.providerNetCents)} €.`,
         JSON.stringify({
           guest: input.guestName,
           company: input.companyName,
           vat: input.vatNumber,
           amountCents: voucher.amount_cents,
+          commissionCents: fee.commissionCents,
+          providerNetCents: fee.providerNetCents,
           serviceDate: input.serviceDate,
-          invoiceHint: `Fattura elettronica B2B intestata a ${input.companyName} (Art. 51 TUIR)`,
-          vatNote: `Importo da fatturare: € ${(voucher.amount_cents / 100).toFixed(2)}`,
+          causale: "Welfare aziendale Art. 51 TUIR",
+          invoiceHint: `Fattura B2B intestata a ${input.companyName} P.IVA ${input.vatNumber} · Art. 51 TUIR`,
+          vatNote: `Lordo ${euro(voucher.amount_cents)} € · Fee RADICI ${euro(fee.commissionCents)} € · Netto ${euro(fee.providerNetCents)} €`,
           transactionId: txId,
         }),
         txId,

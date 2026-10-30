@@ -32,11 +32,8 @@ export async function POST(
   await db.update(notifications).set({ read: true }).where(eq(notifications.id, notification.id));
 
   const txId = notification.transactionId ?? Number((notification.payload as { transactionId?: number })?.transactionId ?? 0);
-  if (txId && body.action === "confirm") {
-    await db
-      .update(transactions)
-      .set({ status: notification.type === "welfare" ? "invoiced" : "receipted" })
-      .where(eq(transactions.id, txId));
+  if (txId && body.action === "confirm" && notification.type !== "welfare") {
+    await db.update(transactions).set({ status: "receipted" }).where(eq(transactions.id, txId));
   }
 
   return NextResponse.json({ ok: true });

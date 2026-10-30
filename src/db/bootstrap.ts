@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export const BOOTSTRAP_SQL = `
 CREATE TABLE IF NOT EXISTS companies (
@@ -229,8 +229,17 @@ CREATE TABLE IF NOT EXISTS transactions (
   discount_cents INTEGER NOT NULL DEFAULT 0 CHECK (discount_cents >= 0),
   list_price_cents INTEGER NOT NULL CHECK (list_price_cents >= 0),
   service_label TEXT NOT NULL,
+  invoice_number TEXT,
+  invoice_date TEXT,
+  payment_status TEXT NOT NULL DEFAULT 'pending' CHECK (payment_status IN ('pending','settled')),
+  commission_bps INTEGER NOT NULL DEFAULT 2000 CHECK (commission_bps >= 0 AND commission_bps <= 10000),
+  commission_cents INTEGER NOT NULL DEFAULT 0 CHECK (commission_cents >= 0),
+  provider_net_cents INTEGER NOT NULL DEFAULT 0 CHECK (provider_net_cents >= 0),
+  invoice_recorded_at INTEGER,
+  payment_settled_at INTEGER,
   idempotency_key TEXT UNIQUE,
-  created_at INTEGER NOT NULL DEFAULT (unixepoch())
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  CHECK (commission_cents + provider_net_cents = amount_cents)
 );
 
 CREATE TABLE IF NOT EXISTS notifications (
@@ -315,6 +324,8 @@ CREATE INDEX IF NOT EXISTS ix_vouchers_plan ON vouchers(plan_id, status);
 CREATE INDEX IF NOT EXISTS ix_selections_venue_date ON voucher_selections(venue_id, service_date);
 CREATE INDEX IF NOT EXISTS ix_grants_event ON matching_grants(event_id, status);
 CREATE INDEX IF NOT EXISTS ix_tx_venue ON transactions(venue_id, created_at);
+CREATE INDEX IF NOT EXISTS ix_tx_payment ON transactions(kind, payment_status);
+CREATE INDEX IF NOT EXISTS ix_tx_company ON transactions(company_id, created_at);
 CREATE INDEX IF NOT EXISTS ix_notifications_venue ON notifications(venue_id, read);
 CREATE INDEX IF NOT EXISTS ix_sessions_user ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS ix_extra_plan_type ON plan_extra_allocations(plan_id, benefit_type);
