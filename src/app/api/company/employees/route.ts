@@ -84,6 +84,7 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     ok: true,
+    vouchersCreated: 2,
     message: `Dipendente ${firstName} ${lastName} registrato con successo con 2 voucher welfare attivi.`,
     employee: {
       id: newEmployee.id,
@@ -91,5 +92,5 @@ export async function POST(request: Request) {
       lastName: newEmployee.lastName,
       email: newEmployee.email,
     },
-  });
+  }, { status: 201 });
 }

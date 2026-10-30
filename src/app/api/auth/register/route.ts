@@ -343,14 +343,19 @@ export async function POST(request: Request) {
   // Crea sessione di autenticazione automatica
   await createSession(user.id);
 
-  return NextResponse.json({
-    ok: true,
-    redirectTo,
-    message: "Registrazione completata con successo!",
-    user: {
-      id: user.id,
-      email: user.email,
-      role: user.role,
+  return NextResponse.json(
+    {
+      ok: true,
+      redirectTo,
+      message: "Registrazione completata con successo!",
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        companyId: user.companyId,
+        venueId: user.venueId,
+      },
     },
-  });
+    { status: 201 }
+  );
 }

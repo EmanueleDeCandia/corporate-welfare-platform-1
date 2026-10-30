@@ -100,6 +100,7 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     ok: true,
+    status: body.status,
     attendanceStatus: body.status,
     message:
       body.status === "attended"
