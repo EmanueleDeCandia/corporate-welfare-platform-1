@@ -81,13 +81,13 @@ function romeParts(value: Date | string | number) {
 
 export function formatEuro(cents: number) {
   const amount = Number(cents);
-  if (!Number.isFinite(amount)) return "0,00 EUR";
+  if (!Number.isFinite(amount)) return "0,00 €";
   const negative = amount < 0;
   const abs = Math.abs(Math.round(amount));
   const euros = Math.floor(abs / 100);
   const rest = String(abs % 100).padStart(2, "0");
   const grouped = String(euros).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return `${negative ? "-" : ""}${grouped},${rest} EUR`;
+  return `${negative ? "-" : ""}${grouped},${rest} €`;
 }
 
 export function formatDate(date: Date | string | number) {

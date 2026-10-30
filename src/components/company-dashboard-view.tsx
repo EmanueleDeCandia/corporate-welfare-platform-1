@@ -1,9 +1,4 @@
-"use client";
-
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { apiFetch } from "@/lib/session-client";
 import {
   Users,
   Ticket,
@@ -12,13 +7,13 @@ import {
   ReceiptText,
   ShieldCheck,
   ChevronRight,
-  MapPin,
   Sparkles,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import type { Company, User, Transaction, Venue, VenueOffering } from "@/db/schema";
 import { formatDateTime, formatEuro, initials, paymentStatusLabel, voucherTypeLabel } from "@/lib/utils";
 import type { PlanBudget } from "@/lib/welfare";
+import { AddEmployeeForm, ExtraAllocationForm } from "@/components/company-employee-actions";
 
 type EmployeeRow = {
   user: User;
@@ -45,7 +40,10 @@ type VenueRow = {
   offerings: VenueOffering[];
 };
 
+export type CompanyDashboardTab = "overview" | "employees" | "venues" | "invoices";
+
 type Props = {
+  tab?: string;
   data: {
     company: Company;
     budget: PlanBudget | null;
@@ -57,53 +55,14 @@ type Props = {
   };
 };
 
-export function CompanyDashboardView({ data }: Props) {
-  const router = useRouter();
+export function parseCompanyTab(tab?: string): CompanyDashboardTab {
+  if (tab === "employees" || tab === "venues" || tab === "invoices") return tab;
+  return "overview";
+}
+
+export function CompanyDashboardView({ data, tab }: Props) {
+  const activeTab = parseCompanyTab(tab);
   const { company, budget, employees, extraEligible, transactions, venues } = data;
-  const [activeTab, setActiveTab] = useState<"overview" | "employees" | "venues" | "invoices">("overview");
-  const [extraType, setExtraType] = useState<"overnight" | "dinner">("overnight");
-  const [extraIds, setExtraIds] = useState<number[]>([]);
-  const [empForm, setEmpForm] = useState({ firstName: "", lastName: "", email: "" });
-  const [message, setMessage] = useState("");
-  const [pending, setPending] = useState(false);
-
-  const eligible = extraType === "overnight" ? extraEligible.overnight : extraEligible.dinner;
-  const extraAllowed = extraType === "overnight" ? budget?.overnightExtraAllowed : budget?.dinnerExtraAllowed;
-  const extraRemaining = extraType === "overnight" ? budget?.overnightExtraRemaining : budget?.dinnerExtraRemaining;
-
-  async function addEmployee() {
-    setPending(true);
-    setMessage("");
-    const response = await apiFetch("/api/company/employees", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(empForm),
-    });
-    const payload = (await response.json()) as { error?: string; message?: string };
-    setPending(false);
-    setMessage(payload.message ?? payload.error ?? "");
-    if (response.ok) {
-      setEmpForm({ firstName: "", lastName: "", email: "" });
-      router.refresh();
-    }
-  }
-
-  async function allocateExtra() {
-    setPending(true);
-    setMessage("");
-    const response = await apiFetch("/api/company/extra-allocations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ benefitType: extraType, userIds: extraIds }),
-    });
-    const payload = (await response.json()) as { error?: string; message?: string };
-    setPending(false);
-    setMessage(payload.message ?? payload.error ?? "");
-    if (response.ok) {
-      setExtraIds([]);
-      router.refresh();
-    }
-  }
 
   return (
     <div className="space-y-8">
@@ -133,23 +92,20 @@ export function CompanyDashboardView({ data }: Props) {
               ["invoices", `Addebiti B2B (${transactions.length})`],
             ] as const
           ).map(([id, label]) => (
-            <button
+            <Link
               key={id}
-              type="button"
-              onClick={() => setActiveTab(id)}
+              href={id === "overview" ? "/azienda" : `/azienda?tab=${id}`}
               className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wider ${
                 activeTab === id ? "bg-cream text-forest" : "bg-white/10 text-cream"
               }`}
             >
               {label}
-            </button>
+            </Link>
           ))}
         </div>
       </section>
 
-      {message ? <p className="rounded-2xl bg-sage/15 px-4 py-3 text-sm text-forest">{message}</p> : null}
-
-      {activeTab === "overview" && budget && (
+      {activeTab === "overview" && budget ? (
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Metric label="Addetti del piano" value={String(budget.eligible_employees)} hint="Plafond virtuale, non utenze create" icon={<Users size={18} />} />
@@ -202,58 +158,21 @@ export function CompanyDashboardView({ data }: Props) {
             </ul>
           </div>
         </div>
-      )}
+      ) : null}
 
-      {activeTab === "employees" && (
+      {activeTab === "employees" ? (
         <div className="space-y-6">
-          <section className="rounded-[28px] border border-forest/10 bg-white p-6">
-            <h2 className="font-serif text-2xl text-forest">Aggiungi dipendente</h2>
-            <p className="text-xs text-olive">Vengono emessi subito 1 pernottamento + 1 cena sul piano attivo. Password demo: radici2026.</p>
-            <div className="mt-4 grid gap-3 md:grid-cols-4">
-              <input placeholder="Nome" value={empForm.firstName} onChange={(e) => setEmpForm({ ...empForm, firstName: e.target.value })} className="rounded-2xl border border-forest/10 bg-cream px-3 py-2 text-sm" />
-              <input placeholder="Cognome" value={empForm.lastName} onChange={(e) => setEmpForm({ ...empForm, lastName: e.target.value })} className="rounded-2xl border border-forest/10 bg-cream px-3 py-2 text-sm" />
-              <input placeholder="Email" value={empForm.email} onChange={(e) => setEmpForm({ ...empForm, email: e.target.value })} className="rounded-2xl border border-forest/10 bg-cream px-3 py-2 text-sm" />
-              <button type="button" disabled={pending} onClick={addEmployee} className="rounded-2xl bg-forest px-4 py-2 text-sm text-cream">
-                Emetti 1+1
-              </button>
-            </div>
-          </section>
-
-          <section className="rounded-[28px] border border-forest/10 bg-white p-6">
-            <h2 className="font-serif text-2xl text-forest">Riassegnazione extra da residui</h2>
-            <div className="mt-3 flex gap-2">
-              <button type="button" onClick={() => { setExtraType("overnight"); setExtraIds([]); }} className={`rounded-full px-3 py-1 text-xs ${extraType === "overnight" ? "bg-forest text-cream" : "bg-cream"}`}>Pernottamenti</button>
-              <button type="button" onClick={() => { setExtraType("dinner"); setExtraIds([]); }} className={`rounded-full px-3 py-1 text-xs ${extraType === "dinner" ? "bg-forest text-cream" : "bg-cream"}`}>Cene</button>
-            </div>
-            <p className="mt-2 text-xs text-olive">
-              {extraAllowed
-                ? `Finestra extra aperta. Puoi assegnare fino a ${extraRemaining} voucher (20% dei residui) a chi ha già usato il proprio.`
-                : budget && !budget.extraWindowOpen
-                  ? `Chiusa fino al ${budget.extraOpensOn}: prima ogni addetto resta su 1 pernottamento e 1 cena.`
-                  : "Chiusa: i non selezionati sono sotto il 20%, oppure il tetto sui residui è esaurito."}
-            </p>
-            <div className="mt-3 space-y-2">
-              {eligible.map((user) => (
-                <label key={user.id} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={extraIds.includes(user.id)}
-                    onChange={(event) =>
-                      setExtraIds((current) =>
-                        event.target.checked ? [...current, user.id] : current.filter((id) => id !== user.id),
-                      )
-                    }
-                  />
-                  {user.firstName} {user.lastName}
-                </label>
-              ))}
-              {eligible.length === 0 ? <p className="text-sm text-olive">Nessun addetto ha ancora terminato il voucher base di questo tipo, oppure ha già ricevuto l&apos;extra.</p> : null}
-            </div>
-            <button type="button" disabled={!extraAllowed || extraIds.length === 0 || pending} onClick={allocateExtra} className="mt-4 rounded-full bg-terracotta px-4 py-2 text-xs font-semibold uppercase text-cream disabled:bg-mist disabled:text-olive">
-              Assegna extra
-            </button>
-          </section>
-
+          <AddEmployeeForm />
+          <ExtraAllocationForm
+            overnightAllowed={Boolean(budget?.overnightExtraAllowed)}
+            dinnerAllowed={Boolean(budget?.dinnerExtraAllowed)}
+            overnightRemaining={budget?.overnightExtraRemaining ?? 0}
+            dinnerRemaining={budget?.dinnerExtraRemaining ?? 0}
+            extraWindowOpen={Boolean(budget?.extraWindowOpen)}
+            extraOpensOn={budget?.extraOpensOn ?? ""}
+            overnightEligible={extraEligible.overnight}
+            dinnerEligible={extraEligible.dinner}
+          />
           <section className="rounded-[28px] border border-forest/10 bg-white p-6 overflow-x-auto">
             <h2 className="font-serif text-2xl text-forest">Monitoraggio dipendenti</h2>
             <table className="mt-4 w-full text-left text-sm">
@@ -283,9 +202,9 @@ export function CompanyDashboardView({ data }: Props) {
             </table>
           </section>
         </div>
-      )}
+      ) : null}
 
-      {activeTab === "venues" && (
+      {activeTab === "venues" ? (
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {venues.map(({ venue, flags, offerings }) => (
             <div key={venue.id} className="rounded-[24px] border border-forest/10 bg-white p-5">
@@ -308,9 +227,9 @@ export function CompanyDashboardView({ data }: Props) {
             </div>
           ))}
         </div>
-      )}
+      ) : null}
 
-      {activeTab === "invoices" && (
+      {activeTab === "invoices" ? (
         <section className="rounded-[28px] border border-forest/10 bg-white p-6 overflow-x-auto">
           <h2 className="font-serif text-2xl text-forest">Addebiti B2B da selezione</h2>
           <p className="mt-1 text-xs text-olive">
@@ -330,12 +249,10 @@ export function CompanyDashboardView({ data }: Props) {
             <tbody className="divide-y divide-mist">
               {transactions.map(({ transaction, user, venue }) => (
                 <tr key={transaction.id}>
-                  <td className="py-3 text-xs text-olive" suppressHydrationWarning>
-                    {formatDateTime(transaction.createdAt)}
-                  </td>
+                  <td className="py-3 text-xs text-olive">{formatDateTime(transaction.createdAt)}</td>
                   <td>{user.firstName} {user.lastName}</td>
                   <td>{venue.name}</td>
-                  <td suppressHydrationWarning>{formatEuro(transaction.amountCents)}</td>
+                  <td>{formatEuro(transaction.amountCents)}</td>
                   <td className="text-xs">
                     {transaction.invoiceNumber ? `n. ${transaction.invoiceNumber} del ${transaction.invoiceDate}` : "In attesa estremi"}
                   </td>
@@ -345,7 +262,7 @@ export function CompanyDashboardView({ data }: Props) {
             </tbody>
           </table>
         </section>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -357,12 +274,8 @@ function Metric({ label, value, hint, icon }: { label: string; value: string; hi
         <span className="text-xs font-semibold uppercase tracking-wider">{label}</span>
         {icon}
       </div>
-      <p className="mt-3 font-serif text-3xl text-forest" suppressHydrationWarning>
-        {value}
-      </p>
-      <p className="mt-1 text-xs text-ink/70" suppressHydrationWarning>
-        {hint}
-      </p>
+      <p className="mt-3 font-serif text-3xl text-forest">{value}</p>
+      <p className="mt-1 text-xs text-ink/70">{hint}</p>
     </div>
   );
 }
@@ -398,7 +311,7 @@ function ChannelCard({
         <div className="grid h-10 w-10 place-items-center rounded-xl bg-sage/20">{icon}</div>
         <div>
           <h3 className="font-serif text-xl">{title}</h3>
-          <p className="text-xs text-olive" suppressHydrationWarning>
+          <p className="text-xs text-olive">
             {selected} usati su {base} base ({rate}%) · {unused} ancora disponibili
           </p>
         </div>

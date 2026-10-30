@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { invites, users } from "@/db/schema";
-import { createSession } from "@/lib/auth";
+import { SESSION_COOKIE, createSession, sessionCookieOptions } from "@/lib/auth";
 import { ensureSeeded } from "@/db/seed";
 import { badgeForPoints, hashPassword, randomCode } from "@/lib/utils";
 
@@ -67,6 +67,10 @@ export async function POST(request: Request) {
       .where(and(eq(invites.id, invite.id)));
   }
 
-  await createSession(user.id);
-  return NextResponse.json({ ok: true, redirectTo: "/account" });
+  const { token, expiresAt } = await createSession(user.id);
+  const redirectTo = `/account?sid=${encodeURIComponent(token)}`;
+  const cookie = await sessionCookieOptions();
+  const response = NextResponse.json({ ok: true, redirectTo, role: user.role });
+  response.cookies.set(SESSION_COOKIE, token, { ...cookie, expires: expiresAt });
+  return response;
 }

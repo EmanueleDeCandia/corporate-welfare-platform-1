@@ -7,13 +7,16 @@ import { getCompanyDashboardData } from "@/lib/company";
 
 export const dynamic = "force-dynamic";
 
-export default async function CompanyDashboardPage() {
+export default async function CompanyDashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const user = await getCurrentUser();
   if (!user) {
     redirect("/login?next=/azienda");
   }
 
-  // Se non è CSR, rimanda al proprio account
   if (user.role !== "csr" || !user.companyId) {
     redirect("/account");
   }
@@ -23,13 +26,15 @@ export default async function CompanyDashboardPage() {
     redirect("/account");
   }
 
+  const { tab } = await searchParams;
+
   return (
     <PublicShell>
       <main className="mx-auto max-w-7xl px-4 py-8 md:px-6">
         <div className="mb-4 flex justify-end">
           <LogoutButton className="rounded-full border border-forest/15 px-4 py-2 text-sm text-forest hover:bg-forest/5" />
         </div>
-        <CompanyDashboardView data={data} />
+        <CompanyDashboardView data={data} tab={tab} />
       </main>
     </PublicShell>
   );

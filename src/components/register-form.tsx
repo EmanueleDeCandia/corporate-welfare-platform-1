@@ -1,7 +1,7 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { persistClientSession } from "@/lib/session-client";
 
 export function RegisterForm({
   inviteCode,
@@ -14,7 +14,6 @@ export function RegisterForm({
   lastName?: string;
   email?: string;
 }) {
-  const router = useRouter();
   const [form, setForm] = useState({
     firstName,
     lastName,
@@ -28,19 +27,31 @@ export function RegisterForm({
     event.preventDefault();
     setPending(true);
     setError("");
-    const response = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, inviteCode }),
-    });
-    const data = (await response.json()) as { error?: string; redirectTo?: string };
-    setPending(false);
-    if (!response.ok) {
-      setError(data.error ?? "Registrazione non riuscita.");
-      return;
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ ...form, inviteCode }),
+      });
+      const data = (await response.json()) as { error?: string; redirectTo?: string };
+      if (!response.ok) {
+        setError(data.error ?? "Registrazione non riuscita.");
+        setPending(false);
+        return;
+      }
+      const dest = data.redirectTo || "/account";
+      try {
+        const sid = new URL(dest, window.location.origin).searchParams.get("sid");
+        if (sid) persistClientSession(sid);
+      } catch {
+        /* ignore */
+      }
+      window.location.assign(dest);
+    } catch {
+      setError("Connessione non riuscita. Riprova.");
+      setPending(false);
     }
-    router.push(data.redirectTo || "/account");
-    router.refresh();
   }
 
   return (

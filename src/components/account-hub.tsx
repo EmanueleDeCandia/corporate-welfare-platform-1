@@ -817,13 +817,14 @@ function FriendsTab({ user, invites }: Props) {
     });
     const data = (await response.json()) as { error?: string; invite?: (typeof invites)[number] };
     setPending(false);
-    if (!response.ok || !data.invite) {
-      setError(data.error ?? "Invito non creato.");
+    if (data.invite) {
+      setCreated(data.invite);
+      setForm({ firstName: "", lastName: "", email: "" });
+      setError("");
+      router.refresh();
       return;
     }
-    setCreated(data.invite);
-    setForm({ firstName: "", lastName: "", email: "" });
-    router.refresh();
+    setError(data.error ?? "Invito non creato.");
   }
 
   const selected = created ?? invites[0];
@@ -859,9 +860,15 @@ function FriendsTab({ user, invites }: Props) {
                 {selected.firstName} {selected.lastName}
               </p>
               <p className="text-sm text-olive">{selected.email}</p>
-              <a href={`/r/${selected.code}`} className="mt-3 inline-flex rounded-full border border-terracotta/30 px-4 py-2 text-xs font-semibold text-terracotta">
-                Vedi convenzione
-              </a>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <a href={`/r/${selected.code}`} className="inline-flex rounded-full border border-terracotta/30 px-4 py-2 text-xs font-semibold text-terracotta">
+                  Vedi convenzione
+                </a>
+                <a href={`/registrati?invite=${selected.code}`} className="inline-flex rounded-full bg-forest px-4 py-2 text-xs font-semibold text-cream">
+                  Link registrazione
+                </a>
+              </div>
+              <p className="mt-2 break-all text-[11px] text-olive">/registrati?invite={selected.code}</p>
             </div>
           </div>
         ) : (
