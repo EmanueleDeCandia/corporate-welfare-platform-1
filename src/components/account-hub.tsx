@@ -474,7 +474,7 @@ function HotelDrawer({
                     </div>
                     <strong className="text-base font-serif text-forest block mt-1">{bookedEvent?.title}</strong>
                     <p className="text-xs text-forest mt-0.5 font-medium">{bookedEvent?.venueName} ({bookedEvent?.city})</p>
-                    <p className="text-[11px] text-olive mt-0.5">Omaggio 2 Persone (25€ + 25€) · Incontro con gli artisti incluso</p>
+                    <p className="text-[11px] text-olive mt-0.5">Omaggio erogato dai Promotori RADICI per 2 Persone (25€ + 25€) · Non grava sull&apos;impresa CSR</p>
                   </div>
 
                   <div className="mt-4 pt-3 border-t border-gold/30 flex flex-wrap gap-2">
@@ -1772,7 +1772,11 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
                       <div>
                         <span className="block text-olive font-medium">Prezzo Totale:</span>
                         <span className="font-bold text-forest">
-                          {formatEuro(b.finalPriceCents)} {b.discountCents > 0 ? "(-10%)" : ""}
+                          {b.voucherId
+                            ? b.bookingType === "theater_event"
+                              ? "Omaggio Promotori (0€ · 2 Posti)"
+                              : "Voucher Welfare (0€ · 100% Azienda)"
+                            : `${formatEuro(b.finalPriceCents)} ${b.discountCents > 0 ? "(-10%)" : ""}`}
                         </span>
                       </div>
                     </div>
@@ -1808,13 +1812,18 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
                         type="button"
                         disabled={actionPendingId === b.id}
                         onClick={() => {
-                          if (confirm(isBasket ? "Vuoi davvero annullare questo ordine?" : "Vuoi davvero annullare questa prenotazione? I posti verranno liberati.")) {
+                          const confirmMsg = isBasket
+                            ? "Vuoi davvero annullare questo ordine?"
+                            : b.voucherId
+                            ? "Vuoi davvero annullare questa prenotazione? Il tuo voucher welfare tornerà disponibile nel portafoglio per poter selezionare un altro fornitore."
+                            : "Vuoi davvero annullare questa prenotazione? I posti verranno liberati.";
+                          if (confirm(confirmMsg)) {
                             updateBookingStatus(b.id, "cancelled");
                           }
                         }}
                         className="rounded-full border border-forest/20 px-3.5 py-2 text-xs font-medium text-forest hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition disabled:opacity-50"
                       >
-                        {isBasket ? "Annulla Ordine" : "Annulla Prenotazione"}
+                        {isBasket ? "Annulla Ordine" : b.voucherId ? "Annulla e Cambia Fornitore" : "Annulla Prenotazione"}
                       </button>
                     </div>
                   )}

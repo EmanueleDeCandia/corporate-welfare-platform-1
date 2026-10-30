@@ -333,9 +333,9 @@ export async function seedDatabase() {
         passwordHash: DEMO_PASSWORD,
         firstName: "Paolo",
         lastName: "Luzi",
-        role: "provider",
+        role: "promoter",
         impactPoints: 0,
-        badgeLevel: "Partner",
+        badgeLevel: "Promotore Culturale · Teatro Lauro Rossi",
         referralCode: "paolo-luzi",
       },
           {
@@ -652,22 +652,20 @@ export async function seedDatabase() {
         province: "MC",
         region: "Marche",
         description:
-          "Teatro all'italiana del 1769. I buoni spettacolo loyalty da 50€ aprono la stagione di prosa e opera.",
+          "Teatro all'italiana del 1769, sede delle rappresentazioni storiche e del Matching Grant promosso da RADICI.",
         longDescription:
-          "Uno dei teatri storici più eleganti delle Marche. Il buono loyalty RADICI da 50€ è un omaggio aziendale distinto dal cassetto welfare: copre un posto in platea o l'integrazione su un abbonamento della stagione. Gli adetti che hanno ricevuto il Voucher Pernottamento possono utilizzare questo buono all'ingresso. Il buono copre il biglietto del Teatro e altri servizi. Invitati senza Voucher di Welfare Aziendale avranno uno sconto del 10% sul biglietto.",
+          "Uno dei teatri storici più eleganti delle Marche. Il Matching Grant RADICI è un omaggio culturale erogato e finanziato dai Promotori della startup territoriale (non dalle imprese CSR): garantisce 2 posti riservati in platea con incontro esclusivo con gli attori a fine spettacolo per tutti gli ospiti che soggiornano nei borghi.",
         lat: 43.3008,
         lng: 13.4539,
         coverImage: "/images/lauro-rossi.jpg",
         gallery: ["/images/lauro-rossi.jpg", "/images/teatro.jpg"],
-        services: ["Posto in platea", "Programma di sala", "Guardaroba incluso"],
+        services: ["Posto in platea omaggio", "Programma di sala", "Guardaroba incluso", "Incontro con gli artisti"],
         aperitivoMenu: [],
         rooms: [],
         priceHotelCents: 0,
         priceAperitivoCents: 0,
         priceShowCents: 5000,
         checkinCode: "venue-lauro-rossi",
-        providerUserId: paolo.id,
-        sponsorCompanyId: acme.id,
         impactPointsGenerated: 1,
         localSupportPercent: 20,
       },
@@ -981,12 +979,10 @@ export async function seedDatabase() {
   await db.update(users).set({ venueId: laValle.id }).where(eq(users.id, elena.id));
   await db.update(users).set({ venueId: insertedVenues[1].id }).where(eq(users.id, marco.id));
   await db.update(users).set({ venueId: insertedVenues[3].id }).where(eq(users.id, chiara.id));
-  await db.update(users).set({ venueId: teatroLauro.id }).where(eq(users.id, paolo.id));
   await db.update(users).set({ venueId: insertedVenues[5].id }).where(eq(users.id, matteo.id));
   await db.update(venues).set({ providerUserId: elena.id }).where(eq(venues.id, laValle.id));
   await db.update(venues).set({ providerUserId: marco.id }).where(eq(venues.id, insertedVenues[1].id));
   await db.update(venues).set({ providerUserId: chiara.id }).where(eq(venues.id, insertedVenues[3].id));
-  await db.update(venues).set({ providerUserId: paolo.id }).where(eq(venues.id, teatroLauro.id));
   await db.update(venues).set({ providerUserId: matteo.id }).where(eq(venues.id, insertedVenues[5].id));
 
   // POPOLAMENTO OFFERTE SERVIZI STRUTTURE (PERNOTTAMENTO, CENA O ENTRAMBI)

@@ -11,12 +11,18 @@ type DemoUser = {
 };
 
 const demos: DemoUser[] = [
-  // 1. Promotori / Platform Admin
+  // 1. Promotori / Platform Admin & Sedi Matching Grant
   {
     email: "chiara.promotori@radici.it",
     label: "Chiara Valenti",
     category: "Startup Promotrice",
-    hint: "Startup RADICI · Regia totale piattaforma & Matching Grant",
+    hint: "Startup RADICI · Regia totale piattaforma & Fondo Matching Grant",
+  },
+  {
+    email: "paolo@teatrolauro.it",
+    label: "Paolo Luzi",
+    category: "Startup Promotrice",
+    hint: "Referente Teatrale · Teatro Lauro Rossi (Matching Grant Promotori)",
   },
   // 2. Aziende CSR
   {
@@ -31,7 +37,7 @@ const demos: DemoUser[] = [
     category: "Impresa CSR",
     hint: "CSR Manager · Verde Energia Italia (Verifica plafond)",
   },
-  // 3. Fornitori
+  // 3. Fornitori (Ricettività, Ristorazione, Filiera Corta)
   {
     email: "elena@lavalle.it",
     label: "Elena Conti",
@@ -45,10 +51,10 @@ const demos: DemoUser[] = [
     hint: "Fornitore Ristorante KM 0 · Osteria del Tiglio (Recanati)",
   },
   {
-    email: "paolo@teatrolauro.it",
-    label: "Paolo Luzi",
+    email: "marco@frantoioconero.it",
+    label: "Marco Silvestri",
     category: "Fornitore Locale",
-    hint: "Fornitore Culturale · Teatro Storico Lauro Rossi",
+    hint: "Produttore Filiera Corta · Frantoio del Conero (Cesti Olio Bio)",
   },
   // 4. Dipendenti Welfare
   {

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
+  bookings,
   companies,
   grantConfirmations,
   grantEvents,
@@ -222,6 +223,74 @@ export async function POST(request: Request) {
     },
     read: false,
   });
+
+  // 3. Registra le prenotazioni in "bookings" per consentire al dipendente di gestire presenze e annullamenti come un utente amico
+  if (isOvernightVoucher) {
+    // Prenotazione Struttura Ricettiva (Hotel / Agriturismo)
+    await db.insert(bookings).values({
+      userId: me.id,
+      venueId: venue.id,
+      voucherId: voucher.id,
+      bookingType: "hospitality",
+      bookingDate: serviceDate,
+      timeSlot: "Check-in standard",
+      partySize: 2,
+      discountPercent: 0,
+      totalAmountCents: amountCents,
+      discountCents: amountCents, // 100% coperto da welfare aziendale
+      finalPriceCents: 0,
+      status: "confirmed",
+      confirmationToken: randomCode("bkg-welfare"),
+      guestName: `${me.firstName} ${me.lastName}`,
+      guestEmail: me.email,
+      notes: `Pernottamento con Voucher Welfare (100% finanziato da ${company?.name ?? "Impresa CSR"})`,
+    });
+
+    // Prenotazione Spettacolo Teatrale Matching Grant (Omaggio Promotori)
+    if (selectedEvent) {
+      await db.insert(bookings).values({
+        userId: me.id,
+        venueId: selectedEvent.venueId || venue.id,
+        grantEventId: selectedEvent.id,
+        voucherId: voucher.id,
+        bookingType: "theater_event",
+        bookingDate: selectedEvent.startsAt
+          ? selectedEvent.startsAt.toISOString().split("T")[0]
+          : serviceDate,
+        timeSlot: "Inizio Spettacolo",
+        partySize: 2,
+        discountPercent: 0,
+        totalAmountCents: 5000,
+        discountCents: 5000, // 100% omaggio offerto dai Promotori
+        finalPriceCents: 0,
+        status: "confirmed",
+        confirmationToken: randomCode("bkg-grant"),
+        guestName: `${me.firstName} ${me.lastName}`,
+        guestEmail: me.email,
+        notes: `Omaggio Matching Grant Promotori (2 posti riservati · ${selectedEvent.title})`,
+      });
+    }
+  } else {
+    // Prenotazione Cena / Degustazione KM 0
+    await db.insert(bookings).values({
+      userId: me.id,
+      venueId: venue.id,
+      voucherId: voucher.id,
+      bookingType: "dinner",
+      bookingDate: serviceDate,
+      timeSlot: "Cena ore 20:30",
+      partySize: 1,
+      discountPercent: 0,
+      totalAmountCents: amountCents,
+      discountCents: amountCents, // 100% coperto da welfare aziendale
+      finalPriceCents: 0,
+      status: "confirmed",
+      confirmationToken: randomCode("bkg-welfare"),
+      guestName: `${me.firstName} ${me.lastName}`,
+      guestEmail: me.email,
+      notes: `Cena & Degustazione KM 0 con Voucher Welfare (100% finanziato da ${company?.name ?? "Impresa CSR"})`,
+    });
+  }
 
   // 3. Punti Impatto al dipendente
   await awardImpact(me.id, venue.impactPointsGenerated);

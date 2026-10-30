@@ -53,8 +53,24 @@ async function run() {
 
   const db = new Database('radici.db');
 
+  // 0. Verifica Paolo Luzi & Teatro Lauro Rossi (NON fornitore, MA Promotore Culturale del Matching Grant)
+  console.log('--- 0. Verifica Ruolo Paolo Luzi e Teatro Lauro Rossi ---');
+  const paoloUser = db.prepare("SELECT id, email, role, venue_id FROM users WHERE email = 'paolo@teatrolauro.it'").get();
+  assert(paoloUser && paoloUser.role === 'promoter', `Paolo Luzi ha ruolo '${paoloUser?.role}' (ATTESO: promoter)`);
+
+  const teatroVenue = db.prepare("SELECT id, name, type, provider_user_id, sponsor_company_id FROM venues WHERE id = 5").get();
+  assert(teatroVenue && teatroVenue.type === 'theater', `Teatro Lauro Rossi è di tipo '${teatroVenue?.type}'`);
+  assert(teatroVenue.sponsor_company_id === null, 'Teatro Lauro Rossi non è sponsorizzato da impresa CSR (finanziato dai Promotori)');
+
+  const paoloCookie = await login('paolo@teatrolauro.it');
+  assert(!!paoloCookie, 'Login Paolo Luzi effettuato');
+  const paoloPromRes = await request('/promotori', { headers: { Cookie: `radici_session=${paoloCookie}` } });
+  assert(paoloPromRes.status === 200, 'Paolo Luzi accede a /promotori (Control Room Matching Grant)');
+  const paoloFornRes = await request('/fornitore', { headers: { Cookie: `radici_session=${paoloCookie}` } });
+  assert(paoloFornRes.status === 307 || paoloFornRes.status === 302, 'Paolo Luzi correttamente reindirizzato da /fornitore');
+
   // 1. Verifica 6 Produttori Filiera Corta
-  console.log('--- 1. Verifica Database Produttori Filiera Corta ---');
+  console.log('\n--- 1. Verifica Database Produttori Filiera Corta ---');
   const producers = db.prepare("SELECT id, name, city, basket_name, price_basket_cents FROM venues WHERE type = 'producer'").all();
   assert(producers.length === 6, `Trovati ${producers.length} produttori filiera corta (attesi 6)`);
   for (const p of producers) {
@@ -95,37 +111,41 @@ async function run() {
   const grantAfter = db.prepare("SELECT id, status, seats_requested FROM matching_grants WHERE voucher_id = ?").get(availableVoucher.id);
   assert(!!grantAfter && grantAfter.status === 'assigned', `Matching grant assegnato (status=${grantAfter?.status}, seats=${grantAfter?.seats_requested})`);
 
-  // 4. Test Azioni Matching Grant (Conferma / Rinuncia)
-  console.log('\n--- 4. Test Conferma e Rinuncia Matching Grant ---');
-  const confirmGrantRes = await request('/api/grants/respond', {
-    method: 'POST',
-    headers: { Cookie: `radici_session=${marioCookie}` },
-    body: JSON.stringify({ voucherId: availableVoucher.id, action: 'confirmed' }),
-  });
-  assert(confirmGrantRes.status === 200, 'Risposta API confermata per il teatro');
-  const grantConfirmed = db.prepare("SELECT status FROM matching_grants WHERE id = ?").get(grantAfter.id);
-  assert(grantConfirmed.status === 'confirmed', `Stato matching grant aggiornato a 'confirmed'`);
+  // Verifica creazione prenotazioni gemelle in bookings per Mario (come gli amici!)
+  const marioBookings = db.prepare("SELECT id, booking_type, voucher_id, final_price_cents, party_size FROM bookings WHERE user_id = 2 AND voucher_id = ?").all(availableVoucher.id);
+  assert(marioBookings.length === 2, `Create ${marioBookings.length} prenotazioni in 'bookings' per Mario (hotel e teatro)`);
+  const bHotel = marioBookings.find(b => b.booking_type === 'hospitality');
+  const bTheater = marioBookings.find(b => b.booking_type === 'theater_event');
+  assert(!!bHotel && bHotel.final_price_cents === 0, 'Prenotazione hotel presente in bookings con 0€ da pagare (coperto da welfare)');
+  assert(!!bTheater && bTheater.final_price_cents === 0 && bTheater.party_size === 2, 'Prenotazione spettacolo teatro presente in bookings con 2 posti omaggio');
 
-  const declineGrantRes = await request('/api/grants/respond', {
+  // 4. Test Azioni Mario su Prenotazioni (Come un Amico: Riconferma Presenza)
+  console.log('\n--- 4. Mario riconferma presenza su soggiorno e teatro ---');
+  const confPresRes = await request('/api/bookings/status', {
     method: 'POST',
     headers: { Cookie: `radici_session=${marioCookie}` },
-    body: JSON.stringify({ voucherId: availableVoucher.id, action: 'declined' }),
+    body: JSON.stringify({ bookingId: bHotel.id, status: 'presence_confirmed' }),
   });
-  assert(declineGrantRes.status === 200, 'Rinuncia posti teatro registrata per evitare overbooking');
-  const grantDeclined = db.prepare("SELECT status FROM matching_grants WHERE id = ?").get(grantAfter.id);
-  assert(grantDeclined.status === 'declined', `Stato matching grant aggiornato a 'declined'`);
+  assert(confPresRes.status === 200, 'Mario ha riconfermato la presenza per il soggiorno');
 
-  // 5. Test Annullamento Selezione Voucher (Permette a Mario di cambiare struttura)
-  console.log('\n--- 5. Test Annullamento Selezione Voucher (Modifica Struttura) ---');
-  const cancelRes = await request('/api/vouchers/cancel-selection', {
+  const confTheaterRes = await request('/api/bookings/status', {
     method: 'POST',
     headers: { Cookie: `radici_session=${marioCookie}` },
-    body: JSON.stringify({ voucherId: availableVoucher.id }),
+    body: JSON.stringify({ bookingId: bTheater.id, status: 'presence_confirmed' }),
   });
-  assert(cancelRes.status === 200, `Annullamento selezione riuscito: ${cancelRes.json?.message}`);
+  assert(confTheaterRes.status === 200, 'Mario ha riconfermato la presenza per lo spettacolo a teatro');
+
+  // 5. Test Annullamento Prenotazione / Cambio Fornitore
+  console.log('\n--- 5. Test Annullamento e Cambio Fornitore da parte di Mario ---');
+  const cancelBookingRes = await request('/api/bookings/status', {
+    method: 'POST',
+    headers: { Cookie: `radici_session=${marioCookie}` },
+    body: JSON.stringify({ bookingId: bHotel.id, status: 'cancelled' }),
+  });
+  assert(cancelBookingRes.status === 200, 'Mario annulla la prenotazione dal pannello');
 
   const voucherReverted = db.prepare("SELECT status, venue_id, grant_event_id FROM vouchers WHERE id = ?").get(availableVoucher.id);
-  assert(voucherReverted.status === 'available' && voucherReverted.venue_id === null, 'Voucher ritornato available e venueId resettato');
+  assert(voucherReverted.status === 'available' && voucherReverted.venue_id === null, 'Voucher ritornato available nel portafoglio di Mario');
 
   const grantCleaned = db.prepare("SELECT id FROM matching_grants WHERE voucher_id = ?").get(availableVoucher.id);
   assert(!grantCleaned, 'Matching grant e posti teatro eliminati e liberati per la capienza');

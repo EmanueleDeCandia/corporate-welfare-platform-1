@@ -429,6 +429,7 @@ export const bookings = sqliteTable("bookings", {
     .references(() => venues.id),
   offeringId: integer("offering_id").references(() => venueOfferings.id),
   grantEventId: integer("grant_event_id").references(() => grantEvents.id),
+  voucherId: integer("voucher_id").references(() => vouchers.id),
   bookingType: text("booking_type").$type<BookingType>().notNull().default("hospitality"),
   bookingDate: text("booking_date").notNull(), // YYYY-MM-DD
   timeSlot: text("time_slot"), // es: "20:30", "14:00"

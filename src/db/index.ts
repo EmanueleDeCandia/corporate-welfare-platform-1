@@ -426,6 +426,16 @@ export async function initDb() {
         console.warn("Migration transactions warning:", e);
       }
 
+      // Safe migration for bookings columns
+      try {
+        const bookingCols = sqlite.pragma("table_info(bookings)") as Array<{ name: string }>;
+        if (!bookingCols.some((col) => col.name === "voucher_id")) {
+          sqlite.exec("ALTER TABLE bookings ADD COLUMN voucher_id INTEGER REFERENCES vouchers(id);");
+        }
+      } catch (e) {
+        console.warn("Migration bookings warning:", e);
+      }
+
       // Safe index creation
       try {
         sqlite.exec(`

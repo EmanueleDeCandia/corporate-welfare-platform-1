@@ -10,7 +10,9 @@ export const dynamic = "force-dynamic";
 export default async function ProviderPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login?next=/fornitore");
+  if (user.role === "promoter") redirect("/promotori");
   if (user.role !== "provider" || !user.venue) redirect("/account");
+  if (user.venue.type === "theater") redirect("/promotori");
 
   const [items, rows, venueBookings] = await Promise.all([
     getProviderNotifications(user.venue.id),

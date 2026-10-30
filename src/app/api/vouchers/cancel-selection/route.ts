@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import {
+  bookings,
   grantConfirmations,
   grantSeats,
   matchingGrants,
@@ -94,7 +95,10 @@ export async function POST(request: Request) {
     await db.delete(matchingGrants).where(eq(matchingGrants.id, grant.id));
   }
 
-  // 6. Annulla la transazione fiscale B2B pendente per questo voucher
+  // 6. Elimina le prenotazioni collegate in "bookings"
+  await db.delete(bookings).where(eq(bookings.voucherId, voucher.id));
+
+  // 7. Annulla la transazione fiscale B2B pendente per questo voucher
   await db
     .update(transactions)
     .set({

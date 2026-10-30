@@ -21,12 +21,13 @@ export async function POST() {
           redeemed_at = NULL;
     `);
 
-    // 2. Rimuovi selezioni e matching grant simulati
+    // 2. Rimuovi selezioni, prenotazioni welfare e matching grant simulati
     sqlite.exec(`
       DELETE FROM voucher_selections;
       DELETE FROM grant_seats;
       DELETE FROM grant_confirmations;
       DELETE FROM matching_grants;
+      DELETE FROM bookings WHERE voucher_id IS NOT NULL;
     `);
 
     // 3. Rimuovi le transazioni di riscatto simulate create durante i test

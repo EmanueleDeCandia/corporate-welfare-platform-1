@@ -171,6 +171,9 @@ async function testProviderAttendanceAndInvoice() {
     `Sicurezza: tentativo di modificare voucher di altro fornitore correttamente respinto con HTTP 403`
   );
 
+  // Assicura che voucher 2 sia selezionato per La Valle (venueId 1)
+  db.prepare("UPDATE vouchers SET venue_id = 1, status = 'selected' WHERE id = 2").run();
+
   // Test assegnazione presenza su voucher di competenza (voucherId 2 appartiene a La Valle del Vento, venueId 1)
   const attRes = await request('/api/provider/attendance', {
     method: 'POST',
