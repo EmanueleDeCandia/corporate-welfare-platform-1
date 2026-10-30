@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
+import { AfterHydration } from "@/components/after-hydration";
 import { apiFetch } from "@/lib/session-client";
 import { Bell, Receipt, Stamp, Wallet } from "lucide-react";
 import type { companies, notifications, transactions, users, venues } from "@/db/schema";
@@ -47,6 +48,20 @@ type Props = {
 };
 
 export function ProviderPanel({ venue, notifications: items, transactions: rows, selections, grants }: Props) {
+  return (
+    <AfterHydration>
+      <ProviderPanelReady
+        venue={venue}
+        notifications={items}
+        transactions={rows}
+        selections={selections}
+        grants={grants}
+      />
+    </AfterHydration>
+  );
+}
+
+function ProviderPanelReady({ venue, notifications: items, transactions: rows, selections, grants }: Props) {
   const router = useRouter();
   const [pending, setPending] = useState<string | null>(null);
   const [invoiceDraft, setInvoiceDraft] = useState<Record<number, { number: string; date: string }>>({});

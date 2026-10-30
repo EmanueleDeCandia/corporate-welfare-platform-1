@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { AfterHydration } from "@/components/after-hydration";
 import { useRouter } from "next/navigation";
 import { apiFetch } from "@/lib/session-client";
 import {
@@ -115,6 +116,18 @@ type Props = {
 type Tab = "wallet" | "kit" | "friends";
 
 export function AccountHub(props: Props) {
+  return (
+    <AfterHydration
+      fallback={
+        <div className="min-h-[24rem] rounded-[28px] bg-white" aria-hidden="true" />
+      }
+    >
+      <AccountHubReady {...props} />
+    </AfterHydration>
+  );
+}
+
+function AccountHubReady(props: Props) {
   const [tab, setTab] = useState<Tab>(props.user.role === "friend" ? "friends" : "wallet");
 
   return (

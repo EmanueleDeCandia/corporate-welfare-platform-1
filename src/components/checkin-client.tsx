@@ -2,11 +2,26 @@
 
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { AfterHydration } from "@/components/after-hydration";
 import { apiFetch } from "@/lib/session-client";
 import type { VenueOffering } from "@/db/schema";
 import { formatEuro, voucherTypeLabel } from "@/lib/utils";
 
-export function CheckinClient({
+export function CheckinClient(props: {
+  venue: { id: number; name: string; type: string; checkinCode: string };
+  offerings: VenueOffering[];
+  loggedIn: boolean;
+  role?: string;
+  inviteCode?: string;
+}) {
+  return (
+    <AfterHydration>
+      <CheckinClientReady {...props} />
+    </AfterHydration>
+  );
+}
+
+function CheckinClientReady({
   venue,
   offerings,
   loggedIn,

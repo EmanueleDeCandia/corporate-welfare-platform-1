@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { AfterHydration } from "@/components/after-hydration";
 import {
   Building2,
   CircleDollarSign,
@@ -18,6 +19,14 @@ import { formatDateTime, formatEuro, grantStatusLabel, paymentStatusLabel, venue
 type Tab = "overview" | "companies" | "providers" | "vouchers" | "grants";
 
 export function PromotersDashboardView({ data }: { data: PromoterDashboardData }) {
+  return (
+    <AfterHydration>
+      <PromotersDashboardReady data={data} />
+    </AfterHydration>
+  );
+}
+
+function PromotersDashboardReady({ data }: { data: PromoterDashboardData }) {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const p = data.pipeline;
   const e = data.economics;

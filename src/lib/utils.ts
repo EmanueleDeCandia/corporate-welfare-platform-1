@@ -34,7 +34,6 @@ export function randomCode(prefix: string) {
   return `${prefix}-${randomBytes(4).toString("hex")}`;
 }
 
-const DISPLAY_TIME_ZONE = "Europe/Rome";
 const MONTHS_IT_SHORT = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"];
 const MONTHS_IT_LONG = [
   "gennaio",
@@ -52,42 +51,51 @@ const MONTHS_IT_LONG = [
 ];
 
 function asDate(value: Date | string | number) {
-  if (value instanceof Date) return value;
+  if (value instanceof Date) return new Date(value.getTime());
   if (typeof value === "number") return new Date(value < 1e12 ? value * 1000 : value);
-  return new Date(value);
+  const raw = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(raw) && !/[zZ]|[+-]\d{2}:\d{2}$/.test(raw)) {
+    return new Date(`${raw}Z`);
+  }
+  return new Date(raw);
+}
+
+function lastUtcSunday(year: number, monthIndex: number) {
+  const end = new Date(Date.UTC(year, monthIndex + 1, 0));
+  end.setUTCDate(end.getUTCDate() - end.getUTCDay());
+  return end;
+}
+
+function romeOffsetHours(utcMs: number) {
+  const year = new Date(utcMs).getUTCFullYear();
+  const dstStart = lastUtcSunday(year, 2);
+  dstStart.setUTCHours(1, 0, 0, 0);
+  const dstEnd = lastUtcSunday(year, 9);
+  dstEnd.setUTCHours(1, 0, 0, 0);
+  return utcMs >= dstStart.getTime() && utcMs < dstEnd.getTime() ? 2 : 1;
 }
 
 function romeParts(value: Date | string | number) {
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: DISPLAY_TIME_ZONE,
-    day: "numeric",
-    month: "numeric",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).formatToParts(asDate(value));
-  const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
-  const hourRaw = get("hour");
-  const hour = hourRaw === "24" ? "00" : hourRaw.padStart(2, "0");
+  const utcMs = asDate(value).getTime();
+  const rome = new Date(utcMs + romeOffsetHours(utcMs) * 3600 * 1000);
   return {
-    day: get("day"),
-    month: Number(get("month")),
-    year: get("year"),
-    hour,
-    minute: get("minute").padStart(2, "0"),
+    day: String(rome.getUTCDate()),
+    month: rome.getUTCMonth() + 1,
+    year: String(rome.getUTCFullYear()),
+    hour: String(rome.getUTCHours()).padStart(2, "0"),
+    minute: String(rome.getUTCMinutes()).padStart(2, "0"),
   };
 }
 
 export function formatEuro(cents: number) {
   const amount = Number(cents);
-  if (!Number.isFinite(amount)) return "0,00 €";
+  if (!Number.isFinite(amount)) return "0,00 EUR";
   const negative = amount < 0;
   const abs = Math.abs(Math.round(amount));
   const euros = Math.floor(abs / 100);
   const rest = String(abs % 100).padStart(2, "0");
   const grouped = String(euros).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return `${negative ? "-" : ""}${grouped},${rest} €`;
+  return `${negative ? "-" : ""}${grouped},${rest} EUR`;
 }
 
 export function formatDate(date: Date | string | number) {
