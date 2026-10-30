@@ -68,6 +68,10 @@ export type CompanyOverview = {
   sector: string;
   employeesCount: number;
   fundedAmountCents: number;
+  localRedistributionCents: number;
+  co2SavedKg: number;
+  localImpactDescription: string | null;
+  reportUrl: string | null;
   totalVouchersIssued: number;
   totalVouchersRedeemed: number;
   totalDebtToProvidersCents: number;
@@ -75,6 +79,7 @@ export type CompanyOverview = {
   totalPendingToProvidersCents: number;
   managerEmail: string | null;
   managerName: string | null;
+  sponsoredVenuesNames: string[];
 };
 
 export type VenueOverview = {
@@ -297,6 +302,7 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       .reduce((sum, tx) => sum + tx.amountCents, 0);
 
     const csrUser = allUsers.find((u) => u.companyId === c.id && u.role === "csr");
+    const sponsoredVenues = allVenues.filter((v) => v.sponsorCompanyId === c.id).map((v) => v.name);
 
     return {
       id: c.id,
@@ -307,6 +313,10 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       sector: c.sector,
       employeesCount: c.employeesCount,
       fundedAmountCents: c.fundedAmountCents,
+      localRedistributionCents: c.localRedistributionCents,
+      co2SavedKg: c.co2SavedKg,
+      localImpactDescription: c.localImpactDescription,
+      reportUrl: c.reportUrl,
       totalVouchersIssued: compVouchers.length,
       totalVouchersRedeemed: compVouchers.filter((v) => v.status !== "available").length,
       totalDebtToProvidersCents: totalDebt,
@@ -314,6 +324,7 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       totalPendingToProvidersCents: totalDebt - totalSettled,
       managerEmail: csrUser?.email ?? null,
       managerName: csrUser ? `${csrUser.firstName} ${csrUser.lastName}` : null,
+      sponsoredVenuesNames: sponsoredVenues,
     };
   });
 

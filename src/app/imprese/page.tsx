@@ -51,8 +51,8 @@ export default async function CompaniesPage() {
                   <p className="font-medium text-forest">{formatEuro(company.fundedAmountCents)}</p>
                 </div>
                 <div className="rounded-2xl bg-cream px-3 py-3">
-                  <p className="text-xs text-olive">Sul territorio</p>
-                  <p className="font-medium text-forest">{formatEuro(company.localRedistributionCents)}</p>
+                  <p className="text-xs text-olive">Sul territorio (5,1x)</p>
+                  <p className="font-medium text-forest">{formatEuro(company.localRedistributionCents || Math.round(company.fundedAmountCents * 5.1))}</p>
                 </div>
               </div>
             </Link>

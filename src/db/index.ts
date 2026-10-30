@@ -436,6 +436,18 @@ export async function initDb() {
         console.warn("Migration bookings warning:", e);
       }
 
+      try {
+        const cCols = sqlite.pragma("table_info(companies)") as Array<{ name: string }>;
+        if (!cCols.some((col) => col.name === "local_impact_description")) {
+          sqlite.exec("ALTER TABLE companies ADD COLUMN local_impact_description TEXT;");
+        }
+        if (!cCols.some((col) => col.name === "report_url")) {
+          sqlite.exec("ALTER TABLE companies ADD COLUMN report_url TEXT;");
+        }
+      } catch (e) {
+        console.warn("Migration companies warning:", e);
+      }
+
       // Safe index creation
       try {
         sqlite.exec(`

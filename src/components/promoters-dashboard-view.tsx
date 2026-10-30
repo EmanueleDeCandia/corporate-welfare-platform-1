@@ -89,6 +89,9 @@ export function PromotersDashboardView({ data }: Props) {
     employeesCount: "50",
     fundedAmountEuros: "3750", // 50 * 75€ = 3.750€
     description: "",
+    localImpactDescription: "",
+    reportUrl: "",
+    sponsoredVenueId: "",
     managerFirstName: "Elena",
     managerLastName: "Martini",
     managerEmail: "",
@@ -167,6 +170,9 @@ export function PromotersDashboardView({ data }: Props) {
           employeesCount: Number(companyForm.employeesCount) || 50,
           fundedAmountCents: Math.round(parseFloat(companyForm.fundedAmountEuros || "0") * 100),
           description: companyForm.description,
+          localImpactDescription: companyForm.localImpactDescription || undefined,
+          reportUrl: companyForm.reportUrl || undefined,
+          sponsoredVenueId: companyForm.sponsoredVenueId ? Number(companyForm.sponsoredVenueId) : undefined,
           managerFirstName: companyForm.managerFirstName,
           managerLastName: companyForm.managerLastName,
           managerEmail: companyForm.managerEmail,
@@ -191,6 +197,9 @@ export function PromotersDashboardView({ data }: Props) {
         employeesCount: "50",
         fundedAmountEuros: "3750",
         description: "",
+        localImpactDescription: "",
+        reportUrl: "",
+        sponsoredVenueId: "",
         managerFirstName: "Elena",
         managerLastName: "Martini",
         managerEmail: "",
@@ -783,12 +792,28 @@ export function PromotersDashboardView({ data }: Props) {
                   </div>
                 </div>
 
-                <div className="mt-5 border-t border-mist pt-4">
+                {comp.sponsoredVenuesNames && comp.sponsoredVenuesNames.length > 0 && (
+                  <div className="mt-3 text-xs bg-gold/15 text-forest rounded-xl p-2.5 border border-gold/30 flex items-center justify-between gap-1.5">
+                    <span className="font-medium text-[11px] truncate">🏆 Sponsor: <strong>{comp.sponsoredVenuesNames.join(", ")}</strong></span>
+                  </div>
+                )}
+
+                <div className="mt-4 border-t border-mist pt-4 space-y-2">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-medium text-olive">Saldo Aperto:</span>
                     <span className="font-serif text-base font-bold text-terracotta">
                       {formatEuro(comp.totalPendingToProvidersCents)}
                     </span>
+                  </div>
+                  <div className="flex justify-end pt-1">
+                    <a
+                      href={`/imprese/${comp.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] font-semibold text-forest hover:text-gold hover:underline inline-flex items-center gap-1"
+                    >
+                      Scheda Pubblica Impresa &rarr;
+                    </a>
                   </div>
                 </div>
               </div>
@@ -1453,6 +1478,59 @@ export function PromotersDashboardView({ data }: Props) {
                   placeholder="Descrivi l'impegno di sostenibilità sociale e vicinanza al territorio dell'impresa..."
                   className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none"
                 />
+              </div>
+
+              {/* Struttura Sponsorizzata */}
+              <div>
+                <label className="block text-xs font-semibold text-forest mb-1">
+                  Struttura Sponsorizzata (Hotel, Agriturismo, Ristorante, Produttore, Teatro)
+                </label>
+                <select
+                  value={companyForm.sponsoredVenueId}
+                  onChange={(e) => setCompanyForm({ ...companyForm, sponsoredVenueId: e.target.value })}
+                  className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none bg-white"
+                >
+                  <option value="">Nessuna struttura specifica (Finanziamento Trasversale)</option>
+                  {data.venuesList.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name} ({v.type === "producer" ? "Produttore KM 0" : v.type === "theater" ? "Teatro" : v.type} · {v.city})
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-[10px] text-olive">
+                  La struttura selezionata mostrerà l&apos;impresa come sponsor ufficiale e apparirà nella scheda pubblica dell&apos;azienda.
+                </p>
+              </div>
+
+              {/* Descrizione Impatto Sviluppo Locale */}
+              <div>
+                <label className="block text-xs font-semibold text-forest mb-1">
+                  Descrizione Impatto sullo Sviluppo Locale (Attestata dal Promotore RADICI)
+                </label>
+                <textarea
+                  rows={2}
+                  value={companyForm.localImpactDescription}
+                  onChange={(e) => setCompanyForm({ ...companyForm, localImpactDescription: e.target.value })}
+                  placeholder="Dettaglia la ricaduta diretta per gli operatori dei borghi, l'indotto turistico e la valorizzazione del patrimonio..."
+                  className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none"
+                />
+              </div>
+
+              {/* Link al Reporting Integrato CSR & ESG */}
+              <div>
+                <label className="block text-xs font-semibold text-forest mb-1">
+                  Pulsante Link: Reporting Integrato CSR & ESG (Opzionale)
+                </label>
+                <input
+                  type="url"
+                  value={companyForm.reportUrl}
+                  onChange={(e) => setCompanyForm({ ...companyForm, reportUrl: e.target.value })}
+                  placeholder="https://azienda.it/bilancio-sostenibilita.pdf"
+                  className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none"
+                />
+                <p className="mt-1 text-[10px] text-olive">
+                  Link pubblico al bilancio di sostenibilità o rendiconto ESG dell&apos;impresa.
+                </p>
               </div>
 
               {/* Sezione Credenziali Referente HR (Collaudo Operativo) */}

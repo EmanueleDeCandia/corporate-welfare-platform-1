@@ -23,6 +23,8 @@ export const companies = sqliteTable("companies", {
   localRedistributionCents: integer("local_redistribution_cents").notNull().default(0),
   co2SavedKg: integer("co2_saved_kg").notNull().default(0),
   description: text("description").notNull(),
+  localImpactDescription: text("local_impact_description"),
+  reportUrl: text("report_url"),
   accent: text("accent").notNull().default("#1C3A2E"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()

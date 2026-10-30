@@ -43,7 +43,7 @@ export function VenueCard({ venue, destination, sponsor, featured = false }: Pro
               <p className="text-[11px] uppercase tracking-[0.14em] text-olive">da</p>
               <p className="font-medium text-forest">
                 {formatEuro(
-                  venue.priceHotelCents || venue.priceAperitivoCents || venue.priceShowCents,
+                  venue.priceHotelCents || venue.priceAperitivoCents || venue.priceShowCents || venue.priceBasketCents,
                 )}
               </p>
             </div>
