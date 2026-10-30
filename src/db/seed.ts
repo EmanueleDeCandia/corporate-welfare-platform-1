@@ -41,7 +41,7 @@ async function seedIfEmpty() {
   await seedDatabase();
 }
 
-async function seedDatabase() {
+export async function seedDatabase() {
   const insertedCompanies = await db
     .insert(companies)
     .values([
@@ -125,6 +125,7 @@ async function seedDatabase() {
 
   const acme = insertedCompanies[0];
   const verde = insertedCompanies[1];
+  const banca = insertedCompanies[2];
 
   // POPOLAMENTO PIANI WELFARE AZIENDALI
   const insertedPlans = await db
@@ -158,11 +159,26 @@ async function seedDatabase() {
         dinnerExtraCapBps: 2000,
         status: "active",
       },
+      {
+        companyId: banca.id,
+        year: 2026,
+        validFrom: new Date("2026-01-01T00:00:00Z"),
+        validUntil: new Date("2026-12-31T23:59:59Z"),
+        eligibleEmployees: banca.employeesCount || 710,
+        overnightAmountCents: 5000,
+        dinnerAmountCents: 2500,
+        overnightExtraThresholdBps: 2000,
+        overnightExtraCapBps: 2000,
+        dinnerExtraThresholdBps: 2000,
+        dinnerExtraCapBps: 2000,
+        status: "active",
+      },
     ])
     .returning();
 
   const acmePlan = insertedPlans[0];
   const verdePlan = insertedPlans[1];
+  const bancaPlan = insertedPlans[2];
 
   const insertedDestinations = await db
     .insert(destinations)
@@ -331,7 +347,49 @@ async function seedDatabase() {
         badgeLevel: "Promotori RADICI",
         referralCode: "chiara-promotori",
       },
-])
+      {
+        email: "alberto.bianchi@verdeenergia.it",
+        passwordHash: DEMO_PASSWORD,
+        firstName: "Alberto",
+        lastName: "Bianchi",
+        role: "csr",
+        companyId: verde.id,
+        impactPoints: 0,
+        badgeLevel: "CSR Manager",
+        referralCode: "alberto-bianchi",
+      },
+      {
+        email: "matteo@osteriadeltiglio.it",
+        passwordHash: DEMO_PASSWORD,
+        firstName: "Matteo",
+        lastName: "Sereni",
+        role: "provider",
+        impactPoints: 0,
+        badgeLevel: "Partner",
+        referralCode: "matteo-sereni",
+      },
+      {
+        email: "davide.ferri@bancaadriatica.it",
+        passwordHash: DEMO_PASSWORD,
+        firstName: "Davide",
+        lastName: "Ferri",
+        role: "employee",
+        companyId: banca.id,
+        impactPoints: 0,
+        badgeLevel: badgeForPoints(0).label,
+        referralCode: "davide-ferri",
+      },
+      {
+        email: "francesca.romani@email.it",
+        passwordHash: DEMO_PASSWORD,
+        firstName: "Francesca",
+        lastName: "Romani",
+        role: "friend",
+        impactPoints: 0,
+        badgeLevel: badgeForPoints(0).label,
+        referralCode: "francesca-romani",
+      },
+    ])
     .returning();
 
   const elenaMartini = insertedUsers[0];
@@ -343,11 +401,21 @@ async function seedDatabase() {
   const marco = insertedUsers[6];
   const chiara = insertedUsers[7];
   const paolo = insertedUsers[8];
+  const chiaraPromotori = insertedUsers[9];
+  const alberto = insertedUsers[10];
+  const matteo = insertedUsers[11];
+  const davide = insertedUsers[12];
+  const francesca = insertedUsers[13];
 
   await db
     .update(users)
     .set({ invitedByUserId: mario.id })
     .where(eq(users.id, luigi.id));
+
+  await db
+    .update(users)
+    .set({ invitedByUserId: giulia.id })
+    .where(eq(users.id, francesca.id));
 
   const insertedVenues = await db
     .insert(venues)
@@ -780,10 +848,12 @@ async function seedDatabase() {
   await db.update(users).set({ venueId: insertedVenues[1].id }).where(eq(users.id, marco.id));
   await db.update(users).set({ venueId: insertedVenues[3].id }).where(eq(users.id, chiara.id));
   await db.update(users).set({ venueId: teatroLauro.id }).where(eq(users.id, paolo.id));
+  await db.update(users).set({ venueId: insertedVenues[5].id }).where(eq(users.id, matteo.id));
   await db.update(venues).set({ providerUserId: elena.id }).where(eq(venues.id, laValle.id));
   await db.update(venues).set({ providerUserId: marco.id }).where(eq(venues.id, insertedVenues[1].id));
   await db.update(venues).set({ providerUserId: chiara.id }).where(eq(venues.id, insertedVenues[3].id));
   await db.update(venues).set({ providerUserId: paolo.id }).where(eq(venues.id, teatroLauro.id));
+  await db.update(venues).set({ providerUserId: matteo.id }).where(eq(venues.id, insertedVenues[5].id));
 
   // POPOLAMENTO OFFERTE SERVIZI STRUTTURE (PERNOTTAMENTO, CENA O ENTRAMBI)
   const laValleVen = insertedVenues[0]; // Agriturismo: entrambi
@@ -1034,6 +1104,7 @@ async function seedDatabase() {
     { user: mario, companyId: acme.id, planId: acmePlan.id, hotelRedeemed: true },
     { user: giulia, companyId: acme.id, planId: acmePlan.id, hotelRedeemed: false },
     { user: sofia, companyId: verde.id, planId: verdePlan.id, hotelRedeemed: false },
+    { user: davide, companyId: banca.id, planId: bancaPlan.id, hotelRedeemed: false },
   ];
 
   let marioOvernightVoucherId = 1;
@@ -1158,6 +1229,16 @@ async function seedDatabase() {
         status: "pending",
         createdAt: new Date("2026-04-02T09:15:00Z"),
       },
+      {
+        inviterId: giulia.id,
+        firstName: "Francesca",
+        lastName: "Romani",
+        email: "francesca.romani@email.it",
+        code: "ref-francesca-romani",
+        status: "converted",
+        friendUserId: francesca.id,
+        createdAt: new Date("2026-03-25T14:30:00Z"),
+      },
     ])
     .returning();
 
@@ -1177,6 +1258,12 @@ async function seedDatabase() {
         discountCents: 0,
         listPriceCents: 5000,
         serviceLabel: "Pernottamento in Camera Matrimoniale",
+        invoiceNumber: "FATT-2026/088",
+        invoiceDate: "2026-03-15",
+        paymentStatus: "settled",
+        commissionBps: 1000,
+        commissionAmountCents: 500,
+        providerNetCents: 4500,
         createdAt: new Date("2026-03-12T18:40:00Z"),
       },
       {
@@ -1189,6 +1276,12 @@ async function seedDatabase() {
         discountCents: 0,
         listPriceCents: 1500,
         serviceLabel: "Buono Spettacolo · platea",
+        invoiceNumber: null,
+        invoiceDate: null,
+        paymentStatus: "pending",
+        commissionBps: 1000,
+        commissionAmountCents: 150,
+        providerNetCents: 1350,
         createdAt: new Date("2026-02-20T20:00:00Z"),
       },
       {
@@ -1201,7 +1294,29 @@ async function seedDatabase() {
         discountCents: 500,
         listPriceCents: 5000,
         serviceLabel: "Soggiorno amico · Camera Matrimoniale",
+        paymentStatus: "settled",
+        commissionBps: 1000,
+        commissionAmountCents: 450,
+        providerNetCents: 4050,
         createdAt: new Date("2026-04-04T19:12:00Z"),
+      },
+      {
+        type: "welfare_redeem",
+        status: "completed",
+        userId: sofia.id,
+        venueId: insertedVenues[5].id, // Osteria del Tiglio
+        companyId: verde.id,
+        amountCents: 2500,
+        discountCents: 0,
+        listPriceCents: 2500,
+        serviceLabel: "Cena di Campagna sotto il Tiglio (KM 0)",
+        invoiceNumber: "FATT-TIGLIO-26/01",
+        invoiceDate: "2026-03-25",
+        paymentStatus: "settled",
+        commissionBps: 1000,
+        commissionAmountCents: 250,
+        providerNetCents: 2250,
+        createdAt: new Date("2026-03-22T19:30:00Z"),
       },
     ])
     .returning();
@@ -1257,6 +1372,25 @@ async function seedDatabase() {
       },
       read: true,
       createdAt: new Date("2026-02-20T20:00:00Z"),
+    },
+    {
+      venueId: insertedVenues[5].id, // Osteria del Tiglio
+      type: "welfare",
+      title: "Notifica riscatto cena KM 0 · Debito B2B dovuto",
+      body: 'L\'utente dipendente "Sofia Neri" ha riscattato un voucher cena welfare per la tua Osteria.',
+      payload: {
+        guest: "Sofia Neri",
+        company: "Verde Energia Italia",
+        vat: "01877654321",
+        amountCents: 2500,
+        commissionAmountCents: 250,
+        providerNetCents: 2250,
+        invoiceHint: "EMETTI FATTURA NEL TUO GESTIONALE A: Verde Energia Italia (P.IVA: 01877654321)",
+        vatNote: "Importo: € 25,00 (Lordo) | Fee Radici (10%): € 2,50 | Netto Osteria: € 22,50",
+        transactionId: insertedTx[3].id,
+      },
+      read: true,
+      createdAt: new Date("2026-03-22T19:30:00Z"),
     },
   ]);
 

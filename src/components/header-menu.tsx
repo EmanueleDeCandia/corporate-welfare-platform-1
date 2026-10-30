@@ -18,13 +18,40 @@ type Props = {
 export function HeaderMenu({ dark, user }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const accountHref = user?.role === "provider" ? "/fornitore" : user?.role === "csr" ? "/azienda" : "/account";
+
+  // Smistamento rigoroso dei link alle aree riservate in base al ruolo
+  const accountHref = 
+    user?.role === "promoter" || user?.role === "admin"
+      ? "/promotori"
+      : user?.role === "csr"
+        ? "/azienda"
+        : user?.role === "provider"
+          ? "/fornitore"
+          : "/account";
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     setOpen(false);
     router.push("/");
     router.refresh();
+  }
+
+  function renderRoleBadge() {
+    if (!user) return null;
+    switch (user.role) {
+      case "promoter":
+      case "admin":
+        return <span className="rounded-full bg-gold/25 px-2.5 py-0.5 text-[11px] font-semibold text-gold">Startup Promotrice</span>;
+      case "csr":
+        return <span className="rounded-full bg-gold/25 px-2.5 py-0.5 text-[11px] font-semibold text-gold">CSR Manager</span>;
+      case "provider":
+        return <span className="rounded-full bg-gold/25 px-2.5 py-0.5 text-[11px] font-semibold text-gold">Fornitore</span>;
+      case "employee":
+        return <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[11px] text-gold">Welfare · {user.impactPoints} pt</span>;
+      case "friend":
+      default:
+        return <span className="rounded-full bg-sage/30 px-2 py-0.5 text-[11px] text-sand">Community · {user.impactPoints} pt</span>;
+    }
   }
 
   return (
@@ -39,13 +66,7 @@ export function HeaderMenu({ dark, user }: Props) {
           <span className="font-medium">
             {user.firstName} {user.lastName}
           </span>
-          {user.role === "csr" ? (<span className="rounded-full bg-gold/20 px-2 py-0.5 text-[11px] text-gold">CSR Manager</span>) : user.role !== "provider" ? (
-            <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[11px] text-gold">
-              {user.impactPoints} pt
-            </span>
-          ) : (
-            <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[11px] text-gold">Fornitore</span>
-          )}
+          {renderRoleBadge()}
         </Link>
       ) : (
         <Link
@@ -86,7 +107,7 @@ export function HeaderMenu({ dark, user }: Props) {
             {user ? (
               <>
                 <Link href={accountHref} onClick={() => setOpen(false)}>
-                  Area riservata
+                  Area riservata ({user.role === "promoter" ? "Startup Promotrice" : user.role === "csr" ? "CSR Azienda" : user.role === "provider" ? "Fornitore" : user.role === "employee" ? "Welfare" : "Community"})
                 </Link>
                 <button type="button" className="text-left text-terracotta" onClick={logout}>
                   Esci
