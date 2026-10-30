@@ -73,6 +73,8 @@ export type CompanyOverview = {
   totalDebtToProvidersCents: number;
   totalSettledToProvidersCents: number;
   totalPendingToProvidersCents: number;
+  managerEmail: string | null;
+  managerName: string | null;
 };
 
 export type VenueOverview = {
@@ -96,6 +98,8 @@ export type VenueOverview = {
   sponsorCompanyId: number | null;
   sponsorCompanyName: string | null;
   checkinCode: string;
+  managerEmail: string | null;
+  managerName: string | null;
   redeemedCount: number;
   attendedCount: number;
   noShowCount: number;
@@ -292,6 +296,8 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       .filter((tx) => tx.paymentStatus === "settled")
       .reduce((sum, tx) => sum + tx.amountCents, 0);
 
+    const csrUser = allUsers.find((u) => u.companyId === c.id && u.role === "csr");
+
     return {
       id: c.id,
       name: c.name,
@@ -306,6 +312,8 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       totalDebtToProvidersCents: totalDebt,
       totalSettledToProvidersCents: totalSettled,
       totalPendingToProvidersCents: totalDebt - totalSettled,
+      managerEmail: csrUser?.email ?? null,
+      managerName: csrUser ? `${csrUser.firstName} ${csrUser.lastName}` : null,
     };
   });
 
@@ -326,6 +334,9 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
 
     const dest = destMap.get(v.destinationId);
     const sponsor = v.sponsorCompanyId ? compMap.get(v.sponsorCompanyId) : null;
+    const providerUser = allUsers.find(
+      (u) => u.venueId === v.id && (u.role === "provider" || u.role === "theater")
+    );
 
     return {
       id: v.id,
@@ -348,6 +359,8 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       sponsorCompanyId: v.sponsorCompanyId,
       sponsorCompanyName: sponsor?.name ?? null,
       checkinCode: v.checkinCode,
+      managerEmail: providerUser?.email ?? null,
+      managerName: providerUser ? `${providerUser.firstName} ${providerUser.lastName}` : null,
       redeemedCount: venueSelections.length,
       attendedCount: venueSelections.filter((s) => s.attendanceStatus === "attended").length,
       noShowCount: venueSelections.filter((s) => s.attendanceStatus === "no_show").length,

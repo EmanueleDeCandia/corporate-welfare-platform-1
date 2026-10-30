@@ -4,7 +4,9 @@ import { db, initDb } from "@/db";
 import {
   bookings,
   grantEvents,
+  sessions,
   transactions,
+  users,
   venueOfferings,
   venues,
   vouchers,
@@ -58,8 +60,20 @@ export async function DELETE(
     // 2. Disaccoppia eventuali spettacoli teatrali referenziati
     await db.update(grantEvents).set({ venueId: null }).where(eq(grantEvents.venueId, venueId));
 
-    // 3. Cancella la struttura
+    // 3. Raccogli gli utenti gestore collegati alla venue
+    const venueUsers = await db.select({ id: users.id }).from(users).where(eq(users.venueId, venueId));
+
+    // 4. Disaccoppia providerUserId sulla venue per rompere il vincolo circolare
+    await db.update(venues).set({ providerUserId: null }).where(eq(venues.id, venueId));
+
+    // 5. Cancella la struttura
     await db.delete(venues).where(eq(venues.id, venueId));
+
+    // 6. Rimuovi le sessioni e gli account gestore collegati
+    for (const u of venueUsers) {
+      await db.delete(sessions).where(eq(sessions.userId, u.id));
+      await db.delete(users).where(eq(users.id, u.id));
+    }
 
     return NextResponse.json({ ok: true, deletedVenueId: venueId });
   } catch (error) {

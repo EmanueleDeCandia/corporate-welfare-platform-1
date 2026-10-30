@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db, initDb } from "@/db";
-import { destinations, venueOfferings, venues } from "@/db/schema";
+import { destinations, users, venueOfferings, venues } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { slugify } from "@/lib/utils";
+import { hashPassword, randomCode, slugify } from "@/lib/utils";
 
 export async function GET() {
   try {
@@ -51,6 +51,10 @@ export async function POST(req: Request) {
       services = [],
       lat: inputLat,
       lng: inputLng,
+      managerFirstName,
+      managerLastName,
+      managerEmail,
+      managerPassword,
     } = body;
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {
@@ -71,6 +75,25 @@ export async function POST(req: Request) {
 
     if (!description || typeof description !== "string") {
       return NextResponse.json({ error: "La descrizione della struttura è obbligatoria." }, { status: 400 });
+    }
+
+    // Validazione credenziali account se specificate
+    if (managerEmail && typeof managerEmail === "string" && managerEmail.trim().length > 0) {
+      const trimmedEmail = managerEmail.trim().toLowerCase();
+      if (!trimmedEmail.includes("@")) {
+        return NextResponse.json({ error: "L'indirizzo email del referente non è valido." }, { status: 400 });
+      }
+      if (!managerPassword || typeof managerPassword !== "string" || managerPassword.length < 6) {
+        return NextResponse.json({ error: "La password del referente deve contenere almeno 6 caratteri." }, { status: 400 });
+      }
+      const [existingUser] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, trimmedEmail))
+        .limit(1);
+      if (existingUser) {
+        return NextResponse.json({ error: "Esiste già un account con questo indirizzo email." }, { status: 409 });
+      }
     }
 
     // Verifica destinazione
@@ -219,9 +242,39 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json({ ok: true, venue: insertedVenue }, { status: 201 });
+    // Creazione facoltativa dell'account referente (ruolo 'provider' o 'theater')
+    let createdUser = null;
+    if (managerEmail && managerPassword) {
+      const trimmedEmail = managerEmail.trim().toLowerCase();
+      const userRole = type === "theater" ? "theater" : "provider";
+      const [u] = await db
+        .insert(users)
+        .values({
+          email: trimmedEmail,
+          passwordHash: hashPassword(managerPassword),
+          firstName: managerFirstName && typeof managerFirstName === "string" && managerFirstName.trim() ? managerFirstName.trim() : name.trim(),
+          lastName: managerLastName && typeof managerLastName === "string" && managerLastName.trim() ? managerLastName.trim() : "Gestore",
+          role: userRole,
+          venueId: insertedVenue.id,
+          referralCode: randomCode(type === "theater" ? "teatro" : "struttura"),
+        })
+        .returning();
+
+      createdUser = {
+        id: u.id,
+        email: u.email,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        role: u.role,
+      };
+
+      await db.update(venues).set({ providerUserId: u.id }).where(eq(venues.id, insertedVenue.id));
+    }
+
+    return NextResponse.json({ ok: true, venue: insertedVenue, user: createdUser }, { status: 201 });
   } catch (error) {
     console.error("POST /api/promoters/venues error:", error);
     return NextResponse.json({ error: "Errore durante la creazione della struttura." }, { status: 500 });
   }
 }
+

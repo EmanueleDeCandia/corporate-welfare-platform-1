@@ -34,6 +34,7 @@ import {
   Bed,
   ShoppingBag,
   Info,
+  Lock,
 } from "lucide-react";
 import type { PromoterDashboardData } from "@/lib/promoters";
 import { formatDate, formatDateTime, formatEuro } from "@/lib/utils";
@@ -69,13 +70,30 @@ export function PromotersDashboardView({ data }: Props) {
   >("economics");
 
   // CMS Modals State
+  const [isAddCompanyOpen, setIsAddCompanyOpen] = useState(false);
   const [isAddVenueOpen, setIsAddVenueOpen] = useState(false);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingCompanyId, setDeletingCompanyId] = useState<number | null>(null);
   const [deletingVenueId, setDeletingVenueId] = useState<number | null>(null);
   const [deletingEventId, setDeletingEventId] = useState<number | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  // Form State Impresa CSR
+  const [companyForm, setCompanyForm] = useState({
+    name: "",
+    vatNumber: "",
+    city: "",
+    sector: "Manifattura & Meccanica",
+    employeesCount: "50",
+    fundedAmountEuros: "3750", // 50 * 75€ = 3.750€
+    description: "",
+    managerFirstName: "Elena",
+    managerLastName: "Martini",
+    managerEmail: "",
+    managerPassword: "",
+  });
 
   // Form State Fornitore
   const [venueForm, setVenueForm] = useState({
@@ -97,6 +115,10 @@ export function PromotersDashboardView({ data }: Props) {
     dailyCapacity: "10",
     sponsorCompanyId: "",
     services: ["Wi-Fi Gratuito", "Parcheggio Riservato", "Degustazione Tipica KM 0"],
+    managerFirstName: "Paolo",
+    managerLastName: "Luzi",
+    managerEmail: "",
+    managerPassword: "",
   });
 
   // Form State Evento / Spettacolo
@@ -124,6 +146,93 @@ export function PromotersDashboardView({ data }: Props) {
           : [...prev.services, service],
       };
     });
+  }
+
+  // Creazione Nuova Impresa CSR
+  async function handleCreateCompany(e: React.FormEvent) {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setActionError(null);
+    setActionSuccess(null);
+
+    try {
+      const res = await fetch("/api/promoters/companies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: companyForm.name,
+          vatNumber: companyForm.vatNumber,
+          city: companyForm.city,
+          sector: companyForm.sector,
+          employeesCount: Number(companyForm.employeesCount) || 50,
+          fundedAmountCents: Math.round(parseFloat(companyForm.fundedAmountEuros || "0") * 100),
+          description: companyForm.description,
+          managerFirstName: companyForm.managerFirstName,
+          managerLastName: companyForm.managerLastName,
+          managerEmail: companyForm.managerEmail,
+          managerPassword: companyForm.managerPassword,
+        }),
+      });
+
+      const resData = await res.json();
+      if (!res.ok) {
+        throw new Error(resData.error || "Errore nella registrazione dell'impresa CSR.");
+      }
+
+      setActionSuccess(
+        `Impresa "${companyForm.name}" registrata con successo! Account HR creato per ${companyForm.managerEmail}.`
+      );
+      setIsAddCompanyOpen(false);
+      setCompanyForm({
+        name: "",
+        vatNumber: "",
+        city: "",
+        sector: "Manifattura & Meccanica",
+        employeesCount: "50",
+        fundedAmountEuros: "3750",
+        description: "",
+        managerFirstName: "Elena",
+        managerLastName: "Martini",
+        managerEmail: "",
+        managerPassword: "",
+      });
+      router.refresh();
+    } catch (err: any) {
+      setActionError(err.message || "Errore durante la creazione dell'impresa.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  // Eliminazione Impresa CSR
+  async function handleDeleteCompany(companyId: number, companyName: string) {
+    if (
+      !window.confirm(
+        `Sei sicuro di voler eliminare l'azienda "${companyName}" dal circuito? Verranno rimossi anche i piani welfare e l'account HR collegato, se non vi sono operazioni storiche.`
+      )
+    ) {
+      return;
+    }
+
+    setDeletingCompanyId(companyId);
+    setActionError(null);
+    setActionSuccess(null);
+
+    try {
+      const res = await fetch(`/api/promoters/companies/${companyId}`, {
+        method: "DELETE",
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        throw new Error(resData.error || "Impossibile eliminare l'impresa.");
+      }
+      setActionSuccess(`Impresa "${companyName}" eliminata con successo dal circuito.`);
+      router.refresh();
+    } catch (err: any) {
+      setActionError(err.message || "Errore durante l'eliminazione dell'impresa.");
+    } finally {
+      setDeletingCompanyId(null);
+    }
   }
 
   // Creazione Nuovo Fornitore
@@ -159,6 +268,10 @@ export function PromotersDashboardView({ data }: Props) {
           dailyCapacity: Number(venueForm.dailyCapacity) || 10,
           sponsorCompanyId: venueForm.sponsorCompanyId ? Number(venueForm.sponsorCompanyId) : null,
           services: venueForm.services,
+          managerFirstName: venueForm.managerFirstName,
+          managerLastName: venueForm.managerLastName,
+          managerEmail: venueForm.managerEmail || undefined,
+          managerPassword: venueForm.managerPassword || undefined,
         }),
       });
 
@@ -167,7 +280,11 @@ export function PromotersDashboardView({ data }: Props) {
         throw new Error(resData.error || "Errore nella creazione della struttura.");
       }
 
-      setActionSuccess(`Fornitore "${venueForm.name}" inserito con successo nel circuito!`);
+      const msg = resData.user
+        ? `Fornitore "${venueForm.name}" inserito con successo! Account di accesso creato per ${resData.user.email}.`
+        : `Fornitore "${venueForm.name}" inserito con successo nel circuito!`;
+
+      setActionSuccess(msg);
       setIsAddVenueOpen(false);
       setVenueForm({
         name: "",
@@ -188,6 +305,10 @@ export function PromotersDashboardView({ data }: Props) {
         dailyCapacity: "10",
         sponsorCompanyId: "",
         services: ["Wi-Fi Gratuito", "Parcheggio Riservato", "Degustazione Tipica KM 0"],
+        managerFirstName: "Paolo",
+        managerLastName: "Luzi",
+        managerEmail: "",
+        managerPassword: "",
       });
       router.refresh();
     } catch (err: any) {
@@ -325,7 +446,7 @@ export function PromotersDashboardView({ data }: Props) {
           <button
             type="button"
             onClick={() => setActionSuccess(null)}
-            className="text-emerald-700 hover:text-emerald-900"
+            className="text-emerald-700 hover:text-emerald-900 cursor-pointer"
           >
             <X size={16} />
           </button>
@@ -341,7 +462,7 @@ export function PromotersDashboardView({ data }: Props) {
           <button
             type="button"
             onClick={() => setActionError(null)}
-            className="text-rose-700 hover:text-rose-900"
+            className="text-rose-700 hover:text-rose-900 cursor-pointer"
           >
             <X size={16} />
           </button>
@@ -359,7 +480,7 @@ export function PromotersDashboardView({ data }: Props) {
               Control Room Piattaforma & Promotori
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-cream/80">
-              Regia completa dell&apos;ecosistema: CMS integrato per l&apos;inserimento ed eliminazione di fornitori e spettacoli, monitoraggio contratti welfare delle imprese CSR, governance dei partner territoriali, commissioni di piattaforma maturate e fondo Matching Grant culturale.
+              Regia completa dell&apos;ecosistema: CMS integrato per l&apos;inserimento ed eliminazione di imprese CSR, fornitori convenzionati e spettacoli teatrali, con generazione istantanea degli account di accesso per il collaudo operativo.
             </p>
           </div>
           <div className="rounded-2xl border border-cream/15 bg-white/5 p-4 backdrop-blur-sm">
@@ -418,7 +539,7 @@ export function PromotersDashboardView({ data }: Props) {
         <button
           type="button"
           onClick={() => setActiveTab("economics")}
-          className={`px-4 py-3 text-sm font-medium transition ${
+          className={`px-4 py-3 text-sm font-medium transition cursor-pointer ${
             activeTab === "economics"
               ? "border-b-2 border-forest font-semibold text-forest"
               : "text-olive hover:text-forest"
@@ -429,7 +550,7 @@ export function PromotersDashboardView({ data }: Props) {
         <button
           type="button"
           onClick={() => setActiveTab("companies")}
-          className={`px-4 py-3 text-sm font-medium transition ${
+          className={`px-4 py-3 text-sm font-medium transition cursor-pointer ${
             activeTab === "companies"
               ? "border-b-2 border-forest font-semibold text-forest"
               : "text-olive hover:text-forest"
@@ -440,7 +561,7 @@ export function PromotersDashboardView({ data }: Props) {
         <button
           type="button"
           onClick={() => setActiveTab("venues")}
-          className={`px-4 py-3 text-sm font-medium transition ${
+          className={`px-4 py-3 text-sm font-medium transition cursor-pointer ${
             activeTab === "venues"
               ? "border-b-2 border-forest font-semibold text-forest"
               : "text-olive hover:text-forest"
@@ -451,7 +572,7 @@ export function PromotersDashboardView({ data }: Props) {
         <button
           type="button"
           onClick={() => setActiveTab("vouchers")}
-          className={`px-4 py-3 text-sm font-medium transition ${
+          className={`px-4 py-3 text-sm font-medium transition cursor-pointer ${
             activeTab === "vouchers"
               ? "border-b-2 border-forest font-semibold text-forest"
               : "text-olive hover:text-forest"
@@ -462,7 +583,7 @@ export function PromotersDashboardView({ data }: Props) {
         <button
           type="button"
           onClick={() => setActiveTab("grants")}
-          className={`px-4 py-3 text-sm font-medium transition ${
+          className={`px-4 py-3 text-sm font-medium transition cursor-pointer ${
             activeTab === "grants"
               ? "border-b-2 border-forest font-semibold text-forest"
               : "text-olive hover:text-forest"
@@ -473,7 +594,7 @@ export function PromotersDashboardView({ data }: Props) {
         <button
           type="button"
           onClick={() => setActiveTab("bookings")}
-          className={`inline-flex items-center gap-1.5 px-4 py-3 text-sm font-medium transition ${
+          className={`inline-flex items-center gap-1.5 px-4 py-3 text-sm font-medium transition cursor-pointer ${
             activeTab === "bookings"
               ? "border-b-2 border-forest font-semibold text-forest"
               : "text-olive hover:text-forest"
@@ -572,9 +693,28 @@ export function PromotersDashboardView({ data }: Props) {
         </section>
       )}
 
-      {/* TAB 2: IMPRESE CSR & CONTRATTI */}
+      {/* TAB 2: IMPRESE CSR & CONTRATTI (CON CMS INSERISCI ED ELIMINA) */}
       {activeTab === "companies" && (
-        <section className="space-y-6">
+        <section className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-mist">
+            <div>
+              <div className="flex items-center gap-2">
+                <Building size={22} className="text-forest" />
+                <h2 className="font-serif text-2xl text-forest">Rete Imprese Finanziatrici CSR</h2>
+              </div>
+              <p className="text-xs text-olive mt-1">
+                Gestione anagrafiche imprese, piani welfare territoriali, plafond stanziati e account HR aziendali per il collaudo immediato.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsAddCompanyOpen(true)}
+              className="inline-flex items-center gap-2 rounded-2xl bg-forest px-4 py-2.5 text-xs font-semibold text-cream shadow-sm hover:bg-forest/90 transition-all shrink-0 cursor-pointer"
+            >
+              <Plus size={16} /> Registra Nuova Impresa CSR
+            </button>
+          </div>
+
           <div className="grid gap-6 md:grid-cols-3">
             {data.companiesList.map((comp) => (
               <div
@@ -595,7 +735,33 @@ export function PromotersDashboardView({ data }: Props) {
                     </span>
                   </div>
 
-                  <div className="mt-5 space-y-2 border-t border-mist pt-4 text-xs">
+                  {/* Informazioni Account HR / Collaudo */}
+                  <div className="mt-3 flex items-center justify-between text-xs bg-cream/70 rounded-xl p-2.5 border border-forest/10">
+                    <div>
+                      <p className="text-[10px] uppercase font-bold text-olive">Account Referente HR</p>
+                      <p className="font-medium text-forest truncate max-w-[190px]">
+                        {comp.managerName || "Referente HR"}
+                      </p>
+                      <p className="text-[11px] text-olive font-mono truncate max-w-[190px]">
+                        {comp.managerEmail || "Nessun account HR"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCompany(comp.id, comp.name)}
+                      disabled={deletingCompanyId === comp.id}
+                      title="Elimina impresa"
+                      className="rounded-lg p-1.5 text-terracotta hover:bg-rose-50 transition cursor-pointer disabled:opacity-50"
+                    >
+                      {deletingCompanyId === comp.id ? (
+                        <Loader2 size={15} className="animate-spin" />
+                      ) : (
+                        <Trash2 size={15} />
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="mt-4 space-y-2 border-t border-mist pt-4 text-xs">
                     <div className="flex justify-between">
                       <span className="text-olive">Plafond Welfare Finanziato:</span>
                       <span className="font-semibold text-forest">{formatEuro(comp.fundedAmountCents)}</span>
@@ -617,7 +783,7 @@ export function PromotersDashboardView({ data }: Props) {
                   </div>
                 </div>
 
-                <div className="mt-6 border-t border-mist pt-4">
+                <div className="mt-5 border-t border-mist pt-4">
                   <div className="flex items-center justify-between text-xs">
                     <span className="font-medium text-olive">Saldo Aperto:</span>
                     <span className="font-serif text-base font-bold text-terracotta">
@@ -641,7 +807,7 @@ export function PromotersDashboardView({ data }: Props) {
                 <h2 className="font-serif text-2xl text-forest">Catalogo Fornitori & Strutture Convenzionate</h2>
               </div>
               <p className="text-xs text-olive mt-1">
-                Backoffice completo: visualizza, inserisci nuove strutture con le relative schede e gestisci in sicurezza la rete territoriale.
+                Backoffice completo: visualizza, inserisci nuove strutture con credenziali d&apos;accesso per il collaudo ed elimina in sicurezza.
               </p>
             </div>
             <button
@@ -682,6 +848,9 @@ export function PromotersDashboardView({ data }: Props) {
                         <div>
                           <p className="font-bold text-forest">{v.name}</p>
                           <p className="text-[11px] text-olive font-mono">{v.checkinCode}</p>
+                          {v.managerEmail && (
+                            <p className="text-[10px] text-emerald-800 font-mono">👤 {v.managerEmail}</p>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -1137,6 +1306,248 @@ export function PromotersDashboardView({ data }: Props) {
       )}
 
       {/* ========================================================= */}
+      {/* MODALE CMS 0: REGISTRA NUOVA IMPRESA CSR                  */}
+      {/* ========================================================= */}
+      {isAddCompanyOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl space-y-6 border border-forest/10 my-auto">
+            <div className="flex items-start justify-between border-b border-mist pb-4">
+              <div>
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-forest/5 px-2.5 py-0.5 text-xs font-semibold text-forest">
+                  <Building size={14} /> Backoffice CMS Imprese CSR
+                </div>
+                <h3 className="font-serif text-2xl text-forest mt-1">Registra Nuova Impresa CSR</h3>
+                <p className="text-xs text-olive">
+                  Inserisci l&apos;azienda cliente, il plafond welfare finanziato e le credenziali del referente HR.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsAddCompanyOpen(false)}
+                className="rounded-full p-1.5 text-olive hover:bg-mist transition cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateCompany} className="space-y-4">
+              {/* Ragione Sociale e Partita IVA */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-forest mb-1">
+                    Ragione Sociale Impresa *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={companyForm.name}
+                    onChange={(e) => setCompanyForm({ ...companyForm, name: e.target.value })}
+                    placeholder="es. Manifatture Picene S.p.A."
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-forest mb-1">
+                    Partita IVA *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={16}
+                    value={companyForm.vatNumber}
+                    onChange={(e) => setCompanyForm({ ...companyForm, vatNumber: e.target.value.toUpperCase() })}
+                    placeholder="01234567890"
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none font-mono"
+                  />
+                </div>
+              </div>
+
+              {/* Sede Legale e Settore */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-forest mb-1">
+                    Sede Legale / Città *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={companyForm.city}
+                    onChange={(e) => setCompanyForm({ ...companyForm, city: e.target.value })}
+                    placeholder="es. Civitanova Marche, Ancona..."
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-forest mb-1">
+                    Settore Merceologico / Industriale *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={companyForm.sector}
+                    onChange={(e) => setCompanyForm({ ...companyForm, sector: e.target.value })}
+                    placeholder="es. Meccanica, Moda, Agroalimentare..."
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Dipendenti e Plafond Welfare */}
+              <div className="rounded-2xl bg-cream/50 p-4 border border-forest/10 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-forest mb-1 flex items-center gap-1">
+                    <Users size={14} className="text-forest" />
+                    Numero Dipendenti Coinvolti *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={companyForm.employeesCount}
+                    onChange={(e) => {
+                      const count = Number(e.target.value) || 0;
+                      setCompanyForm({
+                        ...companyForm,
+                        employeesCount: e.target.value,
+                        fundedAmountEuros: String(count * 75), // 75€ per dipendente (50 notte + 25 cena)
+                      });
+                    }}
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none bg-white font-bold"
+                  />
+                  <p className="mt-1 text-[10px] text-olive">
+                    Genera la capienza del piano welfare per l&apos;anno corrente.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-forest mb-1 flex items-center gap-1">
+                    <Coins size={14} className="text-gold" />
+                    Plafond Welfare Finanziato (€) *
+                  </label>
+                  <input
+                    type="number"
+                    min="100"
+                    step="50"
+                    required
+                    value={companyForm.fundedAmountEuros}
+                    onChange={(e) => setCompanyForm({ ...companyForm, fundedAmountEuros: e.target.value })}
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none bg-white font-bold"
+                  />
+                  <p className="mt-1 text-[10px] text-olive">
+                    Suggerito: 75€/dipendente (50€ soggiorno + 25€ cena).
+                  </p>
+                </div>
+              </div>
+
+              {/* Descrizione CSR */}
+              <div>
+                <label className="block text-xs font-semibold text-forest mb-1">
+                  Descrizione Impegno CSR & Welfare Territoriale
+                </label>
+                <textarea
+                  rows={2}
+                  value={companyForm.description}
+                  onChange={(e) => setCompanyForm({ ...companyForm, description: e.target.value })}
+                  placeholder="Descrivi l'impegno di sostenibilità sociale e vicinanza al territorio dell'impresa..."
+                  className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none"
+                />
+              </div>
+
+              {/* Sezione Credenziali Referente HR (Collaudo Operativo) */}
+              <div className="rounded-2xl bg-forest/5 p-4 border border-forest/15 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Lock size={16} className="text-forest" />
+                  <p className="text-xs font-bold uppercase tracking-wider text-forest">
+                    Credenziali Account Referente HR / Welfare (Accesso Diretto)
+                  </p>
+                </div>
+                <p className="text-[11px] text-olive">
+                  Queste credenziali consentono al referente HR dell&apos;azienda (o al team di test) di accedere subito a <span className="font-mono text-forest">/login</span> per verificare il cruscotto <span className="font-mono text-forest">/azienda</span>.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-forest mb-1">Nome Referente HR</label>
+                    <input
+                      type="text"
+                      value={companyForm.managerFirstName}
+                      onChange={(e) => setCompanyForm({ ...companyForm, managerFirstName: e.target.value })}
+                      placeholder="es. Elena"
+                      className="w-full rounded-xl border border-forest/20 px-3 py-2 text-sm text-forest bg-white focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-forest mb-1">Cognome Referente HR</label>
+                    <input
+                      type="text"
+                      value={companyForm.managerLastName}
+                      onChange={(e) => setCompanyForm({ ...companyForm, managerLastName: e.target.value })}
+                      placeholder="es. Martini"
+                      className="w-full rounded-xl border border-forest/20 px-3 py-2 text-sm text-forest bg-white focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-forest mb-1">Email di Accesso HR *</label>
+                    <input
+                      type="email"
+                      required
+                      value={companyForm.managerEmail}
+                      onChange={(e) => setCompanyForm({ ...companyForm, managerEmail: e.target.value })}
+                      placeholder="es. hr@manifatture.it"
+                      className="w-full rounded-xl border border-forest/20 px-3 py-2 text-sm text-forest bg-white focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-forest mb-1">Password di Accesso * (min. 6 car.)</label>
+                    <input
+                      type="password"
+                      required
+                      minLength={6}
+                      value={companyForm.managerPassword}
+                      onChange={(e) => setCompanyForm({ ...companyForm, managerPassword: e.target.value })}
+                      placeholder="••••••••"
+                      className="w-full rounded-xl border border-forest/20 px-3 py-2 text-sm text-forest bg-white focus:outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Azioni Modale */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-mist">
+                <button
+                  type="button"
+                  onClick={() => setIsAddCompanyOpen(false)}
+                  className="rounded-xl px-4 py-2.5 text-xs font-semibold text-olive hover:text-forest transition cursor-pointer"
+                >
+                  Annulla
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center gap-2 rounded-xl bg-forest px-5 py-2.5 text-xs font-semibold text-cream shadow-sm hover:bg-forest/90 transition cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" /> Registrazione in corso...
+                    </>
+                  ) : (
+                    <>
+                      <Check size={14} /> Registra Impresa & Crea Account
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
       {/* MODALE CMS 1: AGGIUNGI NUOVO FORNITORE / STRUTTURA        */}
       {/* ========================================================= */}
       {isAddVenueOpen && (
@@ -1149,7 +1560,7 @@ export function PromotersDashboardView({ data }: Props) {
                 </div>
                 <h3 className="font-serif text-2xl text-forest mt-1">Aggiungi Fornitore Territoriale</h3>
                 <p className="text-xs text-olive">
-                  Inserisci una nuova struttura con prezzi esatti, capienza, offerte e collegamento sponsor.
+                  Inserisci una nuova struttura con prezzi esatti, capienza, offerte e credenziali di accesso per il titolare.
                 </p>
               </div>
               <button
@@ -1323,7 +1734,7 @@ export function PromotersDashboardView({ data }: Props) {
                 </div>
               </div>
 
-              {/* Prezzi, Offerte e Capienza (Adattivo in base alla tipologia) */}
+              {/* Prezzi, Offerte e Capienza */}
               <div className="rounded-2xl bg-cream/50 p-4 border border-forest/10 space-y-4">
                 <p className="text-xs font-bold uppercase tracking-wider text-forest flex items-center gap-1.5">
                   <Coins size={14} className="text-gold" />
@@ -1463,6 +1874,65 @@ export function PromotersDashboardView({ data }: Props) {
                 <p className="mt-1 text-[11px] text-olive">
                   Se collegato, la struttura presenterà il badge di sponsorship CSR dell&apos;impresa partner.
                 </p>
+              </div>
+
+              {/* Sezione Credenziali Account Fornitore (Collaudo Operativo) */}
+              <div className="rounded-2xl bg-forest/5 p-4 border border-forest/15 space-y-3">
+                <div className="flex items-center gap-2">
+                  <Lock size={16} className="text-forest" />
+                  <p className="text-xs font-bold uppercase tracking-wider text-forest">
+                    Credenziali Account Titolare / Gestore Struttura (Collaudo Diretto)
+                  </p>
+                </div>
+                <p className="text-[11px] text-olive">
+                  Inserisci email e password per creare l&apos;account del fornitore (ruolo &quot;provider&quot; o &quot;theater&quot;). Potrai accedere subito su <span className="font-mono text-forest">/login</span> per testare il cruscotto fornitore o il botteghino teatrale.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-forest mb-1">Nome Referente</label>
+                    <input
+                      type="text"
+                      value={venueForm.managerFirstName}
+                      onChange={(e) => setVenueForm({ ...venueForm, managerFirstName: e.target.value })}
+                      placeholder="es. Paolo"
+                      className="w-full rounded-xl border border-forest/20 px-3 py-2 text-sm text-forest bg-white focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-forest mb-1">Cognome Referente</label>
+                    <input
+                      type="text"
+                      value={venueForm.managerLastName}
+                      onChange={(e) => setVenueForm({ ...venueForm, managerLastName: e.target.value })}
+                      placeholder="es. Luzi"
+                      className="w-full rounded-xl border border-forest/20 px-3 py-2 text-sm text-forest bg-white focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-forest mb-1">Email di Accesso Fornitore</label>
+                    <input
+                      type="email"
+                      value={venueForm.managerEmail}
+                      onChange={(e) => setVenueForm({ ...venueForm, managerEmail: e.target.value })}
+                      placeholder="es. paolo@nuovocasale.it"
+                      className="w-full rounded-xl border border-forest/20 px-3 py-2 text-sm text-forest bg-white focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-forest mb-1">Password Accesso (min. 6 car.)</label>
+                    <input
+                      type="password"
+                      value={venueForm.managerPassword}
+                      onChange={(e) => setVenueForm({ ...venueForm, managerPassword: e.target.value })}
+                      placeholder="••••••••"
+                      className="w-full rounded-xl border border-forest/20 px-3 py-2 text-sm text-forest bg-white focus:outline-none"
+                    />
+                  </div>
+                </div>
               </div>
 
               {/* Servizi Offerti */}
