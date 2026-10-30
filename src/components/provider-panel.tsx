@@ -13,6 +13,8 @@ type Props = {
     transaction: typeof transactions.$inferSelect;
     user: typeof users.$inferSelect;
     company: typeof companies.$inferSelect | null;
+    attendanceStatus?: string;
+    checkedInAt?: Date | null;
   }>;
 };
 
@@ -171,7 +173,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows 
               </tr>
             </thead>
             <tbody className="divide-y divide-mist">
-              {rows.map(({ transaction: tx, user, company }) => {
+              {rows.map(({ transaction: tx, user, company, attendanceStatus }) => {
                 const commission = tx.commissionAmountCents || Math.round(tx.amountCents * 0.1);
                 const net = tx.providerNetCents || tx.amountCents - commission;
                 const isEditing = editingTxId === tx.id;
@@ -223,30 +225,62 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows 
                     {/* Presenza fisica (ESG) */}
                     <td className="py-4 align-top">
                       {tx.voucherId ? (
-                        <div className="space-y-1">
-                          <div className="inline-flex items-center gap-1.5">
-                            <button
-                              type="button"
-                              disabled={pending === tx.voucherId}
-                              onClick={() => registerAttendance(tx.voucherId!, "attended")}
-                              className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-2.5 py-1 text-[11px] font-medium text-forest hover:bg-forest/20 transition disabled:opacity-50"
-                              title="Segna presenza fisica dell'ospite"
-                            >
-                              <CheckCircle2 size={12} /> Presente
-                            </button>
-                            <button
-                              type="button"
-                              disabled={pending === tx.voucherId}
-                              onClick={() => registerAttendance(tx.voucherId!, "no_show")}
-                              className="inline-flex items-center gap-1 rounded-full bg-terracotta/10 px-2.5 py-1 text-[11px] font-medium text-terracotta hover:bg-terracotta/20 transition disabled:opacity-50"
-                              title="Segna mancato arrivo (no-show). Il compenso resta comunque dovuto."
-                            >
-                              <UserX size={12} /> No-Show
-                            </button>
-                          </div>
-                          <span className="block text-[10px] text-olive/80">
-                            (Non influisce sul saldo)
-                          </span>
+                        <div className="space-y-1.5">
+                          {attendanceStatus === "attended" ? (
+                            <div>
+                              <span className="inline-flex items-center gap-1 rounded-full bg-forest/15 px-2.5 py-1 text-xs font-semibold text-forest">
+                                <CheckCircle2 size={13} className="text-forest" /> Presente (Convalidato)
+                              </span>
+                              <button
+                                type="button"
+                                disabled={pending === tx.voucherId}
+                                onClick={() => registerAttendance(tx.voucherId!, "no_show")}
+                                className="mt-1 block text-[10px] text-olive hover:text-terracotta underline"
+                              >
+                                Modifica in No-Show
+                              </button>
+                            </div>
+                          ) : attendanceStatus === "no_show" ? (
+                            <div>
+                              <span className="inline-flex items-center gap-1 rounded-full bg-terracotta/15 px-2.5 py-1 text-xs font-semibold text-terracotta">
+                                <UserX size={13} className="text-terracotta" /> Assente (No-Show)
+                              </span>
+                              <button
+                                type="button"
+                                disabled={pending === tx.voucherId}
+                                onClick={() => registerAttendance(tx.voucherId!, "attended")}
+                                className="mt-1 block text-[10px] text-olive hover:text-forest underline"
+                              >
+                                Modifica in Presente
+                              </button>
+                            </div>
+                          ) : (
+                            <div>
+                              <div className="inline-flex items-center gap-1.5">
+                                <button
+                                  type="button"
+                                  disabled={pending === tx.voucherId}
+                                  onClick={() => registerAttendance(tx.voucherId!, "attended")}
+                                  className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-2.5 py-1 text-[11px] font-semibold text-forest hover:bg-forest/20 transition disabled:opacity-50"
+                                  title="Convalida presenza fisica dell'ospite nel database"
+                                >
+                                  <CheckCircle2 size={12} /> Presente
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={pending === tx.voucherId}
+                                  onClick={() => registerAttendance(tx.voucherId!, "no_show")}
+                                  className="inline-flex items-center gap-1 rounded-full bg-terracotta/10 px-2.5 py-1 text-[11px] font-semibold text-terracotta hover:bg-terracotta/20 transition disabled:opacity-50"
+                                  title="Registra mancato arrivo (no-show) nel database"
+                                >
+                                  <UserX size={12} /> No-Show
+                                </button>
+                              </div>
+                              <span className="block text-[10px] text-olive/80 mt-0.5">
+                                (Compenso comunque dovuto)
+                              </span>
+                            </div>
+                          )}
                         </div>
                       ) : (
                         <span className="text-xs text-olive">Consumato in loco</span>

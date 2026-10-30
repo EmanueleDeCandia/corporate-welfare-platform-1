@@ -11,6 +11,7 @@ import {
   users,
   venues,
   vouchers,
+  voucherSelections,
   grantEvents,
   type GrantEvent,
   type VoucherType,
@@ -173,13 +174,24 @@ export async function getProviderTransactions(venueId: number) {
       transaction: transactions,
       user: users,
       company: companies,
+      selection: voucherSelections,
+      voucher: vouchers,
     })
     .from(transactions)
     .innerJoin(users, eq(transactions.userId, users.id))
     .leftJoin(companies, eq(transactions.companyId, companies.id))
+    .leftJoin(vouchers, eq(transactions.voucherId, vouchers.id))
+    .leftJoin(voucherSelections, eq(transactions.voucherId, voucherSelections.voucherId))
     .where(eq(transactions.venueId, venueId))
     .orderBy(desc(transactions.createdAt));
-  return rows;
+
+  return rows.map((r) => ({
+    transaction: r.transaction,
+    user: r.user,
+    company: r.company,
+    attendanceStatus: r.selection?.attendanceStatus || (r.voucher?.status === "attended" ? "attended" : r.voucher?.status === "no_show" ? "no_show" : "pending"),
+    checkedInAt: r.selection?.checkedInAt ?? null,
+  }));
 }
 
 export async function awardImpact(userId: number, points = 1) {
