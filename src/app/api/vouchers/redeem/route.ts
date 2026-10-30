@@ -176,6 +176,11 @@ export async function POST(request: Request) {
   }
 
   // 1. Transazione Fiscale B2B (obbligazione contrattuale a carico dell'azienda per la struttura)
+  const amountCents = voucher.amountCents;
+  const commissionBps = 1000; // 10% commissione startup Radici
+  const commissionAmountCents = Math.round((amountCents * commissionBps) / 10000);
+  const providerNetCents = amountCents - commissionAmountCents;
+
   const [tx] = await db
     .insert(transactions)
     .values({
@@ -185,10 +190,15 @@ export async function POST(request: Request) {
       venueId: venue.id,
       companyId: me.companyId,
       voucherId: voucher.id,
-      amountCents: voucher.amountCents,
+      amountCents,
       discountCents: 0,
-      listPriceCents: voucher.amountCents,
+      listPriceCents: amountCents,
       serviceLabel: voucherTypeLabel(voucher.type),
+      paymentStatus: "pending", // In attesa di saldo da parte dell'azienda committente
+      commissionBps,
+      commissionAmountCents,
+      providerNetCents,
+      paymentNotes: `Debito welfare aziendale ${company?.name ?? "CSR"} ex Art. 51 TUIR`,
     })
     .returning();
 
@@ -196,15 +206,17 @@ export async function POST(request: Request) {
   await db.insert(notifications).values({
     venueId: venue.id,
     type: "welfare",
-    title: `Nuova selezione voucher: ${voucherTypeLabel(voucher.type)}`,
-    body: `${me.firstName} ${me.lastName} ha selezionato la tua struttura per un voucher welfare da ${voucher.amountCents / 100}€. Fattura da emettere all'azienda ${company?.name ?? "sponsor"}.`,
+    title: `Nuovo riscatto voucher: ${voucherTypeLabel(voucher.type)}`,
+    body: `${me.firstName} ${me.lastName} ha riscattato un voucher welfare da ${(amountCents / 100).toFixed(2)}€. Il pagamento è dovuto dall'impresa ${company?.name ?? "sponsor"} indipendentemente dalla presenza fisica.`,
     payload: {
       guest: `${me.firstName} ${me.lastName}`,
       company: company?.name ?? "Azienda Convenzionata",
       vat: company?.vatNumber ?? "N/D",
-      amountCents: voucher.amountCents,
-      invoiceHint: "Fattura elettronica B2B intestata all'azienda sponsor (Art. 51 TUIR)",
-      vatNote: `Importo da fatturare: € ${(voucher.amountCents / 100).toFixed(2)}`,
+      amountCents,
+      commissionAmountCents,
+      providerNetCents,
+      invoiceHint: `EMETTI FATTURA NEL TUO GESTIONALE A: ${company?.name ?? "Azienda"} (P.IVA: ${company?.vatNumber ?? "N/D"})`,
+      vatNote: `Lordo: € ${(amountCents / 100).toFixed(2)} | Fee Radici (10%): € ${(commissionAmountCents / 100).toFixed(2)} | Netto fornitore: € ${(providerNetCents / 100).toFixed(2)}`,
       transactionId: tx.id,
       serviceDate,
     },

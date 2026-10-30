@@ -261,6 +261,14 @@ export async function initDb() {
           discount_cents INTEGER NOT NULL DEFAULT 0,
           list_price_cents INTEGER NOT NULL,
           service_label TEXT NOT NULL,
+          invoice_number TEXT,
+          invoice_date TEXT,
+          payment_status TEXT NOT NULL DEFAULT 'pending',
+          settled_at INTEGER,
+          commission_bps INTEGER NOT NULL DEFAULT 1000,
+          commission_amount_cents INTEGER NOT NULL DEFAULT 0,
+          provider_net_cents INTEGER NOT NULL DEFAULT 0,
+          payment_notes TEXT,
           created_at INTEGER NOT NULL DEFAULT (unixepoch())
         );
 
@@ -335,6 +343,43 @@ export async function initDb() {
         }
       } catch (e) {
         console.warn("Migration grant_events warning:", e);
+      }
+
+      try {
+        const txCols = sqlite.prepare("PRAGMA table_info(transactions)").all() as Array<{ name: string }>;
+        if (!txCols.some((col) => col.name === "invoice_number")) {
+          sqlite.exec("ALTER TABLE transactions ADD COLUMN invoice_number TEXT;");
+        }
+        if (!txCols.some((col) => col.name === "invoice_date")) {
+          sqlite.exec("ALTER TABLE transactions ADD COLUMN invoice_date TEXT;");
+        }
+        if (!txCols.some((col) => col.name === "payment_status")) {
+          sqlite.exec("ALTER TABLE transactions ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'pending';");
+        }
+        if (!txCols.some((col) => col.name === "settled_at")) {
+          sqlite.exec("ALTER TABLE transactions ADD COLUMN settled_at INTEGER;");
+        }
+        if (!txCols.some((col) => col.name === "commission_bps")) {
+          sqlite.exec("ALTER TABLE transactions ADD COLUMN commission_bps INTEGER NOT NULL DEFAULT 1000;");
+        }
+        if (!txCols.some((col) => col.name === "commission_amount_cents")) {
+          sqlite.exec("ALTER TABLE transactions ADD COLUMN commission_amount_cents INTEGER NOT NULL DEFAULT 0;");
+        }
+        if (!txCols.some((col) => col.name === "provider_net_cents")) {
+          sqlite.exec("ALTER TABLE transactions ADD COLUMN provider_net_cents INTEGER NOT NULL DEFAULT 0;");
+        }
+        if (!txCols.some((col) => col.name === "payment_notes")) {
+          sqlite.exec("ALTER TABLE transactions ADD COLUMN payment_notes TEXT;");
+        }
+        // Calcola retroattivamente le commissioni (10%) e quote fornitore (90%) se non ancora valorizzate
+        sqlite.exec(`
+          UPDATE transactions 
+          SET commission_amount_cents = ROUND(amount_cents * 0.10),
+              provider_net_cents = amount_cents - ROUND(amount_cents * 0.10)
+          WHERE commission_amount_cents = 0 AND amount_cents > 0;
+        `);
+      } catch (e) {
+        console.warn("Migration transactions warning:", e);
       }
 
       // Safe index creation

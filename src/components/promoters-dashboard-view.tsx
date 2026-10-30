@@ -11,6 +11,16 @@ import {
   Layers,
   HeartHandshake,
   Users,
+  Coins,
+  Receipt,
+  CheckCircle2,
+  Clock,
+  MapPin,
+  Store,
+  UserCheck,
+  UserX,
+  FileText,
+  BadgeEuro,
 } from "lucide-react";
 import type { PromoterDashboardData } from "@/lib/promoters";
 import { formatDateTime, formatEuro } from "@/lib/utils";
@@ -20,264 +30,454 @@ type Props = {
 };
 
 export function PromotersDashboardView({ data }: Props) {
-  const [activeTab, setActiveTab] = useState<"overview" | "grants" | "theaters">("overview");
+  const [activeTab, setActiveTab] = useState<
+    "economics" | "companies" | "venues" | "vouchers" | "grants"
+  >("economics");
 
   return (
     <div className="space-y-8">
-      {/* HEADER CRUSCOTTO PROMOTORI */}
+      {/* HEADER: CABINA DI REGIA RADICI STARTUP */}
       <section className="rounded-[32px] bg-forest p-6 text-cream shadow-sm md:p-8">
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-gold/20 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-gold">
-              <Sparkles size={14} /> Circuito Promotori RADICI & Partner
+              <Sparkles size={14} /> Startup RADICI · Platform Management & Backoffice
             </div>
             <h1 className="mt-3 font-serif text-3xl md:text-5xl">
-              Fondo Matching Grant Culturale
+              Control Room Piattaforma & Promotori
             </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-cream/80">
-              Governance e monitoraggio del fondo privato integrativo stanziato da Startup RADICI
-              e partner culturali. Raddoppia il valore del soggiorno per ogni lavoratore
-              offrendo lo spettacolo a teatro e l&apos;incontro con gli artisti.
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-cream/80">
+              Regia completa dell&apos;ecosistema: monitoraggio contratti welfare delle imprese CSR, governance dei fornitori territoriali, commissioni di piattaforma maturate, controllo eventi di pagamento e fondo Matching Grant culturale.
             </p>
           </div>
           <div className="rounded-2xl border border-cream/15 bg-white/5 p-4 backdrop-blur-sm">
-            <p className="text-xs text-cream/70">Referente Promotori</p>
+            <p className="text-xs text-cream/70">Gestore Piattaforma</p>
             <p className="font-medium text-cream">{data.promoterUser.firstName} {data.promoterUser.lastName}</p>
             <p className="text-xs text-gold">{data.promoterUser.email}</p>
           </div>
         </div>
 
-        {/* METRICHE CHIAVE DEL FONDO */}
+        {/* KPI CHIAVE DELLA STARTUP */}
         <div className="mt-8 grid grid-cols-2 gap-4 border-t border-cream/15 pt-6 lg:grid-cols-4">
           <div className="rounded-2xl bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-wider text-cream/70">Grant Assegnati</p>
+            <p className="text-xs uppercase tracking-wider text-cream/70">Volume Transato (GMV)</p>
             <p className="mt-2 font-serif text-2xl text-cream md:text-3xl">
-              {data.totalGrantsAssigned}
+              {formatEuro(data.totalGmvCents)}
             </p>
-            <span className="mt-1 block text-[11px] text-cream/60">Da voucher pernottamento</span>
+            <span className="mt-1 block text-[11px] text-cream/60">Flussi economici complessivi</span>
           </div>
 
-          <div className="rounded-2xl bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-wider text-gold">Confermati (T-7 / T-3)</p>
+          <div className="rounded-2xl bg-white/5 p-4 border border-gold/30 bg-gold/5">
+            <p className="text-xs uppercase tracking-wider text-gold font-bold">Commissioni Radici (10%)</p>
             <p className="mt-2 font-serif text-2xl text-gold md:text-3xl">
-              {data.totalGrantsConfirmed}
+              {formatEuro(data.totalCommissionsCents)}
             </p>
             <span className="mt-1 block text-[11px] text-gold/80">
-              {data.totalGrantsAttended} già presenti a teatro
+              Ricavo della Startup Promotrice
             </span>
           </div>
 
           <div className="rounded-2xl bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-wider text-cream/70">Scaduti / No-Show</p>
+            <p className="text-xs uppercase tracking-wider text-cream/70">Pagamenti Fornitori</p>
             <p className="mt-2 font-serif text-2xl text-cream md:text-3xl">
-              {data.totalGrantsExpired + data.totalGrantsNoShow}
+              {formatEuro(data.totalSettledCents)}
             </p>
             <span className="mt-1 block text-[11px] text-cream/60">
-              Posti liberati per capienza
+              Saldati ({formatEuro(data.totalPendingCents)} in attesa)
             </span>
           </div>
 
           <div className="rounded-2xl bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-wider text-cream/70">Teatri & Palcoscenici</p>
-            <p className="mt-2 font-serif text-2xl text-cream md:text-3xl">{data.theatersCount}</p>
-            <span className="mt-1 block text-[11px] text-cream/60">{data.eventsCount} eventi attivi</span>
+            <p className="text-xs uppercase tracking-wider text-cream/70">Ecosistema Attivo</p>
+            <p className="mt-2 font-serif text-2xl text-cream md:text-3xl">
+              {data.companiesCount} CSR · {data.venuesCount} Fornitori
+            </p>
+            <span className="mt-1 block text-[11px] text-cream/60">
+              {data.employeesCount} dipendenti nel circuito
+            </span>
           </div>
         </div>
       </section>
 
       {/* NAVIGAZIONE TAB */}
-      <div className="flex border-b border-mist">
+      <div className="flex flex-wrap gap-2 border-b border-mist">
         <button
           type="button"
-          onClick={() => setActiveTab("overview")}
-          className={`px-5 py-3 text-sm font-medium transition ${
-            activeTab === "overview"
+          onClick={() => setActiveTab("economics")}
+          className={`px-4 py-3 text-sm font-medium transition ${
+            activeTab === "economics"
               ? "border-b-2 border-forest font-semibold text-forest"
               : "text-olive hover:text-forest"
           }`}
         >
-          Panoramica & Governance
+          Transazioni & Commissioni ({data.platformTransactions.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("companies")}
+          className={`px-4 py-3 text-sm font-medium transition ${
+            activeTab === "companies"
+              ? "border-b-2 border-forest font-semibold text-forest"
+              : "text-olive hover:text-forest"
+          }`}
+        >
+          Imprese CSR & Contratti ({data.companiesCount})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("venues")}
+          className={`px-4 py-3 text-sm font-medium transition ${
+            activeTab === "venues"
+              ? "border-b-2 border-forest font-semibold text-forest"
+              : "text-olive hover:text-forest"
+          }`}
+        >
+          Fornitori del Territorio ({data.venuesCount})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("vouchers")}
+          className={`px-4 py-3 text-sm font-medium transition ${
+            activeTab === "vouchers"
+              ? "border-b-2 border-forest font-semibold text-forest"
+              : "text-olive hover:text-forest"
+          }`}
+        >
+          Flussi Voucher ({data.totalVouchersIssued})
         </button>
         <button
           type="button"
           onClick={() => setActiveTab("grants")}
-          className={`px-5 py-3 text-sm font-medium transition ${
+          className={`px-4 py-3 text-sm font-medium transition ${
             activeTab === "grants"
               ? "border-b-2 border-forest font-semibold text-forest"
               : "text-olive hover:text-forest"
           }`}
         >
-          Registro Matching Grant ({data.totalGrantsAssigned})
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("theaters")}
-          className={`px-5 py-3 text-sm font-medium transition ${
-            activeTab === "theaters"
-              ? "border-b-2 border-forest font-semibold text-forest"
-              : "text-olive hover:text-forest"
-          }`}
-        >
-          Teatri Storici Convenzionati ({data.theatersCount})
+          Matching Grant Culturale ({data.totalGrantsAssigned})
         </button>
       </div>
 
-      {/* TAB 1: PANORAMICA & GOVERNANCE */}
-      {activeTab === "overview" && (
-        <div className="grid gap-6 md:grid-cols-2">
-          <section className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm">
-            <div className="flex items-center gap-2 text-forest">
-              <ShieldCheck size={20} className="text-forest" />
-              <h2 className="font-serif text-2xl">Principio di Separazione Fiscale</h2>
-            </div>
-            <p className="mt-3 text-sm leading-6 text-ink/80">
-              I fondi erogati per il Matching Grant sono <strong>totalmente autonomi</strong> dal
-              Plafond Welfare aziendale delle imprese sponsor (ACME, Verde Energia, ecc.).
-            </p>
-            <ul className="mt-4 space-y-2.5 text-sm text-forest/90">
-              <li className="flex items-start gap-2">
-                <span className="text-gold font-bold">✓</span>
-                <span><strong>Nessun onere per l&apos;azienda:</strong> le imprese saldano solo fatture per alloggio e cene (Art. 51 TUIR).</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-gold font-bold">✓</span>
-                <span><strong>Nessun onere per il Comune:</strong> l&apos;ente pubblico tutela il territorio ma non eroga contributi diretti ai dipendenti.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-gold font-bold">✓</span>
-                <span><strong>Fondo Promotori:</strong> copre integralmente il pacchetto culturale (50€) composto da teatro e incontro serale con gli artisti.</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-gold font-bold">✓</span>
-                <span><strong>Copertura della Startup:</strong> La Startup copre completamente il costo del Matching Grant con i servizi che gestisce per conto delle imprese di ricettività beneficiarie del welfare Aziendale.</span>
-              </li>
-            </ul>
-          </section>
-
-          <section className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm">
-            <div className="flex items-center gap-2 text-forest">
-              <HeartHandshake size={20} className="text-terracotta" />
-              <h2 className="font-serif text-2xl">Composizione del Matching Grant</h2>
-            </div>
-            <p className="mt-3 text-sm leading-6 text-ink/80">
-              Ogni volta che un dipendente riscatta un voucher di tipo <strong>Pernottamento (50€)</strong>, il sistema attiva in automatico il pacchetto culturale complementare valido per 2 persone. Un singolo addetto /a con un amico /a, familiare, partner. Il Matching Grant ha il valore di 25€ + 25€ e non può essere usato totalmente da una singola persona.
-            </p>
-            <div className="mt-4 space-y-3">
-              <div className="rounded-2xl bg-cream p-4 border border-gold/30">
-                <div className="flex items-center gap-2 text-forest font-medium">
-                  <Ticket size={16} className="text-terracotta" /> Biglietto Spettacolo a Teatro (2 Persone · 25€ + 25€)
-                </div>
-                <p className="mt-1 text-xs text-olive leading-5">
-                  Accesso per il lavoratore e il proprio accompagnatore (amico, partner o familiare) presso il teatro storico convenzionato.
-                </p>
-              </div>
-              <div className="rounded-2xl bg-cream p-4 border border-gold/30">
-                <div className="flex items-center gap-2 text-forest font-medium">
-                  <Users size={16} className="text-terracotta" /> Incontro Serale Riservato con gli Artisti
-                </div>
-                <p className="mt-1 text-xs text-olive leading-5">
-                  Esperienza condivisa in coppia presso l&apos;agriturismo o la dimora storica ospitante al termine della rappresentazione.
-                </p>
-              </div>
-            </div>
-          </section>
-        </div>
-      )}
-
-      {/* TAB 2: REGISTRO DEI MATCHING GRANT ATTIVATI */}
-      {activeTab === "grants" && (
-        <section className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm">
-          <div className="flex items-center justify-between pb-4 border-b border-mist">
+      {/* TAB 1: ECONOMICS & COMMISSIONI RADICI */}
+      {activeTab === "economics" && (
+        <section className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-mist">
             <div>
-              <h2 className="font-serif text-2xl text-forest">Registro dei Matching Grant Riconosciuti</h2>
+              <h2 className="font-serif text-2xl text-forest">Registro Transazioni & Commissioni</h2>
               <p className="text-xs text-olive">
-                Elenco dei lavoratori che hanno sbloccato il grant culturale tramite il pernottamento
+                Supervisione delle transazioni intermediate, calcolo automatico della commissione Radici (10%) e stato dei saldi aziende-fornitori.
               </p>
             </div>
-            <span className="rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold text-terracotta">
-              Valore Unitario: 50,00 €
-            </span>
+            <div className="flex items-center gap-3">
+              <span className="rounded-full bg-forest/10 px-3 py-1 text-xs font-semibold text-forest">
+                Fee Startup Applicata: 10%
+              </span>
+              <span className="rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold text-terracotta">
+                Ricavo Totale: {formatEuro(data.totalCommissionsCents)}
+              </span>
+            </div>
           </div>
 
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead className="text-xs uppercase tracking-wider text-olive border-b border-mist">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[900px] text-left text-sm">
+              <thead className="text-[11px] uppercase tracking-wider text-olive border-b border-mist">
                 <tr>
-                  <th className="py-3">Data Attivazione</th>
-                  <th className="py-3">Dipendente</th>
-                  <th className="py-3">Azienda Sponsor</th>
-                  <th className="py-3">Struttura Ospitante</th>
-                  <th className="py-3">Teatro Convenzionato</th>
-                  <th className="py-3 text-right">Quota Fondo Promotori</th>
+                  <th className="py-3">Data</th>
+                  <th className="py-3">Servizio</th>
+                  <th className="py-3">Utente & Impresa CSR</th>
+                  <th className="py-3">Struttura Beneficiaria</th>
+                  <th className="py-3">Lordo Transato</th>
+                  <th className="py-3 text-gold">Fee Radici (10%)</th>
+                  <th className="py-3">Netto Fornitore</th>
+                  <th className="py-3">Fattura Gestionale</th>
+                  <th className="py-3 text-right">Stato Saldo</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-mist">
-                {data.grants.map((grant) => (
-                  <tr key={grant.voucherId} className="hover:bg-cream/40 transition">
+                {data.platformTransactions.map((tx) => (
+                  <tr key={tx.id} className="hover:bg-cream/40 transition">
                     <td className="py-3 text-xs text-olive">
-                      {grant.confirmedAt ? formatDateTime(grant.confirmedAt) : grant.startsAt ? `Inizio: ${formatDateTime(grant.startsAt)}` : "—"}
+                      {formatDateTime(tx.createdAt)}
                     </td>
-                    <td className="font-medium text-forest">
-                      {grant.employeeName}
-                      <span className="block text-[11px] text-olive">{grant.employeeEmail}</span>
+                    <td className="py-3 font-medium text-forest">
+                      {tx.serviceLabel}
+                      <span className="block text-[11px] text-olive capitalize">{tx.type}</span>
                     </td>
-                    <td className="text-forest font-medium">{grant.companyName}</td>
-                    <td className="text-forest">
-                      {grant.venueName}
-                      <span className="block text-[11px] text-olive">{grant.venueCity}</span>
+                    <td className="py-3 text-forest">
+                      <span className="font-medium">{tx.userName}</span>
+                      <span className="block text-[11px] text-olive">
+                        {tx.companyName ? `${tx.companyName} (CSR)` : "Consumer Privato"}
+                      </span>
                     </td>
-                    <td className="text-xs font-medium text-ink/80">{grant.theaterName}</td>
-                    <td className="text-right font-serif text-base text-forest">
-                      {formatEuro(grant.grantValueCents)}
+                    <td className="py-3 text-forest">
+                      <span className="font-medium">{tx.venueName}</span>
+                      <span className="block text-[11px] text-olive capitalize">
+                        {tx.venueType} · {tx.venueCity}
+                      </span>
+                    </td>
+                    <td className="py-3 font-semibold text-forest">
+                      {formatEuro(tx.amountCents)}
+                    </td>
+                    <td className="py-3 font-semibold text-forest bg-gold/5">
+                      +{formatEuro(tx.commissionCents)}
+                    </td>
+                    <td className="py-3 font-medium text-forest">
+                      {formatEuro(tx.providerNetCents)}
+                    </td>
+                    <td className="py-3 text-xs">
+                      {tx.invoiceNumber ? (
+                        <span className="inline-flex items-center gap-1 rounded bg-forest/10 px-2 py-0.5 text-xs font-semibold text-forest">
+                          <FileText size={11} /> {tx.invoiceNumber}
+                        </span>
+                      ) : (
+                        <span className="italic text-olive">Non inserita</span>
+                      )}
+                    </td>
+                    <td className="py-3 text-right">
+                      {tx.paymentStatus === "settled" ? (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-forest/15 px-2.5 py-0.5 text-xs font-semibold text-forest">
+                          <CheckCircle2 size={12} /> Saldato
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-terracotta/15 px-2.5 py-0.5 text-xs font-semibold text-terracotta">
+                          <Clock size={12} /> Da saldare
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}
-                {data.grants.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-sm text-olive">
-                      Nessun matching grant ancora attivato. Appena un lavoratore riscatta il pernottamento, apparirà qui.
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
         </section>
       )}
 
-      {/* TAB 3: TEATRI STORICI CONVENZIONATI */}
-      {activeTab === "theaters" && (
-        <section className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm">
+      {/* TAB 2: IMPRESE CSR & CONTRATTI WELFARE */}
+      {activeTab === "companies" && (
+        <section className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm space-y-6">
           <div className="pb-4 border-b border-mist">
-            <h2 className="font-serif text-2xl text-forest">Palcoscenici & Teatri Partner</h2>
+            <h2 className="font-serif text-2xl text-forest">Governance Imprese Clienti (CSR)</h2>
             <p className="text-xs text-olive">
-              Istituzioni culturali convenzionate che accolgono gli ospiti con biglietto a carico dei Promotori
+              Monitoraggio dei piani welfare aziendali, plafond complessivi versati e saldi verso i fornitori del territorio.
             </p>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            {data.theaters.map((th) => (
-              <div key={th.id} className="rounded-2xl border border-mist p-5 bg-cream/30">
+          <div className="grid gap-6 md:grid-cols-2">
+            {data.companiesList.map((c) => (
+              <div key={c.id} className="rounded-2xl border border-mist p-5 bg-cream/20 space-y-4">
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="text-xs uppercase tracking-wider text-olive">{th.region}</span>
-                    <h3 className="font-serif text-2xl text-forest">{th.name}</h3>
-                    <p className="text-sm text-olive">{th.city}</p>
+                    <span className="text-xs uppercase tracking-wider text-olive">{c.sector} · {c.city}</span>
+                    <h3 className="font-serif text-2xl text-forest">{c.name}</h3>
+                    <p className="text-xs font-mono text-olive">P.IVA: {c.vatNumber}</p>
                   </div>
                   <span className="rounded-full bg-forest/10 px-3 py-1 text-xs font-semibold text-forest">
-                    Partner Attivo
+                    {c.employeesCount} Dipendenti
                   </span>
                 </div>
-                <div className="mt-4 pt-3 border-t border-forest/10 flex items-center justify-between text-xs text-forest">
-                  <span>Biglietti Promotori Attivati:</span>
-                  <strong className="font-serif text-base">{th.grantsGeneratedCount}</strong>
+
+                <div className="grid grid-cols-2 gap-3 border-t border-forest/10 pt-3 text-xs">
+                  <div>
+                    <p className="text-olive">Plafond Welfare Finanziato</p>
+                    <p className="font-serif text-lg font-bold text-forest">{formatEuro(c.fundedAmountCents)}</p>
+                  </div>
+                  <div>
+                    <p className="text-olive">Voucher Riscattati</p>
+                    <p className="font-serif text-lg font-bold text-forest">
+                      {c.totalVouchersRedeemed} / {c.totalVouchersIssued}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-olive">Debito Welfare Fornitori</p>
+                    <p className="font-serif text-base font-semibold text-forest">{formatEuro(c.totalDebtToProvidersCents)}</p>
+                  </div>
+                  <div>
+                    <p className="text-olive">Stato Saldi Fornitori</p>
+                    <p className="text-xs font-medium text-forest">
+                      Saldati: <strong className="text-forest">{formatEuro(c.totalSettledToProvidersCents)}</strong>
+                      <span className="block text-[11px] text-terracotta font-medium">
+                        In attesa: {formatEuro(c.totalPendingToProvidersCents)}
+                      </span>
+                    </p>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </section>
       )}
+
+      {/* TAB 3: FORNITORI DEL TERRITORIO */}
+      {activeTab === "venues" && (
+        <section className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm space-y-6">
+          <div className="pb-4 border-b border-mist">
+            <h2 className="font-serif text-2xl text-forest">Rete Strutture & Partner Territoriali</h2>
+            <p className="text-xs text-olive">
+              Catalogo convenzionato (agriturismi, hotel, ristoranti, teatri), volumi riscattati, presenze convalidate e commissioni maturate per Radici.
+            </p>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[800px] text-left text-sm">
+              <thead className="text-[11px] uppercase tracking-wider text-olive border-b border-mist">
+                <tr>
+                  <th className="py-3">Struttura</th>
+                  <th className="py-3">Tipologia</th>
+                  <th className="py-3">Località</th>
+                  <th className="py-3">Riscatti Ricevuti</th>
+                  <th className="py-3">Presenze / No-Show</th>
+                  <th className="py-3">Volume Lordo</th>
+                  <th className="py-3 text-gold">Fee Radici</th>
+                  <th className="py-3 text-right">Netto Fornitore</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-mist">
+                {data.venuesList.map((v) => (
+                  <tr key={v.id} className="hover:bg-cream/40 transition">
+                    <td className="py-3 font-semibold text-forest">{v.name}</td>
+                    <td className="py-3 capitalize text-xs text-olive">{v.type}</td>
+                    <td className="py-3 text-xs text-olive">{v.city} ({v.province})</td>
+                    <td className="py-3 font-medium text-forest">{v.redeemedCount}</td>
+                    <td className="py-3 text-xs">
+                      <span className="text-forest font-medium">{v.attendedCount} presenti</span>
+                      {v.noShowCount > 0 ? (
+                        <span className="text-terracotta block">· {v.noShowCount} no-show</span>
+                      ) : null}
+                    </td>
+                    <td className="py-3 font-semibold text-forest">{formatEuro(v.grossVolumeCents)}</td>
+                    <td className="py-3 font-semibold text-forest bg-gold/5">+{formatEuro(v.commissionsPaidCents)}</td>
+                    <td className="py-3 text-right font-medium text-forest">{formatEuro(v.netRevenueCents)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* TAB 4: FLUSSI VOUCHER */}
+      {activeTab === "vouchers" && (
+        <section className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm space-y-6">
+          <div className="pb-4 border-b border-mist">
+            <h2 className="font-serif text-2xl text-forest">Ciclo di Vita & Flusso Voucher Welfare</h2>
+            <p className="text-xs text-olive">
+              Ogni selezione/riscatto di un voucher attiva l&apos;obbligo di pagamento a carico dell&apos;azienda CSR. La presenza reale viene monitorata per l&apos;impatto ESG.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className="rounded-2xl border border-forest/10 bg-cream/40 p-4">
+              <p className="text-xs uppercase text-olive">Voucher Totali Emessi</p>
+              <p className="mt-2 font-serif text-3xl text-forest">{data.totalVouchersIssued}</p>
+              <span className="text-[11px] text-olive">Stanziati nei piani welfare</span>
+            </div>
+            <div className="rounded-2xl border border-forest/10 bg-cream/40 p-4">
+              <p className="text-xs uppercase text-olive">Riscattati (Dovuti)</p>
+              <p className="mt-2 font-serif text-3xl text-forest font-bold">{data.totalVouchersRedeemed}</p>
+              <span className="text-[11px] text-forest">Onere certo per l&apos;azienda</span>
+            </div>
+            <div className="rounded-2xl border border-forest/10 bg-cream/40 p-4">
+              <p className="text-xs uppercase text-forest">Presenze Effettive</p>
+              <p className="mt-2 font-serif text-3xl text-forest">{data.totalVouchersAttended}</p>
+              <span className="text-[11px] text-forest">Ospiti verificati sul territorio</span>
+            </div>
+            <div className="rounded-2xl border border-forest/10 bg-cream/40 p-4">
+              <p className="text-xs uppercase text-terracotta">No-Show Segnalati</p>
+              <p className="mt-2 font-serif text-3xl text-terracotta">{data.totalVouchersNoShow}</p>
+              <span className="text-[11px] text-olive">Compenso comunque dovuto</span>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* TAB 5: MATCHING GRANT CULTURALE */}
+      {activeTab === "grants" && (
+        <section className="space-y-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm">
+              <div className="flex items-center gap-2 text-forest">
+                <ShieldCheck size={20} className="text-forest" />
+                <h2 className="font-serif text-2xl">Natura del Matching Grant Culturale</h2>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-ink/80">
+                Il Matching Grant <strong>NON è un voucher welfare aziendale</strong>: è un beneficio culturale integrativo stanziato direttamente dalla <strong>Startup RADICI</strong> e dai partner culturali (valore 50€: 25€ + 25€ per lavoratore e accompagnatore).
+              </p>
+              <div className="mt-4 rounded-2xl bg-cream p-4 border border-gold/30 text-xs text-forest space-y-1">
+                <p>• <strong>Capienza Fondo Promotori:</strong> {formatEuro(data.grantFundCapacityCents)}</p>
+                <p>• <strong>Grant Erogati ad Oggi:</strong> {formatEuro(data.grantFundSpentCents)} ({data.totalGrantsAssigned} attivazioni)</p>
+                <p>• <strong>Fondo Residuo Disponibile:</strong> {formatEuro(data.grantFundCapacityCents - data.grantFundSpentCents)}</p>
+              </div>
+            </div>
+
+            <div className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm">
+              <div className="flex items-center gap-2 text-forest">
+                <Calendar size={20} className="text-terracotta" />
+                <h2 className="font-serif text-2xl">Finestre di Conferma T-7 / T-3</h2>
+              </div>
+              <p className="mt-3 text-sm leading-6 text-ink/80">
+                A differenza del voucher welfare (dovuto al riscatto), il Matching Grant richiede la conferma del posto a teatro a 7 giorni dall&apos;evento (T-7) con deadline a 3 giorni (T-3), per garantire la piena capienza ai teatri partner.
+              </p>
+              <div className="mt-4 grid grid-cols-3 gap-2 text-center text-xs">
+                <div className="rounded-xl bg-forest/5 p-2">
+                  <span className="block font-bold text-forest">{data.totalGrantsConfirmed}</span>
+                  <span className="text-[10px] text-olive">Confermati</span>
+                </div>
+                <div className="rounded-xl bg-forest/5 p-2">
+                  <span className="block font-bold text-forest">{data.totalGrantsAttended}</span>
+                  <span className="text-[10px] text-olive">Presenti a Teatro</span>
+                </div>
+                <div className="rounded-xl bg-forest/5 p-2">
+                  <span className="block font-bold text-terracotta">{data.totalGrantsExpired + data.totalGrantsNoShow}</span>
+                  <span className="text-[10px] text-olive">Posti Rilasciati</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Registro Grant */}
+          <div className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm">
+            <h3 className="font-serif text-2xl text-forest mb-4">Registro Matching Grant Attivati</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead className="text-[11px] uppercase tracking-wider text-olive border-b border-mist">
+                  <tr>
+                    <th className="py-3">Dipendente</th>
+                    <th className="py-3">Azienda Sponsor</th>
+                    <th className="py-3">Struttura Ricettiva</th>
+                    <th className="py-3">Teatro Convenzionato</th>
+                    <th className="py-3">Stato Posto</th>
+                    <th className="py-3 text-right">Quota Fondo</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-mist">
+                  {data.grants.map((grant) => (
+                    <tr key={grant.voucherId} className="hover:bg-cream/40 transition">
+                      <td className="py-3 font-medium text-forest">
+                        {grant.employeeName}
+                        <span className="block text-[11px] text-olive">{grant.employeeEmail}</span>
+                      </td>
+                      <td className="py-3 text-forest">{grant.companyName}</td>
+                      <td className="py-3 text-forest">
+                        {grant.venueName}
+                        <span className="block text-[11px] text-olive">{grant.venueCity}</span>
+                      </td>
+                      <td className="py-3 text-xs text-forest">{grant.theaterName}</td>
+                      <td className="py-3 text-xs">
+                        <span className="rounded-full bg-forest/10 px-2 py-0.5 text-xs font-semibold text-forest capitalize">
+                          {grant.status}
+                        </span>
+                      </td>
+                      <td className="py-3 text-right font-serif text-base text-forest">
+                        {formatEuro(grant.grantValueCents)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      )}
     </div>
   );
 }
-

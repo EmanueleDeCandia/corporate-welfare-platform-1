@@ -317,6 +317,14 @@ export const transactions = sqliteTable("transactions", {
   discountCents: integer("discount_cents").notNull().default(0),
   listPriceCents: integer("list_price_cents").notNull(),
   serviceLabel: text("service_label").notNull(),
+  invoiceNumber: text("invoice_number"),
+  invoiceDate: text("invoice_date"),
+  paymentStatus: text("payment_status").notNull().default("pending"), // 'pending' | 'settled'
+  settledAt: integer("settled_at", { mode: "timestamp" }),
+  commissionBps: integer("commission_bps").notNull().default(1000), // 10% commissione piattaforma Radici
+  commissionAmountCents: integer("commission_amount_cents").notNull().default(0),
+  providerNetCents: integer("provider_net_cents").notNull().default(0),
+  paymentNotes: text("payment_notes"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
