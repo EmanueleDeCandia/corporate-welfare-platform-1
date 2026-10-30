@@ -26,6 +26,8 @@ import {
   AlertTriangle,
   Plus,
   Trash2,
+  Pencil,
+  UploadCloud,
   X,
   ExternalLink,
   Check,
@@ -79,6 +81,222 @@ export function PromotersDashboardView({ data }: Props) {
   const [deletingEventId, setDeletingEventId] = useState<number | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+
+  // File Upload State
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  async function handleFileUpload(file: File, target: "newVenue" | "editVenue") {
+    setIsUploadingImage(true);
+    setUploadError(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        throw new Error(resData.error || "Errore durante il caricamento della foto.");
+      }
+      if (target === "newVenue") {
+        setVenueForm((prev) => ({ ...prev, coverImage: resData.url }));
+      } else {
+        setEditVenueForm((prev) => ({ ...prev, coverImage: resData.url }));
+      }
+    } catch (err: any) {
+      setUploadError(err.message || "Impossibile caricare la foto.");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  }
+
+  // Modifica Impresa CSR State
+  const [isEditCompanyOpen, setIsEditCompanyOpen] = useState(false);
+  const [editingCompany, setEditingCompany] = useState<any | null>(null);
+  const [editCompanyForm, setEditCompanyForm] = useState({
+    name: "",
+    vatNumber: "",
+    city: "",
+    sector: "Manifattura & Meccanica",
+    employeesCount: "50",
+    fundedAmountEuros: "3750",
+    description: "",
+    localImpactDescription: "",
+    reportUrl: "",
+    sponsoredVenueId: "",
+  });
+
+  function openEditCompany(comp: any) {
+    const sponsored = data.venuesList.find((v) => v.sponsorCompanyId === comp.id);
+    setEditingCompany(comp);
+    setEditCompanyForm({
+      name: comp.name,
+      vatNumber: comp.vatNumber,
+      city: comp.city,
+      sector: comp.sector,
+      employeesCount: String(comp.employeesCount),
+      fundedAmountEuros: String(Math.round(comp.fundedAmountCents / 100)),
+      description: comp.description || "",
+      localImpactDescription: comp.localImpactDescription || "",
+      reportUrl: comp.reportUrl || "",
+      sponsoredVenueId: sponsored ? String(sponsored.id) : "",
+    });
+    setIsEditCompanyOpen(true);
+  }
+
+  async function handleUpdateCompany(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingCompany) return;
+    setIsSubmitting(true);
+    setActionError(null);
+    setActionSuccess(null);
+
+    try {
+      const res = await fetch(`/api/promoters/companies/${editingCompany.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editCompanyForm.name,
+          vatNumber: editCompanyForm.vatNumber,
+          city: editCompanyForm.city,
+          sector: editCompanyForm.sector,
+          employeesCount: Number(editCompanyForm.employeesCount) || 50,
+          fundedAmountCents: Math.round(parseFloat(editCompanyForm.fundedAmountEuros || "0") * 100),
+          description: editCompanyForm.description,
+          localImpactDescription: editCompanyForm.localImpactDescription,
+          reportUrl: editCompanyForm.reportUrl,
+          sponsoredVenueId: editCompanyForm.sponsoredVenueId ? Number(editCompanyForm.sponsoredVenueId) : null,
+        }),
+      });
+
+      const resData = await res.json();
+      if (!res.ok) {
+        throw new Error(resData.error || "Errore durante l'aggiornamento dell'impresa.");
+      }
+
+      setActionSuccess(`Impresa "${editCompanyForm.name}" modificata con successo!`);
+      setIsEditCompanyOpen(false);
+      setEditingCompany(null);
+      router.refresh();
+    } catch (err: any) {
+      setActionError(err.message || "Errore durante l'aggiornamento dell'impresa.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  // Modifica Fornitore State
+  const [isEditVenueOpen, setIsEditVenueOpen] = useState(false);
+  const [editingVenue, setEditingVenue] = useState<any | null>(null);
+  const [editVenueForm, setEditVenueForm] = useState({
+    name: "",
+    type: "agriturismo",
+    destinationId: 1,
+    city: "",
+    province: "",
+    region: "",
+    description: "",
+    longDescription: "",
+    coverImage: "/images/agriturismo-valle.jpg",
+    priceHotelEuros: "85",
+    priceAperitivoEuros: "25",
+    priceShowEuros: "0",
+    basketName: "Cesto Prodotti Tipici",
+    basketDescription: "",
+    priceBasketEuros: "42",
+    dailyCapacity: "10",
+    sponsorCompanyId: "",
+    services: ["Wi-Fi Gratuito", "Degustazione Tipica KM 0"],
+  });
+
+  function openEditVenue(venue: any) {
+    setEditingVenue(venue);
+    setEditVenueForm({
+      name: venue.name,
+      type: venue.type,
+      destinationId: venue.destinationId,
+      city: venue.city,
+      province: venue.province,
+      region: venue.region,
+      description: venue.description,
+      longDescription: venue.longDescription || venue.description,
+      coverImage: venue.coverImage,
+      priceHotelEuros: String(Math.round(venue.priceHotelCents / 100)),
+      priceAperitivoEuros: String(Math.round(venue.priceAperitivoCents / 100)),
+      priceShowEuros: String(Math.round(venue.priceShowCents / 100)),
+      basketName: venue.basketName || "Cesto Prodotti Tipici del Territorio",
+      basketDescription: venue.basketDescription || "",
+      priceBasketEuros: String(Math.round(venue.priceBasketCents / 100)),
+      dailyCapacity: "10",
+      sponsorCompanyId: venue.sponsorCompanyId ? String(venue.sponsorCompanyId) : "",
+      services: venue.services && venue.services.length > 0 ? venue.services : ["Wi-Fi Gratuito", "Degustazione Tipica KM 0"],
+    });
+    setIsEditVenueOpen(true);
+  }
+
+  function toggleEditVenueService(service: string) {
+    setEditVenueForm((prev) => {
+      const exists = prev.services.includes(service);
+      return {
+        ...prev,
+        services: exists ? prev.services.filter((s) => s !== service) : [...prev.services, service],
+      };
+    });
+  }
+
+  async function handleUpdateVenue(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editingVenue) return;
+    setIsSubmitting(true);
+    setActionError(null);
+    setActionSuccess(null);
+
+    try {
+      const res = await fetch(`/api/promoters/venues/${editingVenue.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: editVenueForm.name,
+          type: editVenueForm.type,
+          destinationId: Number(editVenueForm.destinationId),
+          city: editVenueForm.city,
+          province: editVenueForm.province,
+          region: editVenueForm.region || undefined,
+          description: editVenueForm.description,
+          longDescription: editVenueForm.longDescription || editVenueForm.description,
+          coverImage: editVenueForm.coverImage,
+          priceHotelCents: Math.round(parseFloat(editVenueForm.priceHotelEuros || "0") * 100),
+          priceAperitivoCents: Math.round(parseFloat(editVenueForm.priceAperitivoEuros || "0") * 100),
+          priceShowCents: Math.round(parseFloat(editVenueForm.priceShowEuros || "0") * 100),
+          basketName: editVenueForm.type === "producer" ? editVenueForm.basketName : null,
+          basketDescription: editVenueForm.type === "producer" ? editVenueForm.basketDescription : null,
+          priceBasketCents:
+            editVenueForm.type === "producer"
+              ? Math.round(parseFloat(editVenueForm.priceBasketEuros || "0") * 100)
+              : 0,
+          dailyCapacity: Number(editVenueForm.dailyCapacity) || 10,
+          sponsorCompanyId: editVenueForm.sponsorCompanyId ? Number(editVenueForm.sponsorCompanyId) : null,
+          services: editVenueForm.services,
+        }),
+      });
+
+      const resData = await res.json();
+      if (!res.ok) {
+        throw new Error(resData.error || "Errore durante l'aggiornamento della struttura.");
+      }
+
+      setActionSuccess(`Struttura "${editVenueForm.name}" modificata con successo!`);
+      setIsEditVenueOpen(false);
+      setEditingVenue(null);
+      router.refresh();
+    } catch (err: any) {
+      setActionError(err.message || "Errore durante l'aggiornamento della struttura.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   // Form State Impresa CSR
   const [companyForm, setCompanyForm] = useState({
@@ -755,19 +973,29 @@ export function PromotersDashboardView({ data }: Props) {
                         {comp.managerEmail || "Nessun account HR"}
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteCompany(comp.id, comp.name)}
-                      disabled={deletingCompanyId === comp.id}
-                      title="Elimina impresa"
-                      className="rounded-lg p-1.5 text-terracotta hover:bg-rose-50 transition cursor-pointer disabled:opacity-50"
-                    >
-                      {deletingCompanyId === comp.id ? (
-                        <Loader2 size={15} className="animate-spin" />
-                      ) : (
-                        <Trash2 size={15} />
-                      )}
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => openEditCompany(comp)}
+                        title="Modifica dati impresa"
+                        className="rounded-lg p-1.5 text-forest hover:bg-forest/10 transition cursor-pointer"
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteCompany(comp.id, comp.name)}
+                        disabled={deletingCompanyId === comp.id}
+                        title="Elimina impresa"
+                        className="rounded-lg p-1.5 text-terracotta hover:bg-rose-50 transition cursor-pointer disabled:opacity-50"
+                      >
+                        {deletingCompanyId === comp.id ? (
+                          <Loader2 size={15} className="animate-spin" />
+                        ) : (
+                          <Trash2 size={15} />
+                        )}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="mt-4 space-y-2 border-t border-mist pt-4 text-xs">
@@ -933,6 +1161,14 @@ export function PromotersDashboardView({ data }: Props) {
                         >
                           <ExternalLink size={15} />
                         </Link>
+                        <button
+                          type="button"
+                          onClick={() => openEditVenue(v)}
+                          title="Modifica struttura"
+                          className="rounded-lg p-1.5 text-forest hover:bg-forest/10 transition cursor-pointer"
+                        >
+                          <Pencil size={15} />
+                        </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteVenue(v.id, v.name)}
@@ -1742,11 +1978,38 @@ export function PromotersDashboardView({ data }: Props) {
                 </div>
               </div>
 
-              {/* Foto di Copertina con Preset 1-Click */}
+              {/* Foto di Copertina con Caricamento File e Preset */}
               <div>
-                <label className="block text-xs font-semibold text-forest mb-1">
-                  Foto di Copertina (URL o Preset Vetrina) *
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-forest">
+                    Foto di Copertina della Struttura *
+                  </label>
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-full bg-forest text-cream px-3 py-1 text-[11px] font-semibold hover:bg-forest/90 transition shadow-xs">
+                    <UploadCloud size={13} />
+                    <span>Carica Foto dal Computer</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/avif"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleFileUpload(f, "newVenue");
+                      }}
+                    />
+                  </label>
+                </div>
+
+                {isUploadingImage && (
+                  <div className="flex items-center gap-2 text-xs text-forest bg-forest/5 p-2.5 rounded-xl mb-2 border border-forest/15">
+                    <Loader2 size={14} className="animate-spin text-forest" />
+                    <span>Caricamento foto in corso sul server...</span>
+                  </div>
+                )}
+                {uploadError && (
+                  <p className="text-xs text-terracotta bg-rose-50 p-2 rounded-xl mb-2 font-medium">
+                    {uploadError}
+                  </p>
+                )}
                 <div className="flex flex-wrap gap-2 mb-2">
                   {COVER_PRESETS.map((p) => (
                     <button
@@ -2061,6 +2324,639 @@ export function PromotersDashboardView({ data }: Props) {
                   ) : (
                     <>
                       <Check size={14} /> Salva & Pubblica nel Circuito
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODALE CMS 4: MODIFICA IMPRESA CSR                        */}
+      {/* ========================================================= */}
+      {isEditCompanyOpen && editingCompany && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl space-y-6 border border-forest/10 my-auto">
+            <div className="flex items-start justify-between border-b border-mist pb-4">
+              <div>
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-forest/5 px-2.5 py-0.5 text-xs font-semibold text-forest">
+                  <Building size={14} /> Backoffice Modifica Impresa CSR
+                </div>
+                <h3 className="font-serif text-2xl text-forest mt-1">Modifica: {editingCompany.name}</h3>
+                <p className="text-xs text-olive">
+                  Aggiorna i dati anagrafici, il plafond welfare, la struttura sponsorizzata e il reporting ESG.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditCompanyOpen(false);
+                  setEditingCompany(null);
+                }}
+                className="rounded-full p-1.5 text-olive hover:bg-mist transition cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateCompany} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-forest mb-1">
+                    Ragione Sociale Azienda *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editCompanyForm.name}
+                    onChange={(e) => setEditCompanyForm({ ...editCompanyForm, name: e.target.value })}
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-forest mb-1">
+                    Partita IVA *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editCompanyForm.vatNumber}
+                    onChange={(e) => setEditCompanyForm({ ...editCompanyForm, vatNumber: e.target.value })}
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-forest mb-1">Città Sede *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editCompanyForm.city}
+                    onChange={(e) => setEditCompanyForm({ ...editCompanyForm, city: e.target.value })}
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-forest mb-1">
+                    Settore Industriale *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editCompanyForm.sector}
+                    onChange={(e) => setEditCompanyForm({ ...editCompanyForm, sector: e.target.value })}
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-cream/50 p-4 border border-forest/10 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-forest mb-1 flex items-center gap-1">
+                    <Users size={14} className="text-forest" />
+                    Numero Dipendenti Coinvolti *
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    required
+                    value={editCompanyForm.employeesCount}
+                    onChange={(e) => {
+                      const count = Number(e.target.value) || 0;
+                      setEditCompanyForm({
+                        ...editCompanyForm,
+                        employeesCount: e.target.value,
+                        fundedAmountEuros: String(count * 75),
+                      });
+                    }}
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none bg-white font-bold"
+                  />
+                  <p className="mt-1 text-[10px] text-olive">
+                    Ricalcola automaticamente la capienza del piano welfare per l&apos;anno in corso.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-forest mb-1 flex items-center gap-1">
+                    <Coins size={14} className="text-gold" />
+                    Plafond Welfare Finanziato (€) *
+                  </label>
+                  <input
+                    type="number"
+                    min="100"
+                    step="50"
+                    required
+                    value={editCompanyForm.fundedAmountEuros}
+                    onChange={(e) => setEditCompanyForm({ ...editCompanyForm, fundedAmountEuros: e.target.value })}
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none bg-white font-bold"
+                  />
+                  <p className="mt-1 text-[10px] text-olive">
+                    Ricalcola la ricaduta moltiplicatore 5,1x: € {(Number(editCompanyForm.fundedAmountEuros || 0) * 5.1).toLocaleString("it-IT", { minimumFractionDigits: 2 })}
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-forest mb-1">
+                  Descrizione Impegno CSR
+                </label>
+                <textarea
+                  rows={2}
+                  value={editCompanyForm.description}
+                  onChange={(e) => setEditCompanyForm({ ...editCompanyForm, description: e.target.value })}
+                  className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-forest mb-1">
+                  Struttura Sponsorizzata (Hotel, Agriturismo, Ristorante, Produttore, Teatro)
+                </label>
+                <select
+                  value={editCompanyForm.sponsoredVenueId}
+                  onChange={(e) => setEditCompanyForm({ ...editCompanyForm, sponsoredVenueId: e.target.value })}
+                  className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none bg-white"
+                >
+                  <option value="">Nessuna struttura specifica (Finanziamento Trasversale)</option>
+                  {data.venuesList.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name} ({v.type === "producer" ? "Produttore KM 0" : v.type === "theater" ? "Teatro" : v.type} · {v.city})
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-[10px] text-olive">
+                  La struttura selezionata mostrerà l&apos;azienda come sponsor e apparirà nella scheda pubblica dell&apos;impresa.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-forest mb-1">
+                  Descrizione Impatto sullo Sviluppo Locale (Attestata dal Promotore RADICI)
+                </label>
+                <textarea
+                  rows={2}
+                  value={editCompanyForm.localImpactDescription}
+                  onChange={(e) => setEditCompanyForm({ ...editCompanyForm, localImpactDescription: e.target.value })}
+                  className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-forest mb-1">
+                  Link al Reporting Integrato CSR & ESG (Opzionale)
+                </label>
+                <input
+                  type="url"
+                  value={editCompanyForm.reportUrl}
+                  onChange={(e) => setEditCompanyForm({ ...editCompanyForm, reportUrl: e.target.value })}
+                  placeholder="https://azienda.it/bilancio-sostenibilita.pdf"
+                  className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-mist">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditCompanyOpen(false);
+                    setEditingCompany(null);
+                  }}
+                  className="rounded-xl px-4 py-2.5 text-xs font-semibold text-olive hover:text-forest transition cursor-pointer"
+                >
+                  Annulla
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center gap-2 rounded-xl bg-forest px-5 py-2.5 text-xs font-semibold text-cream shadow-sm hover:bg-forest/90 transition cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" /> Salvataggio...
+                    </>
+                  ) : (
+                    <>
+                      <Check size={14} /> Salva Modifiche Impresa
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODALE CMS 5: MODIFICA FORNITORE / STRUTTURA               */}
+      {/* ========================================================= */}
+      {isEditVenueOpen && editingVenue && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl space-y-6 border border-forest/10 my-auto">
+            <div className="flex items-start justify-between border-b border-mist pb-4">
+              <div>
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-forest/5 px-2.5 py-0.5 text-xs font-semibold text-forest">
+                  <Store size={14} /> Backoffice Modifica Struttura
+                </div>
+                <h3 className="font-serif text-2xl text-forest mt-1">Modifica: {editingVenue.name}</h3>
+                <p className="text-xs text-olive">
+                  Aggiorna i dettagli, le foto di copertina, i prezzi esatti, la capienza e l&apos;offerta convenzionata.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditVenueOpen(false);
+                  setEditingVenue(null);
+                }}
+                className="rounded-full p-1.5 text-olive hover:bg-mist transition cursor-pointer"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateVenue} className="space-y-5">
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-olive mb-2">
+                  Tipologia Fornitore *
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                  {[
+                    { id: "agriturismo", label: "Agriturismo KM 0", icon: "🌿" },
+                    { id: "hotel", label: "Hotel & Relais", icon: "🏨" },
+                    { id: "restaurant", label: "Ristorante / Osteria", icon: "🍽️" },
+                    { id: "producer", label: "Produttore Filiera", icon: "🧺" },
+                    { id: "theater", label: "Teatro & Spettacolo", icon: "🎭" },
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => setEditVenueForm((f) => ({ ...f, type: t.id }))}
+                      className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-xs font-medium transition cursor-pointer ${
+                        editVenueForm.type === t.id
+                          ? "border-forest bg-forest text-cream shadow-xs font-semibold"
+                          : "border-forest/15 bg-white text-forest hover:bg-forest/5"
+                      }`}
+                    >
+                      <span className="text-lg mb-1">{t.icon}</span>
+                      <span className="text-center">{t.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-semibold text-forest mb-1">
+                    Nome della Struttura / Azienda *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editVenueForm.name}
+                    onChange={(e) => setEditVenueForm({ ...editVenueForm, name: e.target.value })}
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-forest mb-1">
+                    Destinazione Territoriale RADICI *
+                  </label>
+                  <select
+                    value={editVenueForm.destinationId}
+                    onChange={(e) => setEditVenueForm({ ...editVenueForm, destinationId: Number(e.target.value) })}
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none bg-white"
+                  >
+                    {data.destinationsList.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name} ({d.region})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-2">
+                  <label className="block text-xs font-semibold text-forest mb-1">Città *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editVenueForm.city}
+                    onChange={(e) => setEditVenueForm({ ...editVenueForm, city: e.target.value })}
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-forest mb-1">Provincia (Sigla) *</label>
+                  <input
+                    type="text"
+                    required
+                    maxLength={3}
+                    value={editVenueForm.province}
+                    onChange={(e) => setEditVenueForm({ ...editVenueForm, province: e.target.value.toUpperCase() })}
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none uppercase"
+                  />
+                </div>
+              </div>
+
+              {/* Foto di Copertina con Caricamento File e Preset */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-semibold text-forest">
+                    Foto di Copertina della Struttura *
+                  </label>
+                  <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-full bg-forest text-cream px-3 py-1 text-[11px] font-semibold hover:bg-forest/90 transition shadow-xs">
+                    <UploadCloud size={13} />
+                    <span>Carica Nuova Foto dal Computer</span>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp,image/avif"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleFileUpload(f, "editVenue");
+                      }}
+                    />
+                  </label>
+                </div>
+
+                {isUploadingImage && (
+                  <div className="flex items-center gap-2 text-xs text-forest bg-forest/5 p-2.5 rounded-xl mb-2 border border-forest/15">
+                    <Loader2 size={14} className="animate-spin text-forest" />
+                    <span>Caricamento foto in corso sul server...</span>
+                  </div>
+                )}
+                {uploadError && (
+                  <p className="text-xs text-terracotta bg-rose-50 p-2 rounded-xl mb-2 font-medium">
+                    {uploadError}
+                  </p>
+                )}
+
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {COVER_PRESETS.map((p) => (
+                    <button
+                      key={p.url}
+                      type="button"
+                      onClick={() => setEditVenueForm({ ...editVenueForm, coverImage: p.url })}
+                      className={`text-[11px] px-2.5 py-1 rounded-full border transition cursor-pointer ${
+                        editVenueForm.coverImage === p.url
+                          ? "bg-gold text-forest font-bold border-gold"
+                          : "bg-cream text-olive border-forest/15 hover:border-forest/40"
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="flex gap-3 items-center">
+                  <input
+                    type="text"
+                    required
+                    value={editVenueForm.coverImage}
+                    onChange={(e) => setEditVenueForm({ ...editVenueForm, coverImage: e.target.value })}
+                    placeholder="/uploads/... oppure https://..."
+                    className="flex-1 rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none font-mono text-xs"
+                  />
+                  {editVenueForm.coverImage && (
+                    <img
+                      src={editVenueForm.coverImage}
+                      alt="Anteprima Copertina"
+                      className="h-12 w-16 rounded-xl object-cover border border-forest/20 shrink-0 shadow-xs"
+                    />
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-semibold text-forest mb-1">
+                    Descrizione Breve (Card Vetrina) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={editVenueForm.description}
+                    onChange={(e) => setEditVenueForm({ ...editVenueForm, description: e.target.value })}
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-forest mb-1">
+                    Descrizione Estesa (Scheda Struttura)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editVenueForm.longDescription}
+                    onChange={(e) => setEditVenueForm({ ...editVenueForm, longDescription: e.target.value })}
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-cream/50 p-4 border border-forest/10 space-y-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-forest flex items-center gap-1.5">
+                  <Coins size={14} className="text-gold" />
+                  Prezzi, Capienza & Offerta Dedicata
+                </p>
+
+                {editVenueForm.type === "producer" ? (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-semibold text-forest mb-1">
+                          Nome del Cesto Tipico *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          value={editVenueForm.basketName}
+                          onChange={(e) => setEditVenueForm({ ...editVenueForm, basketName: e.target.value })}
+                          className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-semibold text-forest mb-1">
+                          Prezzo Cesto (€) *
+                        </label>
+                        <input
+                          type="number"
+                          step="0.50"
+                          min="0"
+                          required
+                          value={editVenueForm.priceBasketEuros}
+                          onChange={(e) => setEditVenueForm({ ...editVenueForm, priceBasketEuros: e.target.value })}
+                          className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none bg-white font-semibold"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-forest mb-1">
+                        Contenuto Dettagliato Cesto
+                      </label>
+                      <input
+                        type="text"
+                        value={editVenueForm.basketDescription}
+                        onChange={(e) => setEditVenueForm({ ...editVenueForm, basketDescription: e.target.value })}
+                        className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none bg-white"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {(editVenueForm.type === "hotel" || editVenueForm.type === "agriturismo") && (
+                      <div>
+                        <label className="block text-xs font-semibold text-forest mb-1">
+                          Prezzo Pernottamento (€)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.50"
+                          min="0"
+                          value={editVenueForm.priceHotelEuros}
+                          onChange={(e) => setEditVenueForm({ ...editVenueForm, priceHotelEuros: e.target.value })}
+                          className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none bg-white font-semibold"
+                        />
+                      </div>
+                    )}
+
+                    {(editVenueForm.type === "hotel" ||
+                      editVenueForm.type === "agriturismo" ||
+                      editVenueForm.type === "restaurant") && (
+                      <div>
+                        <label className="block text-xs font-semibold text-forest mb-1">
+                          Prezzo Degustazione/Cena (€)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.50"
+                          min="0"
+                          value={editVenueForm.priceAperitivoEuros}
+                          onChange={(e) => setEditVenueForm({ ...editVenueForm, priceAperitivoEuros: e.target.value })}
+                          className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none bg-white font-semibold"
+                        />
+                      </div>
+                    )}
+
+                    {editVenueForm.type === "theater" && (
+                      <div>
+                        <label className="block text-xs font-semibold text-forest mb-1">
+                          Biglietto Spettacolo Base (€)
+                        </label>
+                        <input
+                          type="number"
+                          step="0.50"
+                          min="0"
+                          value={editVenueForm.priceShowEuros}
+                          onChange={(e) => setEditVenueForm({ ...editVenueForm, priceShowEuros: e.target.value })}
+                          className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none bg-white font-semibold"
+                        />
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-xs font-semibold text-forest mb-1">
+                        Capienza Giornaliera (Ospiti)
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={editVenueForm.dailyCapacity}
+                        onChange={(e) => setEditVenueForm({ ...editVenueForm, dailyCapacity: e.target.value })}
+                        className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none bg-white font-semibold"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-xs font-semibold text-forest mb-1">
+                    Azienda Finanziatrice Sponsor (Opzionale)
+                  </label>
+                  <select
+                    value={editVenueForm.sponsorCompanyId}
+                    onChange={(e) => setEditVenueForm({ ...editVenueForm, sponsorCompanyId: e.target.value })}
+                    className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none bg-white"
+                  >
+                    <option value="">Nessun sponsor esclusivo (Partner Generale RADICI)</option>
+                    {data.sponsorCompaniesList.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Servizi Offerti */}
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-olive mb-2">
+                  Servizi & Dotazioni Incluse
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    "Wi-Fi Gratuito",
+                    "Parcheggio Riservato",
+                    "Ristorante Tipico KM 0",
+                    "Piscina Panoramica",
+                    "Aria Condizionata",
+                    "Degustazione Tipica KM 0",
+                    "Biciclette Gratuite",
+                    "Pet Friendly",
+                    "Visita Guidata Cantina",
+                    "Laboratorio del Gusto",
+                  ].map((s) => {
+                    const active = editVenueForm.services.includes(s);
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => toggleEditVenueService(s)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition cursor-pointer ${
+                          active
+                            ? "bg-forest text-cream font-semibold shadow-xs"
+                            : "bg-cream text-olive hover:bg-forest/10"
+                        }`}
+                      >
+                        {active && <Check size={12} />}
+                        {s}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-mist">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditVenueOpen(false);
+                    setEditingVenue(null);
+                  }}
+                  className="rounded-xl px-4 py-2.5 text-xs font-semibold text-olive hover:text-forest transition cursor-pointer"
+                >
+                  Annulla
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center gap-2 rounded-xl bg-forest px-5 py-2.5 text-xs font-semibold text-cream shadow-sm hover:bg-forest/90 transition cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" /> Salvataggio...
+                    </>
+                  ) : (
+                    <>
+                      <Check size={14} /> Salva Modifiche Struttura
                     </>
                   )}
                 </button>

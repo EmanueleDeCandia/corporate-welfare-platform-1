@@ -66,6 +66,7 @@ export type CompanyOverview = {
   vatNumber: string;
   city: string;
   sector: string;
+  description: string;
   employeesCount: number;
   fundedAmountCents: number;
   localRedistributionCents: number;
@@ -94,6 +95,8 @@ export type VenueOverview = {
   destinationId: number;
   destinationName: string;
   description: string;
+  longDescription: string;
+  services: string[];
   priceHotelCents: number;
   priceAperitivoCents: number;
   priceShowCents: number;
@@ -311,6 +314,7 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       vatNumber: c.vatNumber,
       city: c.city,
       sector: c.sector,
+      description: c.description,
       employeesCount: c.employeesCount,
       fundedAmountCents: c.fundedAmountCents,
       localRedistributionCents: c.localRedistributionCents,
@@ -361,6 +365,8 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       destinationId: v.destinationId,
       destinationName: dest?.name ?? v.city,
       description: v.description,
+      longDescription: v.longDescription || v.description,
+      services: (v.services as string[]) || [],
       priceHotelCents: v.priceHotelCents,
       priceAperitivoCents: v.priceAperitivoCents,
       priceShowCents: v.priceShowCents,
