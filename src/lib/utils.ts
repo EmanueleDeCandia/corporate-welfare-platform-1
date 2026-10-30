@@ -106,6 +106,8 @@ export function venueTypeLabel(type: string) {
       return "Teatro / Spettacolo";
     case "restaurant":
       return "Esperienza a tavola";
+    case "producer":
+      return "Produttore Filiera Corta";
     default:
       return type;
   }

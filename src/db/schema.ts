@@ -1,7 +1,7 @@
 import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export type UserRole = "employee" | "friend" | "provider" | "csr" | "promoter" | "admin";
-export type BenefitType = "overnight" | "dinner";
+export type BenefitType = "overnight" | "dinner" | "basket";
 export type VoucherType = "hotel" | "aperitivo" | "theater" | "overnight" | "dinner";
 export type VoucherStatus = "available" | "assigned" | "selected" | "redeemed" | "attended" | "no_show" | "expired";
 export type VoucherOrigin = "base" | "extra";
@@ -134,6 +134,9 @@ export const venues = sqliteTable("venues", {
   priceHotelCents: integer("price_hotel_cents").notNull().default(0),
   priceAperitivoCents: integer("price_aperitivo_cents").notNull().default(0),
   priceShowCents: integer("price_show_cents").notNull().default(0),
+  basketName: text("basket_name"),
+  basketDescription: text("basket_description"),
+  priceBasketCents: integer("price_basket_cents").notNull().default(0),
   checkinCode: text("checkin_code").notNull().unique(),
   providerUserId: integer("provider_user_id").references(() => users.id),
   sponsorCompanyId: integer("sponsor_company_id").references(() => companies.id),
@@ -406,7 +409,7 @@ export type Share = typeof shares.$inferSelect;
 export type Certificate = typeof certificates.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
 
-export type BookingType = "hospitality" | "dinner" | "theater_event" | "experience";
+export type BookingType = "hospitality" | "dinner" | "theater_event" | "experience" | "local_basket";
 export type BookingStatus =
   | "pending"
   | "confirmed"

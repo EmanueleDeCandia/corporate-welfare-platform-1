@@ -150,12 +150,19 @@ async function testProviderAttendanceAndInvoice() {
   const pageRes = await request('/fornitore', { headers: cookieHeader });
   assert(pageRes.status === 200, 'Accesso cruscotto fornitore');
 
-  // Test di sicurezza: tentativo di modificare voucher di un'altra struttura (voucherId 1 appartiene a Teatro Lauro Rossi)
+  const db = new Database('radici.db');
+
+  // Assicuriamo una selezione per un'altra struttura (venue 2) per testare la protezione 403
+  db.prepare("INSERT OR IGNORE INTO voucher_selections (id, voucher_id, venue_id, service_date, selected_at, attendance_status) VALUES (999, 5, 2, '2026-11-01', ?, 'pending')")
+    .run(Math.floor(Date.now() / 1000));
+  db.prepare("UPDATE vouchers SET venue_id = 2 WHERE id = 5").run();
+
+  // Test di sicurezza: tentativo di modificare voucher di un'altra struttura (voucherId 5 appartiene a venue 2)
   const forbiddenRes = await request('/api/provider/attendance', {
     method: 'POST',
     headers: cookieHeader,
     body: JSON.stringify({
-      voucherId: 1,
+      voucherId: 5,
       status: 'attended',
     }),
   });
@@ -192,12 +199,14 @@ async function testProviderAttendanceAndInvoice() {
     `Fornitore aggiorna stato in NO-SHOW su voucher 2 (Status: ${noShowRes.status})`
   );
 
-  // Test registrazione fattura su transazione id: 8
+  // Test registrazione fattura su transazione di Elena (venue 1)
+  const txVenue1 = db.prepare("SELECT id FROM transactions WHERE venue_id = 1 LIMIT 1").get();
+  const targetTxId = txVenue1 ? txVenue1.id : 3;
   const invoiceRes = await request('/api/provider/invoices', {
     method: 'POST',
     headers: cookieHeader,
     body: JSON.stringify({
-      transactionId: 8,
+      transactionId: targetTxId,
       invoiceNumber: 'FAT-2026-099',
       invoiceDate: '2026-10-30',
       paymentStatus: 'settled',
@@ -206,7 +215,7 @@ async function testProviderAttendanceAndInvoice() {
   });
   assert(
     invoiceRes.status === 200 && invoiceRes.json?.ok === true && invoiceRes.json?.transaction?.paymentStatus === 'settled',
-    `Registrazione N° fattura gestionale su transazione 8 (Status: ${invoiceRes.status}, PaymentStatus: ${invoiceRes.json?.transaction?.paymentStatus})`
+    `Registrazione N° fattura gestionale su transazione ${targetTxId} (Status: ${invoiceRes.status}, PaymentStatus: ${invoiceRes.json?.transaction?.paymentStatus})`
   );
 }
 

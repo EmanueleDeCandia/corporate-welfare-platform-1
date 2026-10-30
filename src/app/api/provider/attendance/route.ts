@@ -48,14 +48,27 @@ export async function POST(request: Request) {
     if (!v) {
       return NextResponse.json({ error: "Voucher non trovato." }, { status: 404 });
     }
-    targetVenueId = v.venueId || me.venueId;
+    if (!v.venueId) {
+      return NextResponse.json(
+        { error: "Questo voucher non è stato ancora selezionato per una struttura." },
+        { status: 400 }
+      );
+    }
+    targetVenueId = v.venueId;
+
+    if (me.role === "provider" && me.venueId && me.venueId !== targetVenueId) {
+      return NextResponse.json(
+        { error: "Non sei autorizzato a modificare la presenza per questa struttura." },
+        { status: 403 }
+      );
+    }
 
     // Crea la selezione puntuale
     const [newSel] = await db
       .insert(voucherSelections)
       .values({
         voucherId: v.id,
-        venueId: targetVenueId || 1,
+        venueId: targetVenueId,
         serviceDate: new Date().toISOString().split("T")[0],
         selectedAt: now,
         attendanceStatus: body.status,

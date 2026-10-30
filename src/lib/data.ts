@@ -16,6 +16,7 @@ import {
   venueOfferings,
   bookings,
   matchingGrants,
+  grantConfirmations,
   type Booking,
   type GrantEvent,
   type VoucherType,
@@ -119,6 +120,22 @@ export async function getVenuesByCompany(companyId: number) {
 export async function getUserVouchers(userId: number) {
   await initDb();
   return db.select().from(vouchers).where(eq(vouchers.userId, userId));
+}
+
+export async function getUserMatchingGrants(userId: number) {
+  await initDb();
+  return db
+    .select({
+      grant: matchingGrants,
+      voucher: vouchers,
+      event: grantEvents,
+      confirmation: grantConfirmations,
+    })
+    .from(matchingGrants)
+    .innerJoin(vouchers, eq(matchingGrants.voucherId, vouchers.id))
+    .innerJoin(grantEvents, eq(matchingGrants.eventId, grantEvents.id))
+    .leftJoin(grantConfirmations, eq(grantConfirmations.matchingGrantId, matchingGrants.id))
+    .where(eq(vouchers.userId, userId));
 }
 
 export async function getUserInvites(userId: number) {

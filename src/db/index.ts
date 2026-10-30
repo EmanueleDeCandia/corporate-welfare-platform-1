@@ -125,6 +125,9 @@ export async function initDb() {
           price_hotel_cents INTEGER NOT NULL DEFAULT 0,
           price_aperitivo_cents INTEGER NOT NULL DEFAULT 0,
           price_show_cents INTEGER NOT NULL DEFAULT 0,
+          basket_name TEXT,
+          basket_description TEXT,
+          price_basket_cents INTEGER NOT NULL DEFAULT 0,
           checkin_code TEXT NOT NULL UNIQUE,
           provider_user_id INTEGER REFERENCES users(id),
           sponsor_company_id INTEGER REFERENCES companies(id),
@@ -369,6 +372,21 @@ export async function initDb() {
         }
       } catch (e) {
         console.warn("Migration grant_events warning:", e);
+      }
+
+      try {
+        const vCols = sqlite.prepare("PRAGMA table_info(venues)").all() as Array<{ name: string }>;
+        if (!vCols.some((col) => col.name === "basket_name")) {
+          sqlite.exec("ALTER TABLE venues ADD COLUMN basket_name TEXT;");
+        }
+        if (!vCols.some((col) => col.name === "basket_description")) {
+          sqlite.exec("ALTER TABLE venues ADD COLUMN basket_description TEXT;");
+        }
+        if (!vCols.some((col) => col.name === "price_basket_cents")) {
+          sqlite.exec("ALTER TABLE venues ADD COLUMN price_basket_cents INTEGER NOT NULL DEFAULT 0;");
+        }
+      } catch (e) {
+        console.warn("Migration venues warning:", e);
       }
 
       try {

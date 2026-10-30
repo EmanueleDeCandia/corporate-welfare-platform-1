@@ -16,8 +16,10 @@ import {
   Leaf,
   Plus,
   QrCode,
+  RotateCcw,
   Share2,
   ShieldCheck,
+  ShoppingBag,
   Sparkles,
   Ticket,
   Users,
@@ -33,6 +35,8 @@ import type {
   venues,
   vouchers,
   grantEvents,
+  grantConfirmations,
+  matchingGrants,
   bookings,
   venueOfferings,
 } from "@/db/schema";
@@ -71,6 +75,12 @@ type Props = {
   shares: Array<typeof shares.$inferSelect>;
   certificates: Array<typeof certificates.$inferSelect>;
   bookings?: UserBookingRow[];
+  matchingGrantsList?: Array<{
+    grant: typeof matchingGrants.$inferSelect;
+    voucher: typeof vouchers.$inferSelect;
+    event: GrantEventLite;
+    confirmation: typeof grantConfirmations.$inferSelect | null;
+  }>;
 };
 
 type Tab = "wallet" | "bookings" | "kit" | "friends";
@@ -114,7 +124,8 @@ export function AccountHub(props: Props) {
   );
 }
 
-function WalletTab({ user, company, vouchers, venues, grantEvents = [], transactions }: Props & { grantEvents?: GrantEventLite[] }) {
+function WalletTab(props: Props & { grantEvents?: GrantEventLite[] }) {
+  const { user, company, vouchers, venues, grantEvents = [], transactions, matchingGrantsList = [] } = props;
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [pendingId, setPendingId] = useState<string | null>(null);
@@ -170,8 +181,8 @@ function WalletTab({ user, company, vouchers, venues, grantEvents = [], transact
         <p className="text-xs uppercase tracking-[0.16em] text-olive">Account amico / consumer</p>
         <h2 className="mt-2 font-serif text-3xl text-forest">Nessun cassetto welfare</h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-ink/75">
-          Questo profilo non possiede voucher aziendali. Puoi pagare nei locali del circuito con
-          micro-sconto community e far crescere i Punti Impatto di chi ti ha invitato.
+          Questo profilo non possiede voucher aziendali. Puoi prenotare nelle strutture convenzionate, acquistare
+          cesti della filiera corta con il 10% di sconto garantito e far crescere i Punti Impatto di chi ti ha invitato.
         </p>
         <div className="mt-6 grid gap-3">
           {transactions.map(({ transaction, venue }) => (
@@ -221,6 +232,7 @@ function WalletTab({ user, company, vouchers, venues, grantEvents = [], transact
         items={groups.hotel}
         venues={venues}
         grantEvents={grantEvents}
+        matchingGrantsList={matchingGrantsList}
         pendingId={pendingId}
         onRedeem={redeem}
       />
@@ -261,13 +273,13 @@ function WalletTab({ user, company, vouchers, venues, grantEvents = [], transact
   );
 }
 
-
 function HotelDrawer({
   title,
   subtitle,
   items,
   venues,
   grantEvents = [],
+  matchingGrantsList = [],
   pendingId,
   onRedeem,
 }: {
@@ -276,11 +288,22 @@ function HotelDrawer({
   items: Array<typeof vouchers.$inferSelect>;
   venues: VenueLite[];
   grantEvents: GrantEventLite[];
+  matchingGrantsList?: Array<{
+    grant: typeof matchingGrants.$inferSelect;
+    voucher: typeof vouchers.$inferSelect;
+    event: GrantEventLite;
+    confirmation: typeof grantConfirmations.$inferSelect | null;
+  }>;
   pendingId: string | null;
   onRedeem: (voucherId: number, venueId: number, grantEventId?: number) => void;
 }) {
+  const router = useRouter();
   const available = items.find((item) => item.status === "available");
-  const used = items.filter((item) => item.status === "redeemed").length;
+  const selectedVoucher = items.find((item) => item.status === "selected" || item.status === "redeemed");
+  const used = items.filter((item) => item.status === "redeemed" || item.status === "selected").length;
+
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
+  const [grantActionPending, setGrantActionPending] = useState(false);
 
   // Filtra strutture per il pernottamento (hotel e agriturismi)
   const hotelVenues = venues.filter((v) => matchesVoucher(v.type, "hotel"));
@@ -308,6 +331,51 @@ function HotelDrawer({
   // Passo 2: Evento Matching Grant selezionato
   const [selectedEventId, setSelectedEventId] = useState<number>(events[0]?.id ?? 1);
 
+  async function cancelVoucherSelection(voucherId: number) {
+    if (!confirm("Vuoi davvero annullare la selezione di questa struttura? Il voucher tornerà disponibile e potrai sceglierne un'altra. Gli eventuali posti a teatro verranno liberati per evitare overbooking.")) {
+      return;
+    }
+    setCancellingId(voucherId);
+    try {
+      const res = await fetch("/api/vouchers/cancel-selection", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voucherId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Errore durante l'annullamento.");
+      } else {
+        router.refresh();
+      }
+    } catch {
+      alert("Errore di connessione.");
+    } finally {
+      setCancellingId(null);
+    }
+  }
+
+  async function handleGrantResponse(voucherId: number, action: "confirmed" | "declined") {
+    setGrantActionPending(true);
+    try {
+      const res = await fetch("/api/grants/respond", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voucherId, action }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Errore durante l'aggiornamento.");
+      } else {
+        router.refresh();
+      }
+    } catch {
+      alert("Errore di connessione.");
+    } finally {
+      setGrantActionPending(false);
+    }
+  }
+
   return (
     <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/10">
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -333,40 +401,106 @@ function HotelDrawer({
                 : "border-mist bg-mist/40 text-olive line-through"
             }`}
           >
-            <p>Slot {item.slotIndex} {item.status === "redeemed" ? "· Riscattato" : ""}</p>
+            <p>
+              Slot {item.slotIndex}{" "}
+              {item.status === "selected" ? "· Selezionato" : item.status === "redeemed" ? "· Riscattato" : ""}
+            </p>
             <p className="mt-1 font-medium">{formatEuro(item.amountCents)}</p>
           </div>
         ))}
       </div>
 
       {/* DETTAGLIO SOGGIORNO PRENOTATO E EVENTO MATCHING GRANT ASSEGNATO */}
-      {!available && items[0]?.status === "redeemed" ? (
+      {selectedVoucher ? (
         (() => {
-          const bookedHotel = venues.find((v) => v.id === items[0].venueId);
-          const bookedEvent = events.find((e) => e.id === items[0].grantEventId) || events[0];
+          const bookedHotel = venues.find((v) => v.id === selectedVoucher.venueId);
+          const bookedEvent = events.find((e) => e.id === selectedVoucher.grantEventId) || events[0];
+          const userGrant = matchingGrantsList?.find((mg) => mg.voucher.id === selectedVoucher.id);
+          const grantStatus = userGrant?.grant.status || "assigned";
+
           return (
-            <div className="mt-5 rounded-2xl border border-forest/20 bg-forest/5 p-5">
-              <div className="flex items-center justify-between">
+            <div className="mt-5 rounded-2xl border border-forest/20 bg-forest/5 p-5 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <span className="rounded-full bg-forest px-3 py-1 text-xs font-medium text-cream">
-                  Pernottamento Confermato & Fiscale B2B Assegnato
+                  Pernottamento Selezionato & Obbligo Fiscale B2B Assegnato
                 </span>
                 <span className="text-xs text-olive">
-                  Prenotato il: {items[0].redeemedAt ? formatDateTime(items[0].redeemedAt) : "—"}
+                  Selezionato il: {selectedVoucher.redeemedAt ? formatDateTime(selectedVoucher.redeemedAt) : "Oggi"}
                 </span>
               </div>
-              <div className="mt-3 grid gap-4 sm:grid-cols-2">
-                <div className="rounded-xl border border-mist bg-white p-3.5">
-                  <span className="text-[11px] uppercase tracking-wider text-olive block">Struttura Ospitante</span>
-                  <strong className="text-base font-serif text-forest block mt-0.5">{bookedHotel?.name ?? "Struttura Convenzionata"}</strong>
-                  <p className="text-xs text-olive mt-0.5">{bookedHotel?.city} · Voucher Welfare 50€</p>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-xl border border-mist bg-white p-3.5 flex flex-col justify-between">
+                  <div>
+                    <span className="text-[11px] uppercase tracking-wider text-olive block">Struttura Ospitante</span>
+                    <strong className="text-base font-serif text-forest block mt-0.5">{bookedHotel?.name ?? "Struttura Convenzionata"}</strong>
+                    <p className="text-xs text-olive mt-0.5">{bookedHotel?.city} · Voucher Welfare 50€ (Finanziato da Impresa)</p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-mist/80">
+                    <button
+                      type="button"
+                      disabled={cancellingId === selectedVoucher.id}
+                      onClick={() => cancelVoucherSelection(selectedVoucher.id)}
+                      className="w-full inline-flex items-center justify-center gap-1.5 rounded-full border border-terracotta/40 bg-white px-3 py-2 text-xs font-semibold text-terracotta hover:bg-terracotta hover:text-cream transition disabled:opacity-50"
+                    >
+                      <RotateCcw size={13} />
+                      {cancellingId === selectedVoucher.id ? "Annullamento in corso..." : "Modifica / Annulla Selezione Struttura"}
+                    </button>
+                    <p className="text-[10px] text-olive/80 text-center mt-1">
+                      Ripristina il voucher per scegliere un altro agriturismo o hotel.
+                    </p>
+                  </div>
                 </div>
-                <div className="rounded-xl border border-gold/40 bg-cream p-3.5">
-                  <span className="text-[11px] uppercase tracking-wider text-terracotta block">
-                    Matching Grant Promotori ({bookedEvent?.category.toUpperCase()})
-                  </span>
-                  <strong className="text-base font-serif text-forest block mt-0.5">{bookedEvent?.title}</strong>
-                  <p className="text-xs text-forest mt-0.5 font-medium">{bookedEvent?.venueName} ({bookedEvent?.city})</p>
-                  <p className="text-[11px] text-olive mt-0.5">Omaggio 2 Persone (25€ + 25€) · Incontro con gli artisti incluso</p>
+
+                <div className="rounded-xl border border-gold/40 bg-cream p-3.5 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] uppercase tracking-wider text-terracotta block font-semibold">
+                        Matching Grant Promotori ({bookedEvent?.category.toUpperCase()})
+                      </span>
+                      {grantStatus === "confirmed" ? (
+                        <span className="rounded-full bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 font-bold">
+                          ✓ Presenza Confermata
+                        </span>
+                      ) : grantStatus === "declined" ? (
+                        <span className="rounded-full bg-rose-100 text-rose-800 text-[10px] px-2 py-0.5 font-bold">
+                          Rinunciato (Capienza Liberata)
+                        </span>
+                      ) : (
+                        <span className="rounded-full bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 font-bold">
+                          Assegnato (2 Posti)
+                        </span>
+                      )}
+                    </div>
+                    <strong className="text-base font-serif text-forest block mt-1">{bookedEvent?.title}</strong>
+                    <p className="text-xs text-forest mt-0.5 font-medium">{bookedEvent?.venueName} ({bookedEvent?.city})</p>
+                    <p className="text-[11px] text-olive mt-0.5">Omaggio 2 Persone (25€ + 25€) · Incontro con gli artisti incluso</p>
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-gold/30 flex flex-wrap gap-2">
+                    {grantStatus !== "confirmed" ? (
+                      <button
+                        type="button"
+                        disabled={grantActionPending}
+                        onClick={() => handleGrantResponse(selectedVoucher.id, "confirmed")}
+                        className="flex-1 rounded-full bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-cream hover:bg-emerald-800 transition disabled:opacity-50"
+                      >
+                        ✓ Conferma Presenza a Teatro
+                      </button>
+                    ) : null}
+
+                    {grantStatus !== "declined" ? (
+                      <button
+                        type="button"
+                        disabled={grantActionPending}
+                        onClick={() => handleGrantResponse(selectedVoucher.id, "declined")}
+                        className="rounded-full border border-terracotta/40 bg-white px-3 py-1.5 text-xs font-semibold text-terracotta hover:bg-terracotta/10 transition disabled:opacity-50"
+                        title="Libera la capienza per evitare overbooking se sai di non poter andare a teatro"
+                      >
+                        Rinuncia ai Posti (Anti-overbooking)
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               </div>
             </div>
@@ -522,8 +656,35 @@ function Drawer({
   pendingId: string | null;
   onRedeem: (voucherId: number, venueId: number) => void;
 }) {
+  const router = useRouter();
   const available = items.find((item) => item.status === "available");
-  const used = items.filter((item) => item.status === "redeemed").length;
+  const selectedVoucher = items.find((item) => item.status === "selected" || item.status === "redeemed");
+  const used = items.filter((item) => item.status === "redeemed" || item.status === "selected").length;
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
+
+  async function cancelVoucherSelection(voucherId: number) {
+    if (!confirm("Vuoi davvero annullare la selezione di questo locale? Il voucher tornerà disponibile e potrai sceglierne un altro.")) {
+      return;
+    }
+    setCancellingId(voucherId);
+    try {
+      const res = await fetch("/api/vouchers/cancel-selection", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voucherId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || "Errore durante l'annullamento.");
+      } else {
+        router.refresh();
+      }
+    } catch {
+      alert("Errore di connessione.");
+    } finally {
+      setCancellingId(null);
+    }
+  }
 
   return (
     <section className="rounded-[28px] bg-white p-6">
@@ -546,39 +707,80 @@ function Drawer({
                 : "border-mist bg-mist/40 text-olive line-through"
             }`}
           >
-            <p>Slot {item.slotIndex}</p>
+            <p>
+              Slot {item.slotIndex}{" "}
+              {item.status === "selected" ? "· Selezionato" : item.status === "redeemed" ? "· Riscattato" : ""}
+            </p>
             <p className="mt-1 font-medium">{formatEuro(item.amountCents)}</p>
           </div>
         ))}
       </div>
-      <div className="mt-5 space-y-2">
-        <p className="text-xs uppercase tracking-[0.14em] text-olive">
-          Sei sul posto? Clicca la struttura e premi RISCATTA
-        </p>
-        {venues
-          .filter((venue) => items[0] && matchesVoucher(venue.type, items[0].type))
-          .map((venue) => (
-            <div
-              key={venue.id}
-              className="flex flex-col gap-3 rounded-2xl border border-mist px-4 py-3 md:flex-row md:items-center md:justify-between"
-            >
-              <div>
-                <p className="font-medium text-forest">{venue.name}</p>
-                <p className="text-xs text-olive">
-                  {venue.city} · {venueTypeLabel(venue.type)} · {voucherTypeLabel(items[0]?.type ?? "hotel")}
-                </p>
+
+      {/* DETTAGLIO CENA SELEZIONATA */}
+      {selectedVoucher ? (
+        (() => {
+          const bookedVenue = venues.find((v) => v.id === selectedVoucher.venueId);
+          return (
+            <div className="mt-5 rounded-2xl border border-forest/20 bg-forest/5 p-5">
+              <div className="flex items-center justify-between">
+                <span className="rounded-full bg-forest px-3 py-1 text-xs font-medium text-cream">
+                  Cena / Degustazione Selezionata
+                </span>
+                <span className="text-xs text-olive">
+                  Selezionato il: {selectedVoucher.redeemedAt ? formatDateTime(selectedVoucher.redeemedAt) : "Oggi"}
+                </span>
               </div>
-              <button
-                type="button"
-                disabled={!available || pendingId === `${available?.id}-${venue.id}`}
-                onClick={() => available && onRedeem(available.id, venue.id)}
-                className="rounded-full bg-terracotta px-5 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-cream disabled:bg-mist disabled:text-olive"
-              >
-                {available ? "Riscatta" : "Esaurito"}
-              </button>
+              <div className="mt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-mist bg-white p-4">
+                <div>
+                  <span className="text-[11px] uppercase tracking-wider text-olive block">Ristorante / Osteria Tipica</span>
+                  <strong className="text-base font-serif text-forest block mt-0.5">{bookedVenue?.name ?? "Locale Convenzionato"}</strong>
+                  <p className="text-xs text-olive mt-0.5">{bookedVenue?.city} · Voucher Welfare 25€ (Finanziato da Impresa)</p>
+                </div>
+                <button
+                  type="button"
+                  disabled={cancellingId === selectedVoucher.id}
+                  onClick={() => cancelVoucherSelection(selectedVoucher.id)}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-full border border-terracotta/40 bg-white px-4 py-2 text-xs font-semibold text-terracotta hover:bg-terracotta hover:text-cream transition disabled:opacity-50"
+                >
+                  <RotateCcw size={13} />
+                  {cancellingId === selectedVoucher.id ? "Annullamento in corso..." : "Modifica / Annulla Selezione Locale"}
+                </button>
+              </div>
             </div>
-          ))}
-      </div>
+          );
+        })()
+      ) : null}
+
+      {available ? (
+        <div className="mt-5 space-y-2">
+          <p className="text-xs uppercase tracking-[0.14em] text-olive">
+            Sei sul posto? Clicca la struttura e premi RISCATTA
+          </p>
+          {venues
+            .filter((venue) => items[0] && matchesVoucher(venue.type, items[0].type))
+            .map((venue) => (
+              <div
+                key={venue.id}
+                className="flex flex-col gap-3 rounded-2xl border border-mist px-4 py-3 md:flex-row md:items-center md:justify-between"
+              >
+                <div>
+                  <p className="font-medium text-forest">{venue.name}</p>
+                  <p className="text-xs text-olive">
+                    {venue.city} · {venueTypeLabel(venue.type)} · {voucherTypeLabel(items[0]?.type ?? "hotel")}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={!available || pendingId === `${available?.id}-${venue.id}`}
+                  onClick={() => available && onRedeem(available.id, venue.id)}
+                  className="rounded-full bg-terracotta px-5 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-cream disabled:bg-mist disabled:text-olive"
+                >
+                  {available ? "Riscatta" : "Esaurito"}
+                </button>
+              </div>
+            ))}
+        </div>
+      ) : null}
     </section>
   );
 }
@@ -984,14 +1186,22 @@ function loadImage(src: string) {
 function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
-  const [targetKind, setTargetKind] = useState<"venue" | "event">("venue");
-  const [selectedVenueId, setSelectedVenueId] = useState<number>(venues[0]?.id || 1);
+
+  const isFriend = user.role === "friend";
+  const producerVenues = venues.filter((v) => v.type === "producer");
+  const hospitalityVenues = venues.filter((v) => v.type !== "producer");
+
+  const [targetKind, setTargetKind] = useState<"producer" | "venue" | "event">(
+    producerVenues.length > 0 ? "producer" : "venue"
+  );
+  const [selectedProducerId, setSelectedProducerId] = useState<number>(producerVenues[0]?.id || 12);
+  const [selectedVenueId, setSelectedVenueId] = useState<number>(hospitalityVenues[0]?.id || 1);
   const [selectedEventId, setSelectedEventId] = useState<number>(grantEvents[0]?.id || 1);
   const [bookingDate, setBookingDate] = useState<string>(
     new Date(Date.now() + 86400000 * 3).toISOString().split("T")[0]
   );
   const [timeSlot, setTimeSlot] = useState<string>("20:00");
-  const [partySize, setPartySize] = useState<number>(2);
+  const [partySize, setPartySize] = useState<number>(1);
   const [guestPhone, setGuestPhone] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
 
@@ -1001,12 +1211,15 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
   const [actionPendingId, setActionPendingId] = useState<number | null>(null);
 
   // Calcolo prezzi live
-  const activeVenue = venues.find((v) => v.id === selectedVenueId) || venues[0];
+  const activeProducer = producerVenues.find((p) => p.id === selectedProducerId) || producerVenues[0];
+  const activeVenue = hospitalityVenues.find((v) => v.id === selectedVenueId) || hospitalityVenues[0];
   const activeEvent = grantEvents.find((e) => e.id === selectedEventId) || grantEvents[0];
 
   let unitListPriceCents = 0;
-  if (targetKind === "event" && activeEvent) {
-    unitListPriceCents = 2500; // Valore convenzione evento 25€ a biglietto
+  if (targetKind === "producer" && activeProducer) {
+    unitListPriceCents = activeProducer.priceBasketCents || 3800;
+  } else if (targetKind === "event" && activeEvent) {
+    unitListPriceCents = 2500;
   } else if (activeVenue) {
     unitListPriceCents =
       activeVenue.type === "hotel" || activeVenue.type === "agriturismo"
@@ -1014,7 +1227,8 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
         : activeVenue.priceAperitivoCents || 3000;
   }
 
-  const discountPercent = 10;
+  // Regola fondamentale: Sconti SOLO per Amici invitati da referral. Dipendenti: 0% sconto.
+  const discountPercent = isFriend ? 10 : 0;
   const totalListCents = unitListPriceCents * partySize;
   const discountCents = Math.round((totalListCents * discountPercent) / 100);
   const finalPriceCents = totalListCents - discountCents;
@@ -1026,15 +1240,31 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
     setSuccessMsg("");
 
     try {
+      let targetVenueId = selectedVenueId;
+      let bookingType: "local_basket" | "hospitality" | "dinner" | "theater_event" = "hospitality";
+      let grantEventId: number | null = null;
+
+      if (targetKind === "producer") {
+        targetVenueId = selectedProducerId;
+        bookingType = "local_basket";
+      } else if (targetKind === "event") {
+        targetVenueId = activeEvent?.venueId || selectedVenueId;
+        bookingType = "theater_event";
+        grantEventId = selectedEventId;
+      } else {
+        targetVenueId = selectedVenueId;
+        bookingType = activeVenue?.type === "restaurant" ? "dinner" : "hospitality";
+      }
+
       const res = await fetch("/api/bookings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          venueId: targetKind === "event" && activeEvent?.venueId ? activeEvent.venueId : selectedVenueId,
-          grantEventId: targetKind === "event" ? selectedEventId : null,
-          bookingType: targetKind === "event" ? "theater_event" : activeVenue?.type === "restaurant" ? "dinner" : "hospitality",
+          venueId: targetVenueId,
+          grantEventId,
+          bookingType,
           bookingDate,
-          timeSlot,
+          timeSlot: targetKind === "producer" ? "Consegna / Ritiro" : timeSlot,
           partySize,
           guestPhone,
           notes,
@@ -1043,9 +1273,9 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
 
       const data = await res.json();
       if (!res.ok) {
-        setErrorMsg(data.error || "Errore durante la creazione della prenotazione.");
+        setErrorMsg(data.error || "Errore durante la creazione della prenotazione o dell'ordine.");
       } else {
-        setSuccessMsg(data.message || "Prenotazione registrata con successo!");
+        setSuccessMsg(data.message || (targetKind === "producer" ? "Ordine cesto registrato con successo!" : "Prenotazione registrata con successo!"));
         setShowForm(false);
         router.refresh();
       }
@@ -1085,15 +1315,24 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-gold">
-              <CalendarCheck size={14} /> Circuito Convenzioni & Sconti
+              <CalendarCheck size={14} /> {isFriend ? "Circuito Convenzioni & Sconti Community" : "Prenotazioni & Cesti KM 0"}
             </div>
             <h2 className="mt-2 font-serif text-3xl font-normal text-cream md:text-4xl">
-              Prenotazioni & Spettacoli nei Borghi
+              {isFriend ? "Prenotazioni & Spettacoli nei Borghi" : "Prenotazioni, Spettacoli & Filiera Corta"}
             </h2>
             <p className="mt-2 max-w-2xl text-sm leading-relaxed text-cream/80">
-              Come membro della community RADICI hai accesso a uno sconto garantito del <strong>10%</strong> su
-              tutte le strutture e gli eventi convenzionati. Prenota in anticipo e conferma la tua presenza
-              per permettere ai borghi di gestire i posti senza rischio di overbooking.
+              {isFriend ? (
+                <>
+                  Come membro della community RADICI hai accesso a uno sconto garantito del <strong>10%</strong> su
+                  tutte le strutture, i cesti di eccellenze gastronomiche e gli eventi convenzionati. Prenota in anticipo
+                  e conferma la tua presenza per permettere ai borghi di gestire i posti senza rischio di overbooking.
+                </>
+              ) : (
+                <>
+                  Prenota in anticipo e conferma la tua presenza per permettere ai borghi di gestire i posti senza rischio di overbooking.
+                  Puoi inoltre acquistare i cesti di eccellenze gastronomiche direttamente dai produttori della filiera corta marchigiana.
+                </>
+              )}
             </p>
           </div>
           <button
@@ -1102,7 +1341,7 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
             className="inline-flex items-center justify-center gap-2 rounded-full bg-gold px-6 py-3 font-semibold text-forest shadow-md transition hover:bg-gold/90"
           >
             {showForm ? <XCircle size={18} /> : <Plus size={18} />}
-            {showForm ? "Chiudi Modulo" : "Nuova Prenotazione"}
+            {showForm ? "Chiudi Modulo" : isFriend ? "Nuova Prenotazione" : "Ordina Cesto KM 0 / Prenota"}
           </button>
         </div>
       </div>
@@ -1120,50 +1359,105 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
         </div>
       )}
 
-      {/* Modulo Nuova Prenotazione (a comparsa) */}
+      {/* Modulo Nuova Prenotazione o Acquisto Cesto (a comparsa) */}
       {showForm && (
         <form onSubmit={handleCreateBooking} className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm md:p-8">
           <div className="flex items-center justify-between border-b border-forest/10 pb-4">
             <div>
-              <h3 className="font-serif text-2xl text-forest">Effettua una Nuova Prenotazione Convenzionata</h3>
-              <p className="mt-1 text-xs text-olive">Sconto 10% applicato automaticamente al saldo presso la struttura.</p>
+              <h3 className="font-serif text-2xl text-forest">
+                {targetKind === "producer" ? "Ordina Cesto Prodotti Locali KM 0" : "Effettua una Nuova Prenotazione"}
+              </h3>
+              <p className="mt-1 text-xs text-olive">
+                {targetKind === "producer"
+                  ? "Eccellenze agroalimentari marchigiane fornite direttamente dai produttori di filiera corta."
+                  : isFriend
+                  ? "Sconto 10% applicato automaticamente al saldo presso la struttura."
+                  : "Prenotazione con conferma anticipata per evitare overbooking."}
+              </p>
             </div>
-            <span className="rounded-full bg-forest/5 px-3 py-1 text-xs font-semibold text-forest">
-              Sconto 10% Community
-            </span>
+            {isFriend ? (
+              <span className="rounded-full bg-forest/5 px-3 py-1 text-xs font-semibold text-forest">
+                Sconto 10% Community
+              </span>
+            ) : (
+              <span className="rounded-full bg-forest/5 px-3 py-1 text-xs font-semibold text-forest">
+                Acquisto Diretto
+              </span>
+            )}
           </div>
 
           <div className="mt-6 grid gap-6 md:grid-cols-2">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-forest">
-                Cosa desideri prenotare?
+                Cosa desideri acquistare o prenotare?
               </label>
-              <div className="mt-2 grid grid-cols-2 gap-2">
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTargetKind("producer")}
+                  className={`rounded-2xl py-3 px-2 text-xs md:text-sm font-medium transition text-center ${
+                    targetKind === "producer"
+                      ? "bg-forest text-cream shadow-sm"
+                      : "border border-forest/10 bg-cream text-forest hover:bg-forest/5"
+                  }`}
+                >
+                  <ShoppingBag className="mx-auto mb-1" size={16} />
+                  Cesto KM 0
+                </button>
                 <button
                   type="button"
                   onClick={() => setTargetKind("venue")}
-                  className={`rounded-2xl py-3 text-sm font-medium transition ${
+                  className={`rounded-2xl py-3 px-2 text-xs md:text-sm font-medium transition text-center ${
                     targetKind === "venue"
                       ? "bg-forest text-cream shadow-sm"
                       : "border border-forest/10 bg-cream text-forest hover:bg-forest/5"
                   }`}
                 >
-                  Struttura o Ristorante
+                  <Calendar className="mx-auto mb-1" size={16} />
+                  Struttura
                 </button>
                 <button
                   type="button"
                   onClick={() => setTargetKind("event")}
-                  className={`rounded-2xl py-3 text-sm font-medium transition ${
+                  className={`rounded-2xl py-3 px-2 text-xs md:text-sm font-medium transition text-center ${
                     targetKind === "event"
                       ? "bg-forest text-cream shadow-sm"
                       : "border border-forest/10 bg-cream text-forest hover:bg-forest/5"
                   }`}
                 >
-                  Spettacolo Teatrale / Evento
+                  <Ticket className="mx-auto mb-1" size={16} />
+                  Spettacolo
                 </button>
               </div>
 
-              {targetKind === "venue" ? (
+              {targetKind === "producer" ? (
+                <div className="mt-4">
+                  <label className="block text-xs font-semibold text-forest">Seleziona il Produttore della Filiera Corta</label>
+                  <select
+                    value={selectedProducerId}
+                    onChange={(e) => setSelectedProducerId(Number(e.target.value))}
+                    className="mt-1.5 w-full rounded-2xl border border-forest/15 bg-cream px-4 py-3 text-sm text-forest"
+                  >
+                    {producerVenues.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} ({p.city}) — {p.basketName} ({formatEuro(p.priceBasketCents)})
+                      </option>
+                    ))}
+                  </select>
+                  {activeProducer && (
+                    <div className="mt-3 rounded-2xl border border-gold/30 bg-gold/5 p-4 text-xs text-forest">
+                      <span className="font-semibold text-terracotta uppercase tracking-wider text-[11px] block">
+                        Eccellenza Gastronomica Marchigiana
+                      </span>
+                      <strong className="text-sm font-serif text-forest block mt-0.5">{activeProducer.basketName}</strong>
+                      <p className="mt-1 text-ink/80 leading-relaxed">{activeProducer.basketDescription}</p>
+                      <p className="mt-2 text-olive font-medium">
+                        Prezzo unitario cesto: {formatEuro(activeProducer.priceBasketCents)}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : targetKind === "venue" ? (
                 <div className="mt-4">
                   <label className="block text-xs font-semibold text-forest">Seleziona la Struttura Convenzionata</label>
                   <select
@@ -1171,7 +1465,7 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
                     onChange={(e) => setSelectedVenueId(Number(e.target.value))}
                     className="mt-1.5 w-full rounded-2xl border border-forest/15 bg-cream px-4 py-3 text-sm text-forest"
                   >
-                    {venues.map((v) => (
+                    {hospitalityVenues.map((v) => (
                       <option key={v.id} value={v.id}>
                         {v.name} ({venueTypeLabel(v.type)}) · {v.city} ({v.province})
                       </option>
@@ -1212,7 +1506,9 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
 
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-forest">Data Prenotazione</label>
+                  <label className="block text-xs font-semibold text-forest">
+                    {targetKind === "producer" ? "Data Desiderata Ritiro/Spedizione" : "Data Prenotazione"}
+                  </label>
                   <input
                     type="date"
                     required
@@ -1222,10 +1518,12 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-forest">Orario / Fascia</label>
+                  <label className="block text-xs font-semibold text-forest">
+                    {targetKind === "producer" ? "Modalità / Note Consegna" : "Orario / Fascia"}
+                  </label>
                   <input
                     type="text"
-                    placeholder="es. 20:30 o Check-in"
+                    placeholder={targetKind === "producer" ? "es. Ritiro in azienda o Spedizione" : "es. 20:30 o Check-in"}
                     value={timeSlot}
                     onChange={(e) => setTimeSlot(e.target.value)}
                     className="mt-1.5 w-full rounded-2xl border border-forest/15 bg-cream px-4 py-2.5 text-sm"
@@ -1237,7 +1535,9 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
             <div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-forest">Numero Ospiti / Posti</label>
+                  <label className="block text-xs font-semibold text-forest">
+                    {targetKind === "producer" ? "Numero di Cesti" : "Numero Ospiti / Posti"}
+                  </label>
                   <input
                     type="number"
                     min={1}
@@ -1260,10 +1560,16 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
               </div>
 
               <div className="mt-4">
-                <label className="block text-xs font-semibold text-forest">Note o Richieste Speciali</label>
+                <label className="block text-xs font-semibold text-forest">
+                  {targetKind === "producer" ? "Indirizzo di Spedizione o Note per il Produttore" : "Note o Richieste Speciali"}
+                </label>
                 <textarea
                   rows={2}
-                  placeholder="Es. arrivo in tarda serata, intolleranze alimentari, preferenze camera..."
+                  placeholder={
+                    targetKind === "producer"
+                      ? "Es. Via Roma 10, Sirolo (AN) - citofono Rossi, oppure 'ritiro di persona sabato mattina'..."
+                      : "Es. arrivo in tarda serata, intolleranze alimentari, preferenze camera..."
+                  }
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   className="mt-1.5 w-full rounded-2xl border border-forest/15 bg-cream px-4 py-2.5 text-sm"
@@ -1272,20 +1578,31 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
 
               {/* Box Riepilogo Costi & Sconto Community */}
               <div className="mt-4 rounded-2xl bg-cream/70 p-4 border border-forest/10">
-                <p className="text-xs font-bold uppercase tracking-wider text-forest">Riepilogo Tariffa Convenzionata</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-forest">Riepilogo Importo</p>
                 <div className="mt-2 space-y-1.5 text-xs text-ink/80">
                   <div className="flex justify-between">
-                    <span>Listino ufficiale ({partySize} {partySize === 1 ? "persona" : "persone"}):</span>
-                    <span className="font-medium line-through text-olive">{formatEuro(totalListCents)}</span>
+                    <span>
+                      Listino ({partySize} {targetKind === "producer" ? (partySize === 1 ? "cesto" : "cesti") : (partySize === 1 ? "persona" : "persone")}):
+                    </span>
+                    <span className={`font-medium ${isFriend ? "line-through text-olive" : "text-forest"}`}>
+                      {formatEuro(totalListCents)}
+                    </span>
                   </div>
-                  <div className="flex justify-between text-terracotta">
-                    <span>Sconto Esclusivo Community RADICI (-10%):</span>
-                    <span className="font-semibold">-{formatEuro(discountCents)}</span>
-                  </div>
+                  {isFriend ? (
+                    <div className="flex justify-between text-terracotta">
+                      <span>Sconto Esclusivo Community RADICI (-10%):</span>
+                      <span className="font-semibold">-{formatEuro(discountCents)}</span>
+                    </div>
+                  ) : null}
                   <div className="flex justify-between border-t border-forest/10 pt-2 text-sm font-bold text-forest">
-                    <span>Importo Netto da corrispondere al check-in:</span>
+                    <span>{targetKind === "producer" ? "Totale Ordine Cesto:" : "Importo da corrispondere:"}</span>
                     <span className="text-base text-forest">{formatEuro(finalPriceCents)}</span>
                   </div>
+                  {!isFriend ? (
+                    <p className="mt-1 text-[11px] text-olive leading-normal">
+                      Tariffa da listino produttore. I voucher welfare aziendali per soggiorni e cene sono disponibili nella scheda &quot;Portafoglio Welfare&quot;.
+                    </p>
+                  ) : null}
                 </div>
               </div>
 
@@ -1296,7 +1613,15 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
                 disabled={loading}
                 className="mt-4 w-full rounded-full bg-forest py-3.5 text-sm font-semibold text-cream shadow-md transition hover:bg-forest/90 disabled:opacity-50"
               >
-                {loading ? "Registrazione prenotazione in corso..." : "Invia Prenotazione con Sconto 10%"}
+                {loading
+                  ? "Registrazione in corso..."
+                  : targetKind === "producer"
+                  ? isFriend
+                    ? `Ordina Cesto KM 0 (-10% Sconto Community · ${formatEuro(finalPriceCents)})`
+                    : `Ordina Cesto KM 0 (${formatEuro(finalPriceCents)})`
+                  : isFriend
+                  ? `Invia Prenotazione con Sconto 10% (${formatEuro(finalPriceCents)})`
+                  : `Invia Prenotazione (${formatEuro(finalPriceCents)})`}
               </button>
             </div>
           </div>
@@ -1306,25 +1631,24 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
       {/* Elenco Prenotazioni dell'Utente */}
       <section className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-serif text-2xl text-forest">Le Tue Prenotazioni</h3>
+          <h3 className="font-serif text-2xl text-forest">Le Tue Prenotazioni & Ordini</h3>
           <span className="text-xs font-semibold text-olive">
-            {bookings.length} {bookings.length === 1 ? "prenotazione registrata" : "prenotazioni registrate"}
+            {bookings.length} {bookings.length === 1 ? "registrazione trovata" : "registrazioni trovate"}
           </span>
         </div>
 
         {bookings.length === 0 ? (
           <div className="rounded-[28px] border-2 border-dashed border-forest/15 bg-white p-10 text-center">
             <Calendar className="mx-auto text-forest/30" size={48} />
-            <h4 className="mt-3 font-serif text-xl text-forest">Nessuna prenotazione attiva</h4>
+            <h4 className="mt-3 font-serif text-xl text-forest">Nessun ordine o prenotazione attiva</h4>
             <p className="mt-1 text-sm text-olive max-w-md mx-auto">
-              Non hai ancora prenotato soggiorni, cene o spettacoli convenzionati. Utilizza il pulsante
-              sopra per prenotare con il 10% di sconto.
+              Non hai ancora effettuato ordini di cesti KM 0 o prenotato soggiorni e spettacoli nei borghi.
             </p>
             <button
               onClick={() => setShowForm(true)}
               className="mt-4 rounded-full bg-forest px-6 py-2.5 text-sm font-semibold text-cream"
             >
-              Prenota Adesso
+              Effettua un Ordine o Prenotazione
             </button>
           </div>
         ) : (
@@ -1335,6 +1659,7 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
               const isPresenceConfirmed = b.status === "presence_confirmed";
               const isAttended = b.status === "attended";
               const isCancelled = b.status === "cancelled" || b.status === "rejected";
+              const isBasket = b.bookingType === "local_basket";
 
               return (
                 <div
@@ -1353,8 +1678,12 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
                     {/* Header Card */}
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <span className="inline-block rounded-full bg-forest/5 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-forest">
-                          {b.bookingType === "theater_event"
+                        <span className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                          isBasket ? "bg-amber-100 text-amber-900" : "bg-forest/5 text-forest"
+                        }`}>
+                          {isBasket
+                            ? "Cesto Filiera Corta KM 0"
+                            : b.bookingType === "theater_event"
                             ? "Spettacolo Teatrale"
                             : b.bookingType === "dinner"
                             ? "Cena & Sapori"
@@ -1370,22 +1699,22 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
                       <div>
                         {isPending && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-                            <Clock size={12} /> In Attesa di Accettazione
+                            <Clock size={12} /> {isBasket ? "Ordine in Elaborazione" : "In Attesa di Accettazione"}
                           </span>
                         )}
                         {isConfirmed && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">
-                            <CheckCircle2 size={12} /> Confermata dal Gestore
+                            <CheckCircle2 size={12} /> {isBasket ? "Cesto Confermato dal Produttore" : "Confermata dal Gestore"}
                           </span>
                         )}
                         {isPresenceConfirmed && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
-                            <CheckCircle2 size={12} /> Presenza Riconfermata ✓
+                            <CheckCircle2 size={12} /> {isBasket ? "Ritiro / Ricezione Confermata ✓" : "Presenza Riconfermata ✓"}
                           </span>
                         )}
                         {isAttended && (
                           <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-800">
-                            <Sparkles size={12} /> Completata (Check-in effettuato)
+                            <Sparkles size={12} /> {isBasket ? "Consegnato ✓" : "Completata (Check-in effettuato)"}
                           </span>
                         )}
                         {b.status === "rejected" && (
@@ -1401,7 +1730,14 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
                       </div>
                     </div>
 
-                    {/* Dettagli Evento o Servizio */}
+                    {/* Dettagli Cesto o Evento */}
+                    {isBasket && v.basketName && (
+                      <div className="mt-3 rounded-2xl bg-amber-50/70 p-3 text-xs text-forest border border-amber-200/60">
+                        <p className="font-bold text-terracotta">{v.basketName}</p>
+                        <p className="mt-0.5 text-ink/80 text-[11px] leading-relaxed">{v.basketDescription}</p>
+                      </div>
+                    )}
+
                     {ge && (
                       <div className="mt-3 rounded-2xl bg-gold/10 p-3 text-xs text-forest border border-gold/20">
                         <p className="font-bold text-forest">Spettacolo: {ge.title}</p>
@@ -1414,20 +1750,30 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
                     {/* Dettagli Prenotazione */}
                     <div className="mt-4 grid grid-cols-2 gap-2 rounded-2xl bg-cream/60 p-3 text-xs">
                       <div>
-                        <span className="block text-olive font-medium">Data di Arrivo:</span>
+                        <span className="block text-olive font-medium">
+                          {isBasket ? "Data Desiderata:" : "Data di Arrivo:"}
+                        </span>
                         <span className="font-bold text-forest">{formatDate(b.bookingDate)}</span>
                       </div>
                       <div>
-                        <span className="block text-olive font-medium">Orario / Fascia:</span>
+                        <span className="block text-olive font-medium">
+                          {isBasket ? "Modalità:" : "Orario / Fascia:"}
+                        </span>
                         <span className="font-bold text-forest">{b.timeSlot || "Standard"}</span>
                       </div>
                       <div>
-                        <span className="block text-olive font-medium">Numero Ospiti:</span>
-                        <span className="font-bold text-forest">{b.partySize} {b.partySize === 1 ? "persona" : "persone"}</span>
+                        <span className="block text-olive font-medium">
+                          {isBasket ? "Quantità Cesti:" : "Numero Ospiti:"}
+                        </span>
+                        <span className="font-bold text-forest">
+                          {b.partySize} {isBasket ? (b.partySize === 1 ? "cesto" : "cesti") : (b.partySize === 1 ? "persona" : "persone")}
+                        </span>
                       </div>
                       <div>
-                        <span className="block text-olive font-medium">Prezzo Netto Convenzione:</span>
-                        <span className="font-bold text-forest">{formatEuro(b.finalPriceCents)} (-10%)</span>
+                        <span className="block text-olive font-medium">Prezzo Totale:</span>
+                        <span className="font-bold text-forest">
+                          {formatEuro(b.finalPriceCents)} {b.discountCents > 0 ? "(-10%)" : ""}
+                        </span>
                       </div>
                     </div>
 
@@ -1449,11 +1795,11 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
                             onClick={() => updateBookingStatus(b.id, "presence_confirmed")}
                             className="inline-flex items-center gap-1.5 rounded-full bg-emerald-700 px-4 py-2 text-xs font-semibold text-cream shadow-sm hover:bg-emerald-800 transition disabled:opacity-50"
                           >
-                            <CheckCircle2 size={14} /> Conferma la tua Presenza
+                            <CheckCircle2 size={14} /> {isBasket ? "Conferma Ricezione / Ritiro" : "Conferma la tua Presenza"}
                           </button>
                         ) : (
                           <span className="text-xs text-emerald-800 font-semibold">
-                            ✓ Hai confermato l&apos;arrivo
+                            ✓ {isBasket ? "Hai confermato il ritiro/ricezione" : "Hai confermato l'arrivo"}
                           </span>
                         )}
                       </div>
@@ -1462,13 +1808,13 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
                         type="button"
                         disabled={actionPendingId === b.id}
                         onClick={() => {
-                          if (confirm("Vuoi davvero annullare questa prenotazione? I posti verranno liberati.")) {
+                          if (confirm(isBasket ? "Vuoi davvero annullare questo ordine?" : "Vuoi davvero annullare questa prenotazione? I posti verranno liberati.")) {
                             updateBookingStatus(b.id, "cancelled");
                           }
                         }}
                         className="rounded-full border border-forest/20 px-3.5 py-2 text-xs font-medium text-forest hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition disabled:opacity-50"
                       >
-                        Annulla Prenotazione
+                        {isBasket ? "Annulla Ordine" : "Annulla Prenotazione"}
                       </button>
                     </div>
                   )}

@@ -6,9 +6,11 @@ import {
   grantEvents,
   matchingGrants,
   notifications,
+  transactions,
   users,
   venueOfferings,
   venues,
+  type BookingType,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { getEventCapacityStats, getUserBookings, getVenueBookings } from "@/lib/data";
@@ -45,7 +47,7 @@ export async function POST(request: Request) {
     venueId?: number;
     offeringId?: number;
     grantEventId?: number;
-    bookingType?: "hospitality" | "dinner" | "theater_event" | "experience";
+    bookingType?: BookingType;
     bookingDate?: string;
     timeSlot?: string;
     partySize?: number;
@@ -92,9 +94,17 @@ export async function POST(request: Request) {
     grantEvent = ge;
   }
 
-  // 2. Calcolo Tariffa di Listino e Sconto Convenzione Community (10%)
+  // 2. Calcolo Tariffa di Listino e Sconto Convenzione Community
   let unitPriceCents = 0;
-  let bookingType = body.bookingType || (venue.type === "theater" ? "theater_event" : venue.type === "restaurant" ? "dinner" : "hospitality");
+  let bookingType: BookingType =
+    body.bookingType ||
+    (venue.type === "producer"
+      ? "local_basket"
+      : venue.type === "theater"
+      ? "theater_event"
+      : venue.type === "restaurant"
+      ? "dinner"
+      : "hospitality");
 
   if (body.offeringId) {
     const [offering] = await db
@@ -108,7 +118,9 @@ export async function POST(request: Request) {
   }
 
   if (unitPriceCents === 0) {
-    if (body.grantEventId && grantEvent) {
+    if (venue.type === "producer" || bookingType === "local_basket") {
+      unitPriceCents = venue.priceBasketCents || 3800;
+    } else if (body.grantEventId && grantEvent) {
       unitPriceCents = 2500; // Valore biglietto convenzionato evento (25€)
     } else if (bookingType === "hospitality" || venue.type === "hotel" || venue.type === "agriturismo") {
       unitPriceCents = venue.priceHotelCents || 6000;
@@ -117,7 +129,10 @@ export async function POST(request: Request) {
     }
   }
 
-  const discountPercent = 10; // Convenzione community RADICI
+  // REGOLA FONDAMENTALE: Gli sconti sono riservati ESCLUSIVAMENTE agli invitati amici (ruolo "friend").
+  // Per i dipendenti aziendali (ruolo "employee") non ci sono sconti: il welfare copre i loro voucher, mentre gli acquisti extra sono a tariffa piena.
+  const isFriend = me.role === "friend";
+  const discountPercent = isFriend ? 10 : 0;
   const totalAmountCents = unitPriceCents * partySize;
   const discountCents = Math.round((totalAmountCents * discountPercent) / 100);
   const finalPriceCents = totalAmountCents - discountCents;
@@ -151,12 +166,39 @@ export async function POST(request: Request) {
     })
     .returning();
 
-  // 3. Genera Notifica per la struttura fornitrice
+  // 3. Se acquisto cesto di filiera corta, registra transazione consumer e assegna punti impatto
+  if (bookingType === "local_basket") {
+    const commissionBps = 1000;
+    const commissionAmountCents = Math.round((finalPriceCents * commissionBps) / 10000);
+    const providerNetCents = finalPriceCents - commissionAmountCents;
+
+    await db.insert(transactions).values({
+      type: "consumer_payment",
+      status: "completed",
+      userId: me.id,
+      venueId: venue.id,
+      amountCents: finalPriceCents,
+      discountCents,
+      listPriceCents: totalAmountCents,
+      serviceLabel: `Cesto Filiera Corta: ${venue.basketName || "Prodotti KM 0"}`,
+      paymentStatus: "settled",
+      settledAt: new Date(),
+      commissionBps,
+      commissionAmountCents,
+      providerNetCents,
+      paymentNotes: `Acquisto Cesto Enogastronomico Filiera Corta da ${guestName}`,
+    });
+
+    const { awardImpact } = await import("@/lib/data");
+    await awardImpact(me.id, venue.impactPointsGenerated || 2);
+  }
+
+  // 4. Genera Notifica per la struttura fornitrice o produttore
   await db.insert(notifications).values({
     venueId: venue.id,
-    type: "community_booking",
-    title: `Nuova Prenotazione Community: ${guestName}`,
-    body: `${guestName} ha prenotato per ${partySize} ${partySize === 1 ? "persona" : "persone"} in data ${bookingDate}${body.timeSlot ? ` alle ore ${body.timeSlot}` : ""}. Importo convenzionato con sconto 10%: € ${(finalPriceCents / 100).toFixed(2)}.`,
+    type: bookingType === "local_basket" ? "order" : "community_booking",
+    title: bookingType === "local_basket" ? `Nuovo Ordine Cesto: ${guestName}` : `Nuova Prenotazione: ${guestName}`,
+    body: `${guestName} ha ${bookingType === "local_basket" ? "ordinato" : "prenotato"} ${partySize} ${partySize === 1 ? (bookingType === "local_basket" ? "cesto" : "persona") : (bookingType === "local_basket" ? "cesti" : "persone")} in data ${bookingDate}${body.timeSlot ? ` (${body.timeSlot})` : ""}. Totale: € ${(finalPriceCents / 100).toFixed(2)}${discountPercent > 0 ? " (Sconto 10% applicato)" : ""}.`,
     payload: {
       bookingId: newBooking.id,
       guestName,
@@ -165,16 +207,23 @@ export async function POST(request: Request) {
       bookingDate,
       timeSlot: body.timeSlot,
       finalPriceCents,
+      bookingType,
+      basketName: venue.basketName,
       notes: body.notes,
     },
     read: false,
   });
 
+  const message =
+    bookingType === "local_basket"
+      ? `Ordine per il cesto "${venue.basketName || "Prodotti Locali"}" completato con successo presso ${venue.name}! Totale: € ${(finalPriceCents / 100).toFixed(2)}${discountPercent > 0 ? " (Sconto community del 10% applicato)" : ""}.`
+      : `Prenotazione registrata con successo presso ${venue.name} per ${partySize} ${partySize === 1 ? "ospite" : "ospiti"}.${discountPercent > 0 ? " Lo sconto community del 10% è stato applicato." : ""}`;
+
   return NextResponse.json(
     {
       ok: true,
       booking: newBooking,
-      message: `Prenotazione registrata con successo presso ${venue.name} per ${partySize} ${partySize === 1 ? "ospite" : "ospiti"}. Lo sconto community del 10% è stato applicato.`,
+      message,
     },
     { status: 201 }
   );

@@ -11,6 +11,7 @@ import {
   getUserShares,
   getUserTransactions,
   getUserVouchers,
+  getUserMatchingGrants,
   getVenues,
 } from "@/lib/data";
 import { badgeForPoints } from "@/lib/utils";
@@ -26,7 +27,7 @@ export default async function AccountPage() {
   if (user.role === "csr") redirect("/azienda");
   if (user.role === "provider") redirect("/fornitore");
 
-  const [vouchers, venues, grantEventsList, invites, transactions, shares, certificates, userBookings] = await Promise.all([
+  const [vouchers, venues, grantEventsList, invites, transactions, shares, certificates, userBookings, matchingGrantsList] = await Promise.all([
     getUserVouchers(user.id),
     getVenues(),
     getGrantEvents(),
@@ -35,6 +36,7 @@ export default async function AccountPage() {
     getUserShares(user.id),
     getUserCertificates(user.id),
     getUserBookings(user.id),
+    getUserMatchingGrants(user.id),
   ]);
 
   const badge = badgeForPoints(user.impactPoints);
@@ -75,6 +77,7 @@ export default async function AccountPage() {
             shares={shares}
             certificates={certificates}
             bookings={userBookings}
+            matchingGrantsList={matchingGrantsList}
           />
         </div>
       </main>
