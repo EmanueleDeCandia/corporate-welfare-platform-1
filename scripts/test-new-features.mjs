@@ -53,21 +53,38 @@ async function run() {
 
   const db = new Database('radici.db');
 
-  // 0. Verifica Paolo Luzi & Teatro Lauro Rossi (NON fornitore, MA Promotore Culturale del Matching Grant)
-  console.log('--- 0. Verifica Ruolo Paolo Luzi e Teatro Lauro Rossi ---');
+  // 0. Verifica Separazione Netta: Startup Promotrice vs Teatri & Eventi vs Fornitori
+  console.log('--- 0. Verifica Separazione Ruoli: Startup Promotrice vs Teatri ed Eventi ---');
   const paoloUser = db.prepare("SELECT id, email, role, venue_id FROM users WHERE email = 'paolo@teatrolauro.it'").get();
-  assert(paoloUser && paoloUser.role === 'promoter', `Paolo Luzi ha ruolo '${paoloUser?.role}' (ATTESO: promoter)`);
+  assert(paoloUser && paoloUser.role === 'theater', `Paolo Luzi ha ruolo '${paoloUser?.role}' (ATTESO: theater)`);
+  assert(paoloUser.venue_id === 5, `Paolo Luzi è associato al Teatro Lauro Rossi (venue_id=5)`);
+
+  const chiaraUser = db.prepare("SELECT id, email, role FROM users WHERE email = 'chiara.promotori@radici.it'").get();
+  assert(chiaraUser && chiaraUser.role === 'promoter', `Chiara Valenti ha ruolo '${chiaraUser?.role}' (ATTESO: promoter - Startup RADICI)`);
 
   const teatroVenue = db.prepare("SELECT id, name, type, provider_user_id, sponsor_company_id FROM venues WHERE id = 5").get();
   assert(teatroVenue && teatroVenue.type === 'theater', `Teatro Lauro Rossi è di tipo '${teatroVenue?.type}'`);
-  assert(teatroVenue.sponsor_company_id === null, 'Teatro Lauro Rossi non è sponsorizzato da impresa CSR (finanziato dai Promotori)');
+  assert(teatroVenue.sponsor_company_id === null, 'Teatro Lauro Rossi non è sponsorizzato da impresa CSR (omaggi finanziati dai Promotori)');
 
   const paoloCookie = await login('paolo@teatrolauro.it');
   assert(!!paoloCookie, 'Login Paolo Luzi effettuato');
+  
+  // Paolo accede a /teatro
+  const paoloTeatroRes = await request('/teatro', { headers: { Cookie: `radici_session=${paoloCookie}` } });
+  assert(paoloTeatroRes.status === 200, 'Paolo Luzi accede a /teatro (Cruscotto Teatrale & Botteghino)');
+
+  // Paolo NON accede né a /promotori né a /fornitore (rigorosamente separati)
   const paoloPromRes = await request('/promotori', { headers: { Cookie: `radici_session=${paoloCookie}` } });
-  assert(paoloPromRes.status === 200, 'Paolo Luzi accede a /promotori (Control Room Matching Grant)');
+  assert(paoloPromRes.status === 307 || paoloPromRes.status === 302, 'Paolo Luzi reindirizzato da /promotori (riservato a Startup RADICI)');
+
   const paoloFornRes = await request('/fornitore', { headers: { Cookie: `radici_session=${paoloCookie}` } });
-  assert(paoloFornRes.status === 307 || paoloFornRes.status === 302, 'Paolo Luzi correttamente reindirizzato da /fornitore');
+  assert(paoloFornRes.status === 307 || paoloFornRes.status === 302, 'Paolo Luzi reindirizzato da /fornitore (riservato ai fornitori welfare)');
+
+  // Chiara Valenti (Startup RADICI) accede a /promotori
+  const chiaraCookie = await login('chiara.promotori@radici.it');
+  assert(!!chiaraCookie, 'Login Chiara Valenti effettuato');
+  const chiaraPromRes = await request('/promotori', { headers: { Cookie: `radici_session=${chiaraCookie}` } });
+  assert(chiaraPromRes.status === 200, 'Chiara Valenti accede a /promotori (Startup RADICI)');
 
   // 1. Verifica 6 Produttori Filiera Corta
   console.log('\n--- 1. Verifica Database Produttori Filiera Corta ---');
@@ -203,6 +220,15 @@ async function run() {
     body: JSON.stringify({ bookingId, status: 'presence_confirmed' }),
   });
   assert(statusRes.status === 200, 'Stato ordine aggiornato a presence_confirmed');
+
+  // 9. Botteghino Teatro: Convalida Ingresso Spettatore
+  console.log('\n--- 9. Botteghino Teatro: Convalida Ingresso Spettatore ---');
+  const attendRes = await request('/api/theater/attendance', {
+    method: 'POST',
+    headers: { Cookie: `radici_session=${paoloCookie}` },
+    body: JSON.stringify({ bookingId, attendanceStatus: 'attended' }),
+  });
+  assert(attendRes.status === 200, 'Botteghino teatro: ingresso spettatore convalidato con successo');
 
   console.log(`\n========================================`);
   console.log(`RISULTATO FINALE: ${passed} PASSATI, ${failed} FALLITI`);

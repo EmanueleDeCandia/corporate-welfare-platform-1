@@ -23,11 +23,13 @@ export function HeaderMenu({ dark, user }: Props) {
   const accountHref = 
     user?.role === "promoter" || user?.role === "admin"
       ? "/promotori"
-      : user?.role === "csr"
-        ? "/azienda"
-        : user?.role === "provider"
-          ? "/fornitore"
-          : "/account";
+      : user?.role === "theater"
+        ? "/teatro"
+        : user?.role === "csr"
+          ? "/azienda"
+          : user?.role === "provider"
+            ? "/fornitore"
+            : "/account";
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -42,6 +44,8 @@ export function HeaderMenu({ dark, user }: Props) {
       case "promoter":
       case "admin":
         return <span className="rounded-full bg-gold/25 px-2.5 py-0.5 text-[11px] font-semibold text-gold">Startup Promotrice</span>;
+      case "theater":
+        return <span className="rounded-full bg-terracotta/25 px-2.5 py-0.5 text-[11px] font-semibold text-terracotta">Teatro & Eventi</span>;
       case "csr":
         return <span className="rounded-full bg-gold/25 px-2.5 py-0.5 text-[11px] font-semibold text-gold">CSR Manager</span>;
       case "provider":
@@ -107,7 +111,7 @@ export function HeaderMenu({ dark, user }: Props) {
             {user ? (
               <>
                 <Link href={accountHref} onClick={() => setOpen(false)}>
-                  Area riservata ({user.role === "promoter" ? "Startup Promotrice" : user.role === "csr" ? "CSR Azienda" : user.role === "provider" ? "Fornitore" : user.role === "employee" ? "Welfare" : "Community"})
+                  Area riservata ({user.role === "promoter" ? "Startup Promotrice" : user.role === "theater" ? "Teatro & Eventi" : user.role === "csr" ? "CSR Azienda" : user.role === "provider" ? "Fornitore" : user.role === "employee" ? "Welfare" : "Community"})
                 </Link>
                 <button type="button" className="text-left text-terracotta" onClick={logout}>
                   Esci

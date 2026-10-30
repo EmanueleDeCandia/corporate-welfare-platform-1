@@ -62,6 +62,7 @@ async function testLoginsAndRoles() {
   
   const accounts = [
     { role: 'promoter', email: 'chiara.promotori@radici.it', target: '/promotori' },
+    { role: 'theater', email: 'paolo@teatrolauro.it', target: '/teatro' },
     { role: 'csr', email: 'elena.martini@acme.it', target: '/azienda' },
     { role: 'provider', email: 'elena@lavalle.it', target: '/fornitore' },
     { role: 'employee', email: 'mario.rossi@acme.it', target: '/account' },

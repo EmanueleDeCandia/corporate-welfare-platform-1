@@ -3,28 +3,37 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 
+type DemoCategory =
+  | "Startup Promotrice"
+  | "Teatro & Eventi Culturali"
+  | "Impresa CSR"
+  | "Fornitore Locale"
+  | "Dipendente Welfare"
+  | "Amico Community";
+
 type DemoUser = {
   email: string;
   label: string;
-  category: "Startup Promotrice" | "Impresa CSR" | "Fornitore Locale" | "Dipendente Welfare" | "Amico Community";
+  category: DemoCategory;
   hint: string;
 };
 
 const demos: DemoUser[] = [
-  // 1. Promotori / Platform Admin & Sedi Matching Grant
+  // 1. Startup Promotrice RADICI
   {
     email: "chiara.promotori@radici.it",
     label: "Chiara Valenti",
     category: "Startup Promotrice",
     hint: "Startup RADICI · Regia totale piattaforma & Fondo Matching Grant",
   },
+  // 2. Teatri & Eventi Culturali
   {
     email: "paolo@teatrolauro.it",
     label: "Paolo Luzi",
-    category: "Startup Promotrice",
-    hint: "Referente Teatrale · Teatro Lauro Rossi (Matching Grant Promotori)",
+    category: "Teatro & Eventi Culturali",
+    hint: "Teatro Lauro Rossi (Macerata) · Capienza sala, spettacoli & botteghino",
   },
-  // 2. Aziende CSR
+  // 3. Imprese CSR
   {
     email: "elena.martini@acme.it",
     label: "Elena Martini",
@@ -37,7 +46,7 @@ const demos: DemoUser[] = [
     category: "Impresa CSR",
     hint: "CSR Manager · Verde Energia Italia (Verifica plafond)",
   },
-  // 3. Fornitori (Ricettività, Ristorazione, Filiera Corta)
+  // 4. Fornitori (Ricettività, Ristorazione, Filiera Corta)
   {
     email: "elena@lavalle.it",
     label: "Elena Conti",
@@ -56,7 +65,7 @@ const demos: DemoUser[] = [
     category: "Fornitore Locale",
     hint: "Produttore Filiera Corta · Frantoio del Conero (Cesti Olio Bio)",
   },
-  // 4. Dipendenti Welfare
+  // 5. Dipendenti Welfare
   {
     email: "mario.rossi@acme.it",
     label: "Mario Rossi",
@@ -69,7 +78,7 @@ const demos: DemoUser[] = [
     category: "Dipendente Welfare",
     hint: "Dipendente Banca Adriatica · 2 voucher disponibili da scegliere",
   },
-  // 5. Amici Community
+  // 6. Amici Community
   {
     email: "luigi.bianchi@email.it",
     label: "Luigi Bianchi",
@@ -171,13 +180,15 @@ export function LoginForm() {
                   className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
                     demo.category === "Startup Promotrice"
                       ? "bg-gold/25 text-terracotta"
-                      : demo.category === "Impresa CSR"
-                        ? "bg-forest/15 text-forest"
-                        : demo.category === "Fornitore Locale"
-                          ? "bg-sage/30 text-forest"
-                          : demo.category === "Dipendente Welfare"
-                            ? "bg-cream text-forest border border-forest/10"
-                            : "bg-mist text-olive"
+                      : demo.category === "Teatro & Eventi Culturali"
+                        ? "bg-wine/15 text-wine font-semibold"
+                        : demo.category === "Impresa CSR"
+                          ? "bg-forest/15 text-forest"
+                          : demo.category === "Fornitore Locale"
+                            ? "bg-sage/30 text-forest"
+                            : demo.category === "Dipendente Welfare"
+                              ? "bg-cream text-forest border border-forest/10"
+                              : "bg-mist text-olive"
                   }`}
                 >
                   {demo.category}

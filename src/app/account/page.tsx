@@ -24,6 +24,7 @@ export default async function AccountPage() {
   
   // Smistamento rigoroso dei ruoli: ogni ruolo ha la sua area dedicata
   if (user.role === "promoter" || user.role === "admin") redirect("/promotori");
+  if (user.role === "theater") redirect("/teatro");
   if (user.role === "csr") redirect("/azienda");
   if (user.role === "provider") redirect("/fornitore");
 

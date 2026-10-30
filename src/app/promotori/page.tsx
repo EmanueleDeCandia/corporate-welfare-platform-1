@@ -13,8 +13,11 @@ export default async function PromotersPage() {
     redirect("/login?next=/promotori");
   }
 
-  // Riservato al ruolo promoter
-  if (user.role !== "promoter") {
+  // Riservato esclusivamente alla Startup Promotrice RADICI
+  if (user.role === "theater") {
+    redirect("/teatro");
+  }
+  if (user.role !== "promoter" && user.role !== "admin") {
     redirect("/account");
   }
 

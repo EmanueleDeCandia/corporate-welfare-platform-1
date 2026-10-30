@@ -333,9 +333,9 @@ export async function seedDatabase() {
         passwordHash: DEMO_PASSWORD,
         firstName: "Paolo",
         lastName: "Luzi",
-        role: "promoter",
+        role: "theater",
         impactPoints: 0,
-        badgeLevel: "Promotore Culturale · Teatro Lauro Rossi",
+        badgeLevel: "Direzione Artistica · Teatro Lauro Rossi",
         referralCode: "paolo-luzi",
       },
           {
@@ -980,6 +980,7 @@ export async function seedDatabase() {
   await db.update(users).set({ venueId: insertedVenues[1].id }).where(eq(users.id, marco.id));
   await db.update(users).set({ venueId: insertedVenues[3].id }).where(eq(users.id, chiara.id));
   await db.update(users).set({ venueId: insertedVenues[5].id }).where(eq(users.id, matteo.id));
+  await db.update(users).set({ venueId: teatroLauro.id }).where(eq(users.id, paolo.id));
   await db.update(venues).set({ providerUserId: elena.id }).where(eq(venues.id, laValle.id));
   await db.update(venues).set({ providerUserId: marco.id }).where(eq(venues.id, insertedVenues[1].id));
   await db.update(venues).set({ providerUserId: chiara.id }).where(eq(venues.id, insertedVenues[3].id));
