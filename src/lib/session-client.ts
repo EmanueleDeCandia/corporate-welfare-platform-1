@@ -1,24 +1,33 @@
 export const CLIENT_SESSION_KEY = "radici_session";
 export const SESSION_HEADER = "x-radici-session";
 
-export function readClientSessionToken() {
-  if (typeof window === "undefined") return "";
-  const fromUrl = new URLSearchParams(window.location.search).get("sid");
-  if (fromUrl) return fromUrl;
+function readStorage(storage: Storage) {
   try {
-    return window.sessionStorage.getItem(CLIENT_SESSION_KEY) ?? "";
+    return storage.getItem(CLIENT_SESSION_KEY) ?? "";
   } catch {
     return "";
   }
 }
 
-export function persistClientSession(token: string) {
-  if (typeof window === "undefined" || !token) return;
+function writeStorage(storage: Storage, token: string) {
   try {
-    window.sessionStorage.setItem(CLIENT_SESSION_KEY, token);
+    storage.setItem(CLIENT_SESSION_KEY, token);
   } catch {
     /* ignore */
   }
+}
+
+export function readClientSessionToken() {
+  if (typeof window === "undefined") return "";
+  const fromUrl = new URLSearchParams(window.location.search).get("sid");
+  if (fromUrl) return fromUrl;
+  return readStorage(window.sessionStorage) || readStorage(window.localStorage);
+}
+
+export function persistClientSession(token: string) {
+  if (typeof window === "undefined" || !token) return;
+  writeStorage(window.sessionStorage, token);
+  writeStorage(window.localStorage, token);
   const secure = window.location.protocol === "https:";
   const parts = [`${CLIENT_SESSION_KEY}=${token}`, "Path=/", `Max-Age=${14 * 24 * 60 * 60}`];
   if (secure) parts.push("Secure", "SameSite=None", "Partitioned");
@@ -30,11 +39,12 @@ export function clearClientSession() {
   if (typeof window === "undefined") return;
   try {
     window.sessionStorage.removeItem(CLIENT_SESSION_KEY);
+    window.localStorage.removeItem(CLIENT_SESSION_KEY);
   } catch {
     /* ignore */
   }
   document.cookie = `${CLIENT_SESSION_KEY}=; Path=/; Max-Age=0; SameSite=Lax`;
-  document.cookie = `${CLIENT_SESSION_KEY}=; Path=/; Max-Age=0; Secure; SameSite=None; Partitioned`;
+  document.cookie = `${CLIENT_SESSION_KEY}=; Path=/; Max-Age=0; Secure; SameSite=None`;
 }
 
 export function sessionHeaders(init?: HeadersInit) {

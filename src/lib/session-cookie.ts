@@ -52,3 +52,17 @@ export function cookieOptionsFromHeaders(h: Headers) {
     partitioned: secure,
   };
 }
+
+/** Keep the session token in the URL: Arena iframes often drop cookies on client navigations. */
+export function pathWithSession(path: string, token?: string | null) {
+  if (!token) return path;
+  const hashIndex = path.indexOf("#");
+  const hash = hashIndex >= 0 ? path.slice(hashIndex) : "";
+  const base = hashIndex >= 0 ? path.slice(0, hashIndex) : path;
+  const queryIndex = base.indexOf("?");
+  const pathname = queryIndex >= 0 ? base.slice(0, queryIndex) : base;
+  const query = queryIndex >= 0 ? base.slice(queryIndex + 1) : "";
+  const params = new URLSearchParams(query);
+  params.set("sid", token);
+  return `${pathname}?${params.toString()}${hash}`;
+}

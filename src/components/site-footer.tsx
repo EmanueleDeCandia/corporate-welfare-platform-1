@@ -1,7 +1,10 @@
 import { GlobalResetButton } from "@/components/global-reset-button";
 import Link from "next/link";
+import { getSessionToken, pathWithSession } from "@/lib/auth";
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const token = await getSessionToken();
+  const href = (path: string) => pathWithSession(path, token);
   return (
     <footer className="mt-20 border-t border-forest/10 bg-[#12261e] text-[#fbf7f0]">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 md:grid-cols-4 md:px-6">
@@ -16,16 +19,16 @@ export function SiteFooter() {
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-[#c29b38] font-semibold">Portale</p>
           <div className="mt-3 flex flex-col gap-2 text-sm text-[#fbf7f0]/85">
-            <Link href="/esplora" className="hover:text-[#c29b38] transition">Mappa e strutture</Link>
-            <Link href="/destinazioni" className="hover:text-[#c29b38] transition">Macro-aree</Link>
-            <Link href="/imprese" className="hover:text-[#c29b38] transition">Vetrina imprese ESG</Link>
-            <Link href="/come-funziona" className="hover:text-[#c29b38] transition">Modello pay-per-use</Link>
+            <Link href={href("/esplora")} className="hover:text-[#c29b38] transition">Mappa e strutture</Link>
+            <Link href={href("/destinazioni")} className="hover:text-[#c29b38] transition">Macro-aree</Link>
+            <Link href={href("/imprese")} className="hover:text-[#c29b38] transition">Vetrina imprese ESG</Link>
+            <Link href={href("/come-funziona")} className="hover:text-[#c29b38] transition">Modello pay-per-use</Link>
           </div>
         </div>
         <div>
           <p className="text-xs uppercase tracking-[0.18em] text-[#c29b38] font-semibold">Circuiti</p>
           <div className="mt-3 flex flex-col gap-2 text-sm text-[#fbf7f0]/85">
-            <Link href="/account" className="hover:text-[#c29b38] transition">Portafoglio welfare</Link>
+            <Link href={href("/account")} className="hover:text-[#c29b38] transition">Portafoglio welfare</Link>
             <Link href="/login" className="hover:text-[#c29b38] transition">Accesso dipendente</Link>
             <Link href="/login" className="hover:text-[#c29b38] transition">Pannello fornitore</Link>
             <p className="text-[#fbf7f0]/60 text-xs mt-1">P.IVA imprese in fatturazione diretta</p>

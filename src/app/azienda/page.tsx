@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/logout-button";
 import { PublicShell } from "@/components/public-shell";
 import { CompanyDashboardView } from "@/components/company-dashboard-view";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getSessionToken, pathWithSession } from "@/lib/auth";
 import { getCompanyDashboardData } from "@/lib/company";
 
 export const dynamic = "force-dynamic";
@@ -13,17 +13,18 @@ export default async function CompanyDashboardPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const user = await getCurrentUser();
+  const token = await getSessionToken();
   if (!user) {
     redirect("/login?next=/azienda");
   }
 
   if (user.role !== "csr" || !user.companyId) {
-    redirect("/account");
+    redirect(pathWithSession("/account", token));
   }
 
   const data = await getCompanyDashboardData(user.companyId);
   if (!data) {
-    redirect("/account");
+    redirect(pathWithSession("/account", token));
   }
 
   const { tab } = await searchParams;

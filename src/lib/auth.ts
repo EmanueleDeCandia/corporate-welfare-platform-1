@@ -15,11 +15,25 @@ export {
   SESSION_HEADER,
   cookieOptionsFromHeaders,
   isHttpsRequest,
+  pathWithSession,
   publicOriginFromHeaders,
 } from "@/lib/session-cookie";
 
 export async function sessionCookieOptions() {
   return cookieOptionsFromHeaders(await headers());
+}
+
+export function defaultPathForRole(role: string) {
+  if (role === "provider") return "/fornitore";
+  if (role === "csr") return "/azienda";
+  if (role === "promoter" || role === "admin") return "/promotori";
+  return "/account";
+}
+
+export async function getSessionToken() {
+  const jar = await cookies();
+  const h = await headers();
+  return jar.get(SESSION_COOKIE)?.value || h.get(SESSION_HEADER) || "";
 }
 
 export type SessionUser = {

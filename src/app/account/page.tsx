@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { AccountHub } from "@/components/account-hub";
 import { LogoutButton } from "@/components/logout-button";
 import { PublicShell } from "@/components/public-shell";
-import { getCurrentUser } from "@/lib/auth";
+import { defaultPathForRole, getCurrentUser, getSessionToken, pathWithSession } from "@/lib/auth";
 import {
   getEmployeeWallet,
   getUserCertificates,
@@ -18,10 +18,11 @@ export const dynamic = "force-dynamic";
 
 export default async function AccountPage() {
   const user = await getCurrentUser();
+  const token = await getSessionToken();
   if (!user) redirect("/login?next=/account");
-  if (user.role === "provider") redirect("/fornitore");
-  if (user.role === "csr") redirect("/azienda");
-  if (user.role === "promoter") redirect("/promotori");
+  if (user.role === "provider" || user.role === "csr" || user.role === "promoter" || user.role === "admin") {
+    redirect(pathWithSession(defaultPathForRole(user.role), token));
+  }
 
   const [wallet, venues, invites, transactions, shares, certificates] = await Promise.all([
     getEmployeeWallet(user.id),

@@ -23,9 +23,9 @@ export default function LoginPage() {
             </Suspense>
           </div>
           <p className="mt-6 text-sm text-olive">
-            Sei un amico invitato?{" "}
+            Non hai un account?{" "}
             <Link href="/registrati" className="text-terracotta">
-              Crea un account consumer
+              Registrati come dipendente, amico, CSR, fornitore o promotore
             </Link>
           </p>
         </section>

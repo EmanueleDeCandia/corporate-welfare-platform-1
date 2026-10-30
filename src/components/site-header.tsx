@@ -1,9 +1,11 @@
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getSessionToken, pathWithSession } from "@/lib/auth";
 import { HeaderMenu } from "@/components/header-menu";
 
 export async function SiteHeader({ dark = false }: { dark?: boolean }) {
   const user = await getCurrentUser();
+  const token = user ? await getSessionToken() : "";
+  const href = (path: string) => pathWithSession(path, token);
 
   return (
     <header
@@ -14,7 +16,7 @@ export async function SiteHeader({ dark = false }: { dark?: boolean }) {
       }`}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-6">
-        <Link href="/" className="flex items-center gap-3">
+        <Link href={href("/")} className="flex items-center gap-3">
           <img src="/images/logo.png" alt="RADICI" className="h-11 w-11 rounded-full object-cover" />
           <span className="leading-none">
             <span className="font-serif text-xl tracking-[0.14em]">RADICI</span>
@@ -24,24 +26,25 @@ export async function SiteHeader({ dark = false }: { dark?: boolean }) {
           </span>
         </Link>
         <nav className="hidden items-center gap-6 text-sm md:flex">
-          <Link href="/esplora" className="hover:text-terracotta">
+          <Link href={href("/esplora")} className="hover:text-terracotta">
             Esplora
           </Link>
-          <Link href="/destinazioni" className="hover:text-terracotta">
+          <Link href={href("/destinazioni")} className="hover:text-terracotta">
             Destinazioni
           </Link>
-          <Link href="/strutture" className="hover:text-terracotta">
+          <Link href={href("/strutture")} className="hover:text-terracotta">
             Strutture
           </Link>
-          <Link href="/imprese" className="hover:text-terracotta">
+          <Link href={href("/imprese")} className="hover:text-terracotta">
             Imprese ESG
           </Link>
-          <Link href="/come-funziona" className="hover:text-terracotta">
+          <Link href={href("/come-funziona")} className="hover:text-terracotta">
             Come funziona
           </Link>
         </nav>
         <HeaderMenu
           dark={dark}
+          sessionToken={token}
           user={
             user
               ? {

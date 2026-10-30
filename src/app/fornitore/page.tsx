@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { LogoutButton } from "@/components/logout-button";
 import { ProviderPanel } from "@/components/provider-panel";
 import { PublicShell } from "@/components/public-shell";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getSessionToken, pathWithSession } from "@/lib/auth";
 import {
   getProviderGrants,
   getProviderNotifications,
@@ -14,8 +14,9 @@ export const dynamic = "force-dynamic";
 
 export default async function ProviderPage() {
   const user = await getCurrentUser();
+  const token = await getSessionToken();
   if (!user) redirect("/login?next=/fornitore");
-  if (user.role !== "provider" || !user.venue) redirect("/account");
+  if (user.role !== "provider" || !user.venue) redirect(pathWithSession("/account", token));
 
   const [items, rows, selections, grants] = await Promise.all([
     getProviderNotifications(user.venue.id),

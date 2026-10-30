@@ -2,21 +2,21 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { SESSION_COOKIE, createSession, safeNextPath, sessionCookieOptions } from "@/lib/auth";
+import {
+  SESSION_COOKIE,
+  createSession,
+  defaultPathForRole,
+  pathWithSession,
+  safeNextPath,
+  sessionCookieOptions,
+} from "@/lib/auth";
 import { ensureSeeded } from "@/db/seed";
 import { verifyPassword } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-function defaultRedirect(role: string) {
-  if (role === "provider") return "/fornitore";
-  if (role === "csr") return "/azienda";
-  if (role === "promoter" || role === "admin") return "/promotori";
-  return "/account";
-}
-
 function redirectForRole(role: string, next?: string | null) {
-  const fallback = defaultRedirect(role);
+  const fallback = defaultPathForRole(role);
   const safe = safeNextPath(next);
   if (!safe) return fallback;
   if (role === "csr" && safe.startsWith("/azienda")) return safe;
@@ -91,8 +91,7 @@ export async function POST(request: Request) {
 
   const { token, expiresAt } = await createSession(user.id);
   const destination = redirectForRole(user.role, next);
-  const separator = destination.includes("?") ? "&" : "?";
-  const redirectTo = `${destination}${separator}sid=${encodeURIComponent(token)}`;
+  const redirectTo = pathWithSession(destination, token);
   const cookie = await sessionCookieOptions();
 
   if (isJsonRequest(request)) {

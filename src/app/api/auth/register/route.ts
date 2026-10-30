@@ -1,12 +1,21 @@
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
-import { db } from "@/db";
-import { invites, users } from "@/db/schema";
-import { SESSION_COOKIE, createSession, sessionCookieOptions } from "@/lib/auth";
+import {
+  SESSION_COOKIE,
+  createSession,
+  defaultPathForRole,
+  pathWithSession,
+  sessionCookieOptions,
+} from "@/lib/auth";
 import { ensureSeeded } from "@/db/seed";
-import { badgeForPoints, hashPassword, randomCode } from "@/lib/utils";
+import { isRegisterableRole, registerAccount } from "@/lib/register-account";
+import { WelfareError } from "@/lib/welfare";
 
 export const dynamic = "force-dynamic";
+
+function optionalId(value: unknown) {
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) && n > 0 ? n : undefined;
+}
 
 export async function POST(request: Request) {
   await ensureSeeded();
@@ -15,13 +24,24 @@ export async function POST(request: Request) {
     lastName?: string;
     email?: string;
     password?: string;
+    role?: string;
     inviteCode?: string;
+    companyId?: number | string;
+    companyName?: string;
+    vatNumber?: string;
+    city?: string;
+    venueId?: number | string;
+    venueName?: string;
+    venueType?: string;
+    destinationId?: number | string;
   };
 
   const firstName = body.firstName?.trim();
   const lastName = body.lastName?.trim();
   const email = body.email?.trim().toLowerCase();
   const password = body.password ?? "";
+  const inviteCode = body.inviteCode?.trim() || undefined;
+  const role = inviteCode ? "friend" : body.role?.trim() || "friend";
 
   if (!firstName || !lastName || !email || password.length < 6) {
     return NextResponse.json(
@@ -30,47 +50,38 @@ export async function POST(request: Request) {
     );
   }
 
-  const [existing] = await db.select().from(users).where(eq(users.email, email)).limit(1);
-  if (existing) {
-    return NextResponse.json({ error: "Esiste già un account con questa email." }, { status: 409 });
+  if (!isRegisterableRole(role)) {
+    return NextResponse.json({ error: "Ruolo non valido." }, { status: 400 });
   }
 
-  let invite = body.inviteCode
-    ? (await db.select().from(invites).where(eq(invites.code, body.inviteCode)).limit(1))[0]
-    : undefined;
-  if (!invite) {
-    invite = (await db.select().from(invites).where(eq(invites.email, email)).limit(1))[0];
-  }
-  if (invite?.expiresAt && invite.expiresAt < new Date()) {
-    invite = undefined;
-  }
-
-  const [user] = await db
-    .insert(users)
-    .values({
-      email,
-      passwordHash: hashPassword(password),
+  try {
+    const created = registerAccount({
       firstName,
       lastName,
-      role: "friend",
-      impactPoints: 0,
-      badgeLevel: badgeForPoints(0).label,
-      referralCode: randomCode("amico"),
-      invitedByUserId: invite?.inviterId ?? null,
-    })
-    .returning();
+      email,
+      password,
+      role,
+      inviteCode,
+      companyId: optionalId(body.companyId),
+      companyName: body.companyName,
+      vatNumber: body.vatNumber,
+      city: body.city,
+      venueId: optionalId(body.venueId),
+      venueName: body.venueName,
+      venueType: body.venueType,
+      destinationId: optionalId(body.destinationId),
+    });
 
-  if (invite && invite.status === "pending") {
-    await db
-      .update(invites)
-      .set({ status: "registered", friendUserId: user.id, acceptedAt: new Date() })
-      .where(and(eq(invites.id, invite.id)));
+    const { token, expiresAt } = await createSession(created.userId);
+    const redirectTo = pathWithSession(defaultPathForRole(created.role), token);
+    const cookie = await sessionCookieOptions();
+    const response = NextResponse.json({ ok: true, redirectTo, role: created.role });
+    response.cookies.set(SESSION_COOKIE, token, { ...cookie, expires: expiresAt });
+    return response;
+  } catch (error) {
+    if (error instanceof WelfareError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+    throw error;
   }
-
-  const { token, expiresAt } = await createSession(user.id);
-  const redirectTo = `/account?sid=${encodeURIComponent(token)}`;
-  const cookie = await sessionCookieOptions();
-  const response = NextResponse.json({ ok: true, redirectTo, role: user.role });
-  response.cookies.set(SESSION_COOKIE, token, { ...cookie, expires: expiresAt });
-  return response;
 }

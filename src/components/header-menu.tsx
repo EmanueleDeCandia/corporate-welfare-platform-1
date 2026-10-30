@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { apiFetch, clearClientSession } from "@/lib/session-client";
+import { pathWithSession } from "@/lib/session-cookie";
 
 type Props = {
   dark?: boolean;
+  sessionToken?: string;
   user: {
     firstName: string;
     lastName: string;
@@ -16,17 +18,18 @@ type Props = {
   } | null;
 };
 
-export function HeaderMenu({ dark, user }: Props) {
+export function HeaderMenu({ dark, sessionToken = "", user }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const href = (path: string) => pathWithSession(path, sessionToken);
   const accountHref =
     user?.role === "provider"
-      ? "/fornitore"
+      ? href("/fornitore")
       : user?.role === "csr"
-        ? "/azienda"
+        ? href("/azienda")
         : user?.role === "promoter" || user?.role === "admin"
-          ? "/promotori"
-          : "/account";
+          ? href("/promotori")
+          : href("/account");
 
   async function logout() {
     try {
@@ -51,7 +54,9 @@ export function HeaderMenu({ dark, user }: Props) {
           <span className="font-medium">
             {user.firstName} {user.lastName}
           </span>
-          {user.role === "csr" ? (<span className="rounded-full bg-gold/20 px-2 py-0.5 text-[11px] text-gold">CSR Manager</span>) : user.role !== "provider" ? (
+          {user.role === "csr" ? (
+            <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[11px] text-gold">CSR Manager</span>
+          ) : user.role !== "provider" ? (
             <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[11px] text-gold">
               {user.impactPoints} pt
             </span>
@@ -80,19 +85,19 @@ export function HeaderMenu({ dark, user }: Props) {
       {open ? (
         <div className="absolute left-0 right-0 top-full border-b border-forest/10 bg-paper p-4 text-forest shadow-xl md:hidden">
           <div className="flex flex-col gap-3 text-sm">
-            <Link href="/esplora" onClick={() => setOpen(false)}>
+            <Link href={href("/esplora")} onClick={() => setOpen(false)}>
               Esplora
             </Link>
-            <Link href="/destinazioni" onClick={() => setOpen(false)}>
+            <Link href={href("/destinazioni")} onClick={() => setOpen(false)}>
               Destinazioni
             </Link>
-            <Link href="/strutture" onClick={() => setOpen(false)}>
+            <Link href={href("/strutture")} onClick={() => setOpen(false)}>
               Strutture
             </Link>
-            <Link href="/imprese" onClick={() => setOpen(false)}>
+            <Link href={href("/imprese")} onClick={() => setOpen(false)}>
               Imprese ESG
             </Link>
-            <Link href="/come-funziona" onClick={() => setOpen(false)}>
+            <Link href={href("/come-funziona")} onClick={() => setOpen(false)}>
               Come funziona
             </Link>
             {user ? (
