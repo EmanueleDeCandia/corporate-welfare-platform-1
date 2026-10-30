@@ -330,10 +330,12 @@ export function CompanyDashboardView({ data }: Props) {
             <tbody className="divide-y divide-mist">
               {transactions.map(({ transaction, user, venue }) => (
                 <tr key={transaction.id}>
-                  <td className="py-3 text-xs text-olive">{formatDateTime(transaction.createdAt)}</td>
+                  <td className="py-3 text-xs text-olive" suppressHydrationWarning>
+                    {formatDateTime(transaction.createdAt)}
+                  </td>
                   <td>{user.firstName} {user.lastName}</td>
                   <td>{venue.name}</td>
-                  <td>{formatEuro(transaction.amountCents)}</td>
+                  <td suppressHydrationWarning>{formatEuro(transaction.amountCents)}</td>
                   <td className="text-xs">
                     {transaction.invoiceNumber ? `n. ${transaction.invoiceNumber} del ${transaction.invoiceDate}` : "In attesa estremi"}
                   </td>
@@ -355,8 +357,12 @@ function Metric({ label, value, hint, icon }: { label: string; value: string; hi
         <span className="text-xs font-semibold uppercase tracking-wider">{label}</span>
         {icon}
       </div>
-      <p className="mt-3 font-serif text-3xl text-forest">{value}</p>
-      <p className="mt-1 text-xs text-ink/70">{hint}</p>
+      <p className="mt-3 font-serif text-3xl text-forest" suppressHydrationWarning>
+        {value}
+      </p>
+      <p className="mt-1 text-xs text-ink/70" suppressHydrationWarning>
+        {hint}
+      </p>
     </div>
   );
 }
@@ -392,7 +398,9 @@ function ChannelCard({
         <div className="grid h-10 w-10 place-items-center rounded-xl bg-sage/20">{icon}</div>
         <div>
           <h3 className="font-serif text-xl">{title}</h3>
-          <p className="text-xs text-olive">{selected} usati su {base} base ({rate}%) · {unused} ancora disponibili</p>
+          <p className="text-xs text-olive" suppressHydrationWarning>
+            {selected} usati su {base} base ({rate}%) · {unused} ancora disponibili
+          </p>
         </div>
       </div>
       <p className="mt-4 text-sm text-forest">

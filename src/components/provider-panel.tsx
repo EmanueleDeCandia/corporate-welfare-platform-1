@@ -389,7 +389,9 @@ function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl bg-white/5 p-3">
       <p className="text-[11px] uppercase tracking-wider text-cream/70">{label}</p>
-      <p className="mt-1 font-serif text-xl text-cream">{value}</p>
+      <p className="mt-1 font-serif text-xl text-cream" suppressHydrationWarning>
+        {value}
+      </p>
     </div>
   );
 }

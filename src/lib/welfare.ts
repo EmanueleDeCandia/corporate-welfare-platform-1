@@ -52,19 +52,28 @@ export type PlanBudget = PlanBudgetRow & {
   dinnerSelectionRate: number;
 };
 
+function parseIsoDateUtc(isoDate: string) {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
 export function extraWindowOpen(validUntil: string, windowDays: number, now = new Date()) {
-  const until = new Date(`${validUntil}T23:59:59`);
-  if (Number.isNaN(until.getTime())) return false;
-  const start = new Date(`${validUntil}T00:00:00`);
-  start.setDate(start.getDate() - Math.max(0, windowDays));
-  return now >= start && now <= until;
+  const until = parseIsoDateUtc(validUntil);
+  if (!until) return false;
+  until.setUTCHours(23, 59, 59, 999);
+  const start = parseIsoDateUtc(validUntil);
+  if (!start) return false;
+  start.setUTCDate(start.getUTCDate() - Math.max(0, windowDays));
+  start.setUTCHours(0, 0, 0, 0);
+  return now.getTime() >= start.getTime() && now.getTime() <= until.getTime();
 }
 
 export function extraOpensOn(validUntil: string, windowDays: number) {
-  const until = new Date(`${validUntil}T00:00:00`);
-  if (Number.isNaN(until.getTime())) return validUntil;
-  until.setDate(until.getDate() - Math.max(0, windowDays));
-  return until.toISOString().slice(0, 10);
+  const start = parseIsoDateUtc(validUntil);
+  if (!start) return validUntil;
+  start.setUTCDate(start.getUTCDate() - Math.max(0, windowDays));
+  return start.toISOString().slice(0, 10);
 }
 
 function leftoverExtraRule(input: {

@@ -403,7 +403,9 @@ function BenefitDrawer({
             <p>
               {item.origin === "extra" ? "Extra da residui" : "Base"} · {voucherStatusLabel(item.status)}
             </p>
-            <p className="mt-1 font-medium text-forest">{formatEuro(item.amountCents)}</p>
+            <p className="mt-1 font-medium text-forest" suppressHydrationWarning>
+              {formatEuro(item.amountCents)}
+            </p>
           </div>
         ))}
       </div>

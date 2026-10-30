@@ -375,7 +375,9 @@ function Stat({ label, value, hint }: { label: string; value: string; hint: stri
   return (
     <div className="rounded-2xl bg-white/5 p-4">
       <p className="text-xs uppercase tracking-wider text-cream/70">{label}</p>
-      <p className="mt-2 font-serif text-2xl text-cream md:text-3xl">{value}</p>
+      <p className="mt-2 font-serif text-2xl text-cream md:text-3xl" suppressHydrationWarning>
+        {value}
+      </p>
       <span className="mt-1 block text-[11px] text-cream/60">{hint}</span>
     </div>
   );

@@ -58,34 +58,36 @@ function asDate(value: Date | string | number) {
 }
 
 function romeParts(value: Date | string | number) {
-  const parts = new Intl.DateTimeFormat("en-US", {
+  const parts = new Intl.DateTimeFormat("en-GB", {
     timeZone: DISPLAY_TIME_ZONE,
     day: "numeric",
     month: "numeric",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-    hourCycle: "h23",
+    hour12: false,
   }).formatToParts(asDate(value));
   const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
+  const hourRaw = get("hour");
+  const hour = hourRaw === "24" ? "00" : hourRaw.padStart(2, "0");
   return {
     day: get("day"),
     month: Number(get("month")),
     year: get("year"),
-    hour: get("hour").padStart(2, "0"),
+    hour,
     minute: get("minute").padStart(2, "0"),
   };
 }
 
 export function formatEuro(cents: number) {
   const amount = Number(cents);
-  if (!Number.isFinite(amount)) return "0,00\u00A0\u20AC";
+  if (!Number.isFinite(amount)) return "0,00 EUR";
   const negative = amount < 0;
   const abs = Math.abs(Math.round(amount));
   const euros = Math.floor(abs / 100);
   const rest = String(abs % 100).padStart(2, "0");
   const grouped = String(euros).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return `${negative ? "-" : ""}${grouped},${rest}\u00A0\u20AC`;
+  return `${negative ? "-" : ""}${grouped},${rest} EUR`;
 }
 
 export function formatDate(date: Date | string | number) {
