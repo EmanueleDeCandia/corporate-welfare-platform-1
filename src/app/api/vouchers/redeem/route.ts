@@ -34,6 +34,7 @@ export async function POST(request: Request) {
     offeringId?: number;
     serviceDate?: string;
     grantEventId?: number;
+    grantSeatsCount?: number;
   };
 
   if (!body.voucherId || !body.venueId) {
@@ -126,22 +127,26 @@ export async function POST(request: Request) {
     })
     .onConflictDoNothing();
 
-  // Se pernottamento: crea Matching Grant riservato (1 posto per il dipendente beneficiario) e predispone la conferma
+  // Scelta posti Matching Grant: 1 persona (25€) o 2 persone (50€ = 25€ + 25€)
+  const grantSeatsCount = body.grantSeatsCount === 1 ? 1 : 2;
+  const grantAmountCents = grantSeatsCount * 2500;
+
+  // Se pernottamento: crea Matching Grant riservato (1 o 2 posti secondo la scelta dell'utente) e predispone la conferma
   if (isOvernightVoucher && selectedEvent) {
     const [grant] = await db
       .insert(matchingGrants)
       .values({
         voucherId: voucher.id,
         eventId: selectedEvent.id,
-        amountCents: 2500,
-        seatsRequested: 1,
+        amountCents: grantAmountCents,
+        seatsRequested: grantSeatsCount,
         status: "assigned",
         assignedAt: now,
       })
       .returning();
 
     if (grant) {
-      // Posto 1: Dipendente Beneficiario
+      // Posto 1: Dipendente Beneficiario (25€)
       await db.insert(grantSeats).values({
         matchingGrantId: grant.id,
         holderRole: "employee",
@@ -149,6 +154,17 @@ export async function POST(request: Request) {
         holderEmail: me.email,
         valueCents: 2500,
       });
+
+      // Se ha scelto 2 persone: aggiungi Posto 2 per l'Accompagnatore (25€)
+      if (grantSeatsCount === 2) {
+        await db.insert(grantSeats).values({
+          matchingGrantId: grant.id,
+          holderRole: "companion",
+          holderName: "Accompagnatore",
+          holderEmail: null,
+          valueCents: 2500,
+        });
+      }
 
       // Calcola finestra conferma (T-7 invio, T-3 scadenza)
       const eventStart = selectedEvent.startsAt || new Date(Date.now() + 30 * 24 * 3600 * 1000);
@@ -237,7 +253,7 @@ export async function POST(request: Request) {
       notes: `Pernottamento Welfare (1 Persona / Quota Dipendente · 100% finanziato da ${company?.name ?? "Impresa CSR"})`,
     });
 
-    // Prenotazione Spettacolo Teatrale Matching Grant (Omaggio Promotori) - 1 Posto per il Dipendente
+    // Prenotazione Spettacolo Teatrale Matching Grant (Omaggio Promotori) - Posti Scelti (1 o 2)
     if (selectedEvent) {
       await db.insert(bookings).values({
         userId: me.id,
@@ -249,16 +265,16 @@ export async function POST(request: Request) {
           ? selectedEvent.startsAt.toISOString().split("T")[0]
           : serviceDate,
         timeSlot: "Inizio Spettacolo",
-        partySize: 1, // 1 Posto: omaggio nominale per il dipendente beneficiario
+        partySize: grantSeatsCount, // 1 o 2 Posti scelti dal dipendente
         discountPercent: 0,
-        totalAmountCents: 2500,
-        discountCents: 2500, // 100% omaggio offerto dai Promotori
+        totalAmountCents: grantAmountCents,
+        discountCents: grantAmountCents, // 100% omaggio offerto dai Promotori
         finalPriceCents: 0,
         status: "confirmed",
         confirmationToken: randomCode("bkg-grant"),
         guestName: `${me.firstName} ${me.lastName}`,
         guestEmail: me.email,
-        notes: `Omaggio Matching Grant Promotori (1 posto platea · ${selectedEvent.title})`,
+        notes: `Omaggio Matching Grant Promotori (${grantSeatsCount} ${grantSeatsCount === 1 ? "posto platea" : "posti platea"} · ${selectedEvent.title})`,
       });
     }
   } else {

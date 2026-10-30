@@ -136,13 +136,13 @@ function WalletTab(props: Props & { grantEvents?: GrantEventLite[] }) {
     theater: vouchers.filter((item) => item.type === "theater"),
   };
 
-  async function redeem(voucherId: number, venueId: number, grantEventId?: number) {
+  async function redeem(voucherId: number, venueId: number, grantEventId?: number, grantSeatsCount: number = 2) {
     setPendingId(`${voucherId}-${venueId}`);
     setMessage("");
     const response = await fetch("/api/vouchers/redeem", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ voucherId, venueId, grantEventId }),
+      body: JSON.stringify({ voucherId, venueId, grantEventId, grantSeatsCount }),
     });
     const data = (await response.json()) as { error?: string; message?: string };
     setPendingId(null);
@@ -295,7 +295,7 @@ function HotelDrawer({
     confirmation: typeof grantConfirmations.$inferSelect | null;
   }>;
   pendingId: string | null;
-  onRedeem: (voucherId: number, venueId: number, grantEventId?: number) => void;
+  onRedeem: (voucherId: number, venueId: number, grantEventId?: number, grantSeatsCount?: number) => void;
 }) {
   const router = useRouter();
   const available = items.find((item) => item.status === "available");
@@ -318,7 +318,7 @@ function HotelDrawer({
       venueName: "Teatro Lauro Rossi",
       city: "Macerata",
       region: "Marche",
-      description: "Posti riservati per 2 persone con incontro con gli attori a fine spettacolo.",
+      description: "Posti riservati con incontro con gli attori a fine spettacolo.",
       grantAmountCents: 5000,
       artistMeetupIncluded: true,
       active: true,
@@ -330,6 +330,8 @@ function HotelDrawer({
   const [selectedHotelVenue, setSelectedHotelVenue] = useState<VenueLite | null>(null);
   // Passo 2: Evento Matching Grant selezionato
   const [selectedEventId, setSelectedEventId] = useState<number>(events[0]?.id ?? 1);
+  // Scelta posti Matching Grant: 1 Persona (25€) o 2 Persone (50€ = 25€ + 25€)
+  const [grantSeatsCount, setGrantSeatsCount] = useState<1 | 2>(2);
 
   async function cancelVoucherSelection(voucherId: number) {
     if (!confirm("Vuoi davvero annullare la selezione di questa struttura? Il voucher tornerà disponibile e potrai sceglierne un'altra. Gli eventuali posti a teatro verranno liberati per evitare overbooking.")) {
@@ -422,6 +424,7 @@ function HotelDrawer({
           const bookedEvent = events.find((e) => e.id === selectedVoucher.grantEventId) || events[0];
           const userGrant = matchingGrantsList?.find((mg) => mg.voucher.id === selectedVoucher.id);
           const grantStatus = userGrant?.grant.status || "assigned";
+          const grantSeatsRequested = userGrant?.grant.seatsRequested || 2;
 
           return (
             <div className="mt-5 rounded-2xl border border-forest/20 bg-forest/5 p-5 space-y-4">
@@ -473,13 +476,15 @@ function HotelDrawer({
                         </span>
                       ) : (
                         <span className="rounded-full bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 font-bold">
-                          Assegnato (1 Posto Beneficiario)
+                          Assegnato ({grantSeatsRequested} {grantSeatsRequested === 1 ? "Posto" : "Posti"})
                         </span>
                       )}
                     </div>
                     <strong className="text-base font-serif text-forest block mt-1">{bookedEvent?.title}</strong>
                     <p className="text-xs text-forest mt-0.5 font-medium">{bookedEvent?.venueName} ({bookedEvent?.city})</p>
-                    <p className="text-[11px] text-olive mt-0.5">Omaggio erogato dai Promotori RADICI per il Dipendente Beneficiario (1 Posto Platea) · Fondo Promotori</p>
+                    <p className="text-[11px] text-olive mt-0.5">
+                      Omaggio erogato dai Promotori RADICI per {grantSeatsRequested} {grantSeatsRequested === 1 ? "Persona (25€)" : "Persone (50€ · 25€ + 25€)"} · Fondo Promotori
+                    </p>
                   </div>
 
                   <div className="mt-4 pt-3 border-t border-gold/30 flex flex-wrap gap-2">
@@ -582,10 +587,60 @@ function HotelDrawer({
                 </p>
               </div>
               <p className="mt-2 text-xs text-olive leading-relaxed">
-                Avendo selezionato il soggiorno presso <strong>{selectedHotelVenue.name}</strong>, i Promotori attivano l&apos;Omaggio Culturale Matching Grant (1 posto riservato in platea). Scegli a quale evento o spettacolo territoriale partecipare:
+                Avendo selezionato il soggiorno presso <strong>{selectedHotelVenue.name}</strong>, i Promotori attivano il Fondo Matching Grant di <strong>50€ (25€ + 25€ per 2 persone)</strong>.
+                Ciascun biglietto vale 25€: scegli con il pulsante se prenoti per <strong>1 persona</strong> (da solo) o per <strong>2 persone</strong> (con accompagnatore):
               </p>
 
-              <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
+              {/* PULSANTI DI SCELTA: 1 O 2 PERSONE */}
+              <div className="mt-3.5 rounded-2xl border border-forest/15 bg-white p-4 shadow-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold uppercase tracking-wider text-forest text-[11px]">
+                    Numero Partecipanti allo Spettacolo:
+                  </span>
+                  <span className="text-xs font-semibold text-terracotta">
+                    {grantSeatsCount === 1 ? "1 Biglietto (25€ Omaggio Promotori)" : "2 Biglietti (50€ Omaggio · 25€ + 25€)"}
+                  </span>
+                </div>
+                <div className="mt-2.5 grid grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setGrantSeatsCount(1)}
+                    className={`flex items-center justify-between rounded-xl p-3 text-left transition border ${
+                      grantSeatsCount === 1
+                        ? "border-forest bg-forest/10 text-forest font-semibold shadow-xs"
+                        : "border-mist bg-cream/40 text-olive hover:border-gold/40"
+                    }`}
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-forest">1 Persona</p>
+                      <p className="text-[10px] text-olive mt-0.5">Partecipo da solo (1 posto)</p>
+                    </div>
+                    <span className="rounded-full bg-sand px-2 py-0.5 text-[10px] font-bold text-forest">
+                      25€
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setGrantSeatsCount(2)}
+                    className={`flex items-center justify-between rounded-xl p-3 text-left transition border ${
+                      grantSeatsCount === 2
+                        ? "border-forest bg-forest/10 text-forest font-semibold shadow-xs"
+                        : "border-mist bg-cream/40 text-olive hover:border-gold/40"
+                    }`}
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-forest">2 Persone</p>
+                      <p className="text-[10px] text-olive mt-0.5">Con accompagnatore (2 posti)</p>
+                    </div>
+                    <span className="rounded-full bg-gold/25 px-2 py-0.5 text-[10px] font-bold text-terracotta">
+                      50€ (25€+25€)
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-2.5 sm:grid-cols-2">
                 {events.map((ev) => (
                   <label
                     key={ev.id}
@@ -621,16 +676,16 @@ function HotelDrawer({
               <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-gold/20 pt-4">
                 <div>
                   <p className="text-xs text-olive">
-                    Riepilogo: <strong>{selectedHotelVenue.name}</strong> + <strong>{events.find(e => e.id === selectedEventId)?.venueName ?? "Evento Territoriale"}</strong>
+                    Riepilogo: <strong>{selectedHotelVenue.name}</strong> + <strong>{events.find(e => e.id === selectedEventId)?.venueName ?? "Evento Territoriale"}</strong> ({grantSeatsCount} {grantSeatsCount === 1 ? "posto omaggio" : "posti omaggio"})
                   </p>
                   <p className="text-[11px] text-terracotta mt-0.5">
-                    Fattura B2B intestata all&apos;azienda per 1 quota dipendente (50€) · Omaggio teatrale 1 posto coperto dai Promotori.
+                    Fattura B2B intestata ad ACME per la camera (1 quota welfare dipendente) · Quota Spettacolo ({grantSeatsCount} {grantSeatsCount === 1 ? "posto da 25€" : "posti da 25€ + 25€ = 50€"}) coperta integralmente dai Promotori.
                   </p>
                 </div>
                 <button
                   type="button"
                   disabled={pendingId === `${available.id}-${selectedHotelVenue.id}`}
-                  onClick={() => onRedeem(available.id, selectedHotelVenue.id, selectedEventId)}
+                  onClick={() => onRedeem(available.id, selectedHotelVenue.id, selectedEventId, grantSeatsCount)}
                   className="rounded-full bg-forest px-6 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-cream hover:bg-forest/90 disabled:opacity-50 transition shadow-sm"
                 >
                   {pendingId === `${available.id}-${selectedHotelVenue.id}`

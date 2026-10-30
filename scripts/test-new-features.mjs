@@ -110,7 +110,7 @@ async function run() {
   const availableVoucher = db.prepare("SELECT id FROM vouchers WHERE user_id = 2 AND type = 'hotel' AND status = 'available'").get();
   assert(!!availableVoucher, `Voucher hotel disponibile id=${availableVoucher?.id}`);
 
-  console.log('\n--- 3. Selezione Struttura + Spettacolo Matching Grant ---');
+  console.log('\n--- 3. Selezione Struttura + Spettacolo Matching Grant (Scelta 2 Persone: 25€ + 25€ = 50€) ---');
   const redeemRes = await request('/api/vouchers/redeem', {
     method: 'POST',
     headers: { Cookie: `radici_session=${marioCookie}` },
@@ -118,23 +118,29 @@ async function run() {
       voucherId: availableVoucher.id,
       venueId: 2, // Agriturismo
       grantEventId: 1, // Teatro Lauro Rossi
+      grantSeatsCount: 2, // Scelta utente: 2 persone (50€ Matching Grant)
     }),
   });
-  assert(redeemRes.status === 200, 'Voucher selezionato con successo (status=selected)');
+  assert(redeemRes.status === 200, 'Voucher selezionato con successo (status=selected, grantSeatsCount=2)');
 
   const voucherAfter = db.prepare("SELECT status, venue_id, grant_event_id FROM vouchers WHERE id = ?").get(availableVoucher.id);
   assert(voucherAfter.status === 'selected', `Voucher status è '${voucherAfter.status}'`);
 
-  const grantAfter = db.prepare("SELECT id, status, seats_requested FROM matching_grants WHERE voucher_id = ?").get(availableVoucher.id);
-  assert(!!grantAfter && grantAfter.status === 'assigned' && grantAfter.seats_requested === 1, `Matching grant assegnato a Mario per 1 persona (status=${grantAfter?.status}, seats=${grantAfter?.seats_requested})`);
+  const grantAfter = db.prepare("SELECT id, status, seats_requested, amount_cents FROM matching_grants WHERE voucher_id = ?").get(availableVoucher.id);
+  assert(!!grantAfter && grantAfter.status === 'assigned' && grantAfter.seats_requested === 2 && grantAfter.amount_cents === 5000, `Matching grant assegnato a Mario per 2 persone (seats=2, amount=€50)`);
 
-  // Verifica creazione prenotazioni gemelle in bookings per Mario (1 persona ciascuna, conformità Art. 51 TUIR)
+  const seatsRows = db.prepare("SELECT holder_role, value_cents FROM grant_seats WHERE matching_grant_id = ?").all(grantAfter.id);
+  assert(seatsRows.length === 2, `Creati 2 posti in grant_seats (dipendente 25€ + accompagnatore 25€)`);
+
+  // Verifica prenotazioni gemelle in bookings per Mario:
+  // Hotel: 1 persona (quota welfare dipendente Art. 51 TUIR)
+  // Spettacolo teatro: 2 posti (Matching Grant dei Promotori per 2 persone)
   const marioBookings = db.prepare("SELECT id, booking_type, voucher_id, final_price_cents, party_size FROM bookings WHERE user_id = 2 AND voucher_id = ?").all(availableVoucher.id);
   assert(marioBookings.length === 2, `Create ${marioBookings.length} prenotazioni in 'bookings' per Mario (hotel e teatro)`);
   const bHotel = marioBookings.find(b => b.booking_type === 'hospitality');
   const bTheater = marioBookings.find(b => b.booking_type === 'theater_event');
-  assert(!!bHotel && bHotel.final_price_cents === 0 && bHotel.party_size === 1, 'Prenotazione hotel presente in bookings con 0€ da pagare per esattamente 1 persona (quota welfare)');
-  assert(!!bTheater && bTheater.final_price_cents === 0 && bTheater.party_size === 1, 'Prenotazione spettacolo teatro presente in bookings con 1 posto omaggio dipendente');
+  assert(!!bHotel && bHotel.final_price_cents === 0 && bHotel.party_size === 1, 'Prenotazione hotel in bookings: esattamente 1 persona (quota welfare 50€)');
+  assert(!!bTheater && bTheater.final_price_cents === 0 && bTheater.party_size === 2, 'Prenotazione teatro in bookings: esattamente 2 posti omaggio promotori scelti');
 
   // 4. Test Azioni Mario su Prenotazioni (Come un Amico: Riconferma Presenza)
   console.log('\n--- 4. Mario riconferma presenza su soggiorno e teatro ---');
@@ -166,6 +172,24 @@ async function run() {
 
   const grantCleaned = db.prepare("SELECT id FROM matching_grants WHERE voucher_id = ?").get(availableVoucher.id);
   assert(!grantCleaned, 'Matching grant e posti teatro eliminati e liberati per la capienza');
+
+  // 5b. Mario riseleziona il voucher scegliendo di andare da solo (1 Persona: 25€)
+  console.log('\n--- 5b. Test Selezione Mario con 1 Persona (25€ Matching Grant) ---');
+  const redeem1Res = await request('/api/vouchers/redeem', {
+    method: 'POST',
+    headers: { Cookie: `radici_session=${marioCookie}` },
+    body: JSON.stringify({
+      voucherId: availableVoucher.id,
+      venueId: 2,
+      grantEventId: 1,
+      grantSeatsCount: 1, // Scelta: 1 persona da solo
+    }),
+  });
+  assert(redeem1Res.status === 200, 'Mario riscatta con 1 posto teatro (grantSeatsCount=1)');
+  const grant1 = db.prepare("SELECT seats_requested, amount_cents FROM matching_grants WHERE voucher_id = ?").get(availableVoucher.id);
+  assert(grant1 && grant1.seats_requested === 1 && grant1.amount_cents === 2500, 'Matching grant registrato con 1 posto e 25€');
+  const theater1Bkg = db.prepare("SELECT party_size, final_price_cents FROM bookings WHERE user_id = 2 AND booking_type = 'theater_event' AND voucher_id = ? AND status != 'cancelled' ORDER BY id DESC").get(availableVoucher.id);
+  assert(theater1Bkg && theater1Bkg.party_size === 1, 'Prenotazione a teatro creata esattamente per 1 posto');
 
   // 6. Test Acquisto Cesto Filiera Corta da parte di Mario Rossi (Dipendente -> ZERO SCONTI)
   console.log('\n--- 6. Ordine Cesto Filiera Corta: Mario Rossi (0% Sconto) ---');
