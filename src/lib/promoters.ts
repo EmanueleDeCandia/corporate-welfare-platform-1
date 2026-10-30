@@ -82,6 +82,20 @@ export type VenueOverview = {
   type: string;
   city: string;
   province: string;
+  region: string;
+  coverImage: string;
+  destinationId: number;
+  destinationName: string;
+  description: string;
+  priceHotelCents: number;
+  priceAperitivoCents: number;
+  priceShowCents: number;
+  priceBasketCents: number;
+  basketName: string | null;
+  basketDescription: string | null;
+  sponsorCompanyId: number | null;
+  sponsorCompanyName: string | null;
+  checkinCode: string;
   redeemedCount: number;
   attendedCount: number;
   noShowCount: number;
@@ -117,6 +131,9 @@ export type PromoterDashboardData = {
   platformTransactions: PlatformTransactionRow[];
   companiesList: CompanyOverview[];
   venuesList: VenueOverview[];
+  destinationsList: Array<{ id: number; name: string; region: string }>;
+  sponsorCompaniesList: Array<{ id: number; name: string }>;
+  theatersList: Array<{ id: number; name: string; city: string; region: string }>;
 
   // Matching Grant Culturale (governato direttamente da Radici)
   totalGrantsAssigned: number;
@@ -134,10 +151,15 @@ export type PromoterDashboardData = {
     id: number;
     title: string;
     category: string;
+    venueId: number | null;
     venueName: string;
     city: string;
+    region: string;
+    description: string;
     startsAt: Date | null;
     capacity: number;
+    grantAmountCents: number;
+    artistMeetupIncluded: boolean | null;
     welfareSeats: number;
     communitySeats: number;
     seatsOccupied: number;
@@ -288,6 +310,9 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
   });
 
   // 4. Panoramica Fornitori del Territorio
+  const destMap = new Map(allDestinations.map((d) => [d.id, d]));
+  const compMap = new Map(allCompanies.map((c) => [c.id, c]));
+
   const venuesList: VenueOverview[] = allVenues.map((v) => {
     const venueTx = platformTransactions.filter((tx) => tx.venueName === v.name);
     const venueSelections = allSelections.filter((s) => s.venueId === v.id);
@@ -299,6 +324,9 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       .filter((tx) => tx.paymentStatus === "settled")
       .reduce((sum, tx) => sum + tx.providerNetCents, 0);
 
+    const dest = destMap.get(v.destinationId);
+    const sponsor = v.sponsorCompanyId ? compMap.get(v.sponsorCompanyId) : null;
+
     return {
       id: v.id,
       name: v.name,
@@ -306,6 +334,20 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       type: v.type,
       city: v.city,
       province: v.province,
+      region: v.region,
+      coverImage: v.coverImage,
+      destinationId: v.destinationId,
+      destinationName: dest?.name ?? v.city,
+      description: v.description,
+      priceHotelCents: v.priceHotelCents,
+      priceAperitivoCents: v.priceAperitivoCents,
+      priceShowCents: v.priceShowCents,
+      priceBasketCents: v.priceBasketCents,
+      basketName: v.basketName,
+      basketDescription: v.basketDescription,
+      sponsorCompanyId: v.sponsorCompanyId,
+      sponsorCompanyName: sponsor?.name ?? null,
+      checkinCode: v.checkinCode,
       redeemedCount: venueSelections.length,
       attendedCount: venueSelections.filter((s) => s.attendanceStatus === "attended").length,
       noShowCount: venueSelections.filter((s) => s.attendanceStatus === "no_show").length,
@@ -441,10 +483,15 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       id: ge.id,
       title: ge.title,
       category: ge.category,
+      venueId: ge.venueId,
       venueName: ge.venueName,
       city: ge.city,
+      region: ge.region,
+      description: ge.description,
       startsAt: ge.startsAt,
       capacity,
+      grantAmountCents: ge.grantAmountCents,
+      artistMeetupIncluded: ge.artistMeetupIncluded,
       welfareSeats,
       communitySeats,
       seatsOccupied,
@@ -466,6 +513,24 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     };
   });
 
+  const destinationsList = allDestinations.map((d) => ({
+    id: d.id,
+    name: d.name,
+    region: d.region,
+  }));
+
+  const sponsorCompaniesList = allCompanies.map((c) => ({
+    id: c.id,
+    name: c.name,
+  }));
+
+  const theatersList = theaterVenues.map((th) => ({
+    id: th.id,
+    name: th.name,
+    city: th.city,
+    region: th.region,
+  }));
+
   return {
     promoterUser,
     totalGmvCents,
@@ -483,6 +548,9 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     platformTransactions,
     companiesList,
     venuesList,
+    destinationsList,
+    sponsorCompaniesList,
+    theatersList,
     totalGrantsAssigned,
     totalGrantsConfirmed,
     totalGrantsAttended,
