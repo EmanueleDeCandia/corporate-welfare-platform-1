@@ -15,8 +15,12 @@ export function AfterHydration({
     setReady(true);
   }, []);
   if (!ready) {
-    return (
-      fallback ?? <div className="min-h-[16rem] rounded-[28px] bg-white" aria-hidden="true" />
+    // `null` is a valid "render nothing" fallback: only `undefined` uses the default box.
+    // This keeps the server HTML identical to the client's first render (no hydration mismatch).
+    return fallback !== undefined ? (
+      fallback
+    ) : (
+      <div className="min-h-[16rem] rounded-[28px] bg-white" aria-hidden="true" />
     );
   }
   return children;

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Menu, X } from "lucide-react";
 import { AfterHydration } from "@/components/after-hydration";
 import { pathWithSession } from "@/lib/session-cookie";
+import { logoutClient } from "@/lib/session-client";
 
 type Props = {
   dark?: boolean;
@@ -18,21 +19,7 @@ type Props = {
 };
 
 function leaveSession() {
-  void (async () => {
-    try {
-      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
-    } finally {
-      try {
-        window.sessionStorage.setItem("radici_logged_out", "1");
-        window.sessionStorage.removeItem("radici_session");
-        window.localStorage.removeItem("radici_session");
-      } catch {
-        /* ignore */
-      }
-      document.cookie = "radici_session=; Path=/; Max-Age=0; SameSite=Lax";
-      window.location.replace("/login");
-    }
-  })();
+  void logoutClient();
 }
 
 export function HeaderMenu({ sessionToken = "", user }: Props) {

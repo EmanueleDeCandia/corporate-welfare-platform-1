@@ -90,10 +90,19 @@ export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
   });
 }
 
-/** Kept as a named export so older preview bundles do not crash on Esci. */
+/**
+ * Single logout entry point used by every "Esci" button.
+ * Destroys the DB session + cookie via the API (token sent both as `?sid=` and
+ * header so the middleware always finds it), then clears the client session
+ * (storage, cookie, `?sid=` in the URL) and redirects to /login.
+ */
 export async function logoutClient() {
+  const token = readClientSessionToken();
+  const url = token ? `/api/auth/logout?sid=${encodeURIComponent(token)}` : "/api/auth/logout";
   try {
-    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    await apiFetch(url, { method: "POST" });
+  } catch {
+    /* Even if the network call fails, clean up the client so the user is not stuck. */
   } finally {
     clearClientSession();
     window.location.replace("/login");
