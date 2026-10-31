@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { SESSION_COOKIE, SESSION_HEADER, cookieOptionsFromHeaders } from "@/lib/session-cookie";
 
 export function middleware(request: NextRequest) {
+  const isLogout = request.nextUrl.pathname === "/api/auth/logout";
   const sid = request.nextUrl.searchParams.get("sid");
   const cookieToken = request.cookies.get(SESSION_COOKIE)?.value;
   const headerToken = request.headers.get(SESSION_HEADER);
@@ -14,6 +15,12 @@ export function middleware(request: NextRequest) {
   const response = NextResponse.next({
     request: { headers: requestHeaders },
   });
+
+  if (isLogout) {
+    const options = cookieOptionsFromHeaders(request.headers);
+    response.cookies.set(SESSION_COOKIE, "", { ...options, maxAge: 0 });
+    return response;
+  }
 
   if (token) {
     const options = cookieOptionsFromHeaders(request.headers);

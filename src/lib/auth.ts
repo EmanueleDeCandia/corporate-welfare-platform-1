@@ -70,7 +70,8 @@ export async function createSession(userId: number) {
 export async function destroySession() {
   await initDb();
   const jar = await cookies();
-  const token = jar.get(SESSION_COOKIE)?.value;
+  const h = await headers();
+  const token = jar.get(SESSION_COOKIE)?.value || h.get(SESSION_HEADER) || undefined;
   if (token) {
     await db.delete(sessions).where(eq(sessions.token, token));
   }
@@ -78,6 +79,7 @@ export async function destroySession() {
   jar.set(SESSION_COOKIE, "", {
     ...cookie,
     expires: new Date(0),
+    maxAge: 0,
   });
 }
 

@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import { apiFetch, clearClientSession } from "@/lib/session-client";
+import { logoutClient } from "@/lib/session-client";
 import { pathWithSession } from "@/lib/session-cookie";
 
 type Props = {
@@ -19,7 +18,6 @@ type Props = {
 };
 
 export function HeaderMenu({ sessionToken = "", user }: Props) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const href = (path: string) => pathWithSession(path, sessionToken);
   const accountHref =
@@ -31,28 +29,29 @@ export function HeaderMenu({ sessionToken = "", user }: Props) {
           ? href("/promotori")
           : href("/account");
 
-  async function logout() {
-    try {
-      await apiFetch("/api/auth/logout", { method: "POST" });
-    } finally {
-      clearClientSession();
-      setOpen(false);
-      router.push("/");
-      router.refresh();
-    }
+  function logout() {
+    setOpen(false);
+    void logoutClient();
   }
 
   return (
     <div className="flex items-center gap-2">
       {user ? (
-        <Link
-          href={accountHref}
-          className="hidden items-center gap-2 rounded-full bg-forest px-3.5 py-1.5 text-[13px] text-cream md:flex"
-        >
-          <span>
+        <div className="hidden items-center gap-2 md:flex">
+          <Link
+            href={accountHref}
+            className="rounded-full bg-forest px-3.5 py-1.5 text-[13px] text-cream"
+          >
             {user.firstName} {user.lastName}
-          </span>
-        </Link>
+          </Link>
+          <button
+            type="button"
+            onClick={logout}
+            className="rounded-full border border-forest/15 px-3 py-1.5 text-[13px] text-olive hover:text-forest"
+          >
+            Esci
+          </button>
+        </div>
       ) : (
         <Link
           href="/login"

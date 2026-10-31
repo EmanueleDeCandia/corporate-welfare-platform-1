@@ -1,5 +1,6 @@
 export const CLIENT_SESSION_KEY = "radici_session";
 export const SESSION_HEADER = "x-radici-session";
+const LOGOUT_FLAG = "radici_logged_out";
 
 function readStorage(storage: Storage) {
   try {
@@ -17,8 +18,17 @@ function writeStorage(storage: Storage, token: string) {
   }
 }
 
+function logoutFlagOn() {
+  try {
+    return window.sessionStorage.getItem(LOGOUT_FLAG) === "1";
+  } catch {
+    return false;
+  }
+}
+
 export function readClientSessionToken() {
   if (typeof window === "undefined") return "";
+  if (logoutFlagOn()) return "";
   const fromUrl = new URLSearchParams(window.location.search).get("sid");
   if (fromUrl) return fromUrl;
   return readStorage(window.sessionStorage) || readStorage(window.localStorage);
@@ -26,6 +36,11 @@ export function readClientSessionToken() {
 
 export function persistClientSession(token: string) {
   if (typeof window === "undefined" || !token) return;
+  try {
+    window.sessionStorage.removeItem(LOGOUT_FLAG);
+  } catch {
+    /* ignore */
+  }
   writeStorage(window.sessionStorage, token);
   writeStorage(window.localStorage, token);
   const secure = window.location.protocol === "https:";
@@ -38,6 +53,7 @@ export function persistClientSession(token: string) {
 export function clearClientSession() {
   if (typeof window === "undefined") return;
   try {
+    window.sessionStorage.setItem(LOGOUT_FLAG, "1");
     window.sessionStorage.removeItem(CLIENT_SESSION_KEY);
     window.localStorage.removeItem(CLIENT_SESSION_KEY);
   } catch {
@@ -45,6 +61,16 @@ export function clearClientSession() {
   }
   document.cookie = `${CLIENT_SESSION_KEY}=; Path=/; Max-Age=0; SameSite=Lax`;
   document.cookie = `${CLIENT_SESSION_KEY}=; Path=/; Max-Age=0; Secure; SameSite=None`;
+  document.cookie = `${CLIENT_SESSION_KEY}=; Path=/; Max-Age=0; Secure; SameSite=None; Partitioned`;
+  try {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("sid")) {
+      url.searchParams.delete("sid");
+      window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+  } catch {
+    /* ignore */
+  }
 }
 
 export function sessionHeaders(init?: HeadersInit) {
@@ -60,6 +86,15 @@ export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
     credentials: init.credentials ?? "include",
     headers: sessionHeaders(init.headers),
   });
+}
+
+export async function logoutClient() {
+  try {
+    await apiFetch("/api/auth/logout", { method: "POST" });
+  } finally {
+    clearClientSession();
+    window.location.replace("/login");
+  }
 }
 
 let fetchPatched = false;

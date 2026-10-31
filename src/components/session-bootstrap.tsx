@@ -40,6 +40,7 @@ export function SessionBootstrap() {
       }
       if (url.origin !== window.location.origin) return;
       if (url.pathname.startsWith("/api/")) return;
+      if (url.pathname === "/login" || url.pathname === "/registrati") return;
       const sid = readClientSessionToken();
       if (!sid) return;
       if (url.searchParams.get("sid") === sid) return;
