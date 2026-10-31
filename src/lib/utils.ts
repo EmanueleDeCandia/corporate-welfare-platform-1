@@ -169,6 +169,8 @@ export function venueTypeLabel(type: string) {
       return "Luogo di spettacolo";
     case "restaurant":
       return "Esperienza a tavola";
+    case "producer":
+      return "Produttore Locale KM 0";
     default:
       return type;
   }

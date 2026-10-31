@@ -3,6 +3,7 @@ import { CheckinClient } from "@/components/checkin-client";
 import { PublicShell } from "@/components/public-shell";
 import { getCurrentUser } from "@/lib/auth";
 import { getInviteByEmail, getVenueByCheckin, resolveCheckinCode } from "@/lib/data";
+import { getLocalProducerByVenueId } from "@/lib/local-producers";
 import { sqlite } from "@/db";
 import { venueTypeLabel } from "@/lib/utils";
 import { ProviderCheckin } from "@/components/provider-checkin";
@@ -80,6 +81,7 @@ export default async function CheckinPage({
   const row = await getVenueByCheckin(code);
   if (!row) notFound();
   const invite = user ? await getInviteByEmail(user.email) : null;
+  const producerRow = row.venue.type === "producer" ? await getLocalProducerByVenueId(row.venue.id) : null;
 
   return (
     <PublicShell>
@@ -95,6 +97,22 @@ export default async function CheckinPage({
               {row.venue.city}, {row.destination.region}
             </p>
             <p className="mt-4 text-sm leading-6 text-ink/75">{row.venue.description}</p>
+            {producerRow ? (
+              <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                <div className="rounded-2xl bg-cream p-3">
+                  <p className="font-serif text-xl text-forest">{producerRow.stats.basketsSold}</p>
+                  <p className="text-[10px] uppercase tracking-wider text-olive">cestini venduti</p>
+                </div>
+                <div className="rounded-2xl bg-cream p-3">
+                  <p className="font-serif text-xl text-forest">{producerRow.stats.kmAvoidedTotal} km</p>
+                  <p className="text-[10px] uppercase tracking-wider text-olive">km evitati</p>
+                </div>
+                <div className="rounded-2xl bg-cream p-3">
+                  <p className="font-serif text-xl text-forest">{producerRow.stats.co2AvoidedKg.toFixed(1)} kg</p>
+                  <p className="text-[10px] uppercase tracking-wider text-olive">CO2 evitata</p>
+                </div>
+              </div>
+            ) : null}
           </div>
         </section>
         <CheckinClient
@@ -105,6 +123,8 @@ export default async function CheckinPage({
             checkinCode: row.venue.checkinCode,
           }}
           offerings={row.offerings.filter((item) => item.active)}
+          producer={producerRow ? { discountBps: producerRow.producer.discountBps, initiative: producerRow.producer.initiative } : null}
+          products={producerRow?.products.filter((item) => item.active) ?? []}
           loggedIn={Boolean(user)}
           role={user?.role}
           inviteCode={invite?.code}

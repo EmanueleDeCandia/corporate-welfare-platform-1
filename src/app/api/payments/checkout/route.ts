@@ -4,6 +4,7 @@ import { db } from "@/db";
 import { invites, notifications, transactions, venueOfferings, venues } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { awardImpact } from "@/lib/data";
+import { buyLocalProduct } from "@/lib/local-producers";
 import { DEFAULT_FRIEND_DISCOUNT_BPS, voucherTypeLabel } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +18,8 @@ export async function POST(request: Request) {
   const body = (await request.json()) as {
     venueId?: number;
     offeringId?: number;
+    productId?: number;
+    quantity?: number;
     cardName?: string;
     cardNumber?: string;
     inviteCode?: string;
@@ -36,6 +39,55 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Struttura non trovata." }, { status: 404 });
   }
 
+  let invite = body.inviteCode
+    ? (await db.select().from(invites).where(eq(invites.code, body.inviteCode)).limit(1))[0]
+    : undefined;
+  if (!invite) {
+    invite = (await db.select().from(invites).where(eq(invites.email, me.email)).limit(1))[0];
+  }
+
+  // --- Ramo Produttore Locale KM 0: sconto initiative (default 10%) per TUTTI i ruoli ---
+  if (venue.type === "producer") {
+    if (!body.productId) {
+      return NextResponse.json({ error: "Seleziona un cesto KM 0." }, { status: 400 });
+    }
+    try {
+      const result = await buyLocalProduct({
+        userId: me.id,
+        venueId: venue.id,
+        productId: Number(body.productId),
+        quantity: Number(body.quantity ?? 1),
+        inviteId: invite?.id ?? null,
+      });
+
+      const inviterId = invite?.inviterId ?? me.invitedByUserId;
+      let inviterName = "";
+      if (inviterId) {
+        const awarded = await awardImpact(inviterId, 1, "referral", "invite", String(invite?.id ?? `user:${me.id}`));
+        inviterName = awarded ? `${awarded.firstName} ${awarded.lastName}` : "";
+        if (invite && invite.status !== "converted") {
+          await db
+            .update(invites)
+            .set({ status: "converted", friendUserId: me.id, acceptedAt: new Date() })
+            .where(eq(invites.id, invite.id));
+        }
+      }
+
+      return NextResponse.json({
+        ok: true,
+        amountCents: result.amountCents,
+        discountCents: result.discountCents,
+        kmAvoided: result.kmAvoided,
+        co2AvoidedKg: result.co2AvoidedKg,
+        stats: result.stats,
+        inviter: inviterName || null,
+        message: `Cesto KM 0 confermato presso ${venue.name}. Hai evitato ${result.kmAvoided} km (${result.co2AvoidedKg.toFixed(1)} kg CO2).`,
+      });
+    } catch (error) {
+      return NextResponse.json({ error: error instanceof Error ? error.message : "Acquisto non riuscito." }, { status: 400 });
+    }
+  }
+
   const offerings = await db.select().from(venueOfferings).where(eq(venueOfferings.venueId, venue.id));
   const offering =
     (body.offeringId ? offerings.find((item) => item.id === body.offeringId) : undefined) ??
@@ -49,13 +101,6 @@ export async function POST(request: Request) {
   const discountBps = isFriend ? offering.friendDiscountBps || DEFAULT_FRIEND_DISCOUNT_BPS : 0;
   const discountCents = Math.round((offering.listPriceCents * discountBps) / 10000);
   const amountCents = offering.listPriceCents - discountCents;
-
-  let invite = body.inviteCode
-    ? (await db.select().from(invites).where(eq(invites.code, body.inviteCode)).limit(1))[0]
-    : undefined;
-  if (!invite) {
-    invite = (await db.select().from(invites).where(eq(invites.email, me.email)).limit(1))[0];
-  }
 
   const [tx] = await db
     .insert(transactions)

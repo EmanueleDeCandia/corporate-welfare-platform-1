@@ -92,17 +92,33 @@ export type PromoterLedgerRow = {
   paymentStatus: string;
 };
 
+export type PromoterLocalProducerRow = {
+  producerId: number;
+  venueId: number;
+  name: string;
+  city: string;
+  region: string;
+  discountBps: number;
+  basketsSold: number;
+  volumeCents: number;
+  kmAvoidedTotal: number;
+  co2AvoidedKg: number;
+  productsCount: number;
+};
+
 export type PromoterDashboardData = {
   promoterUser: typeof users.$inferSelect;
   economics: PromoterEconomics;
   companies: PromoterCompanyRow[];
   providers: PromoterProviderRow[];
+  localProducers: PromoterLocalProducerRow[];
   voucherFunnel: PromoterVoucherFunnel;
   ledger: PromoterLedgerRow[];
   pipeline: ReturnType<typeof getGrantPipeline>;
   eventsCount: number;
   theatersCount: number;
   promotedDestinationsCount: number;
+  destinations: Array<{ id: number; name: string; region: string }>;
   grants: PromoterGrantRow[];
   events: Array<{
     id: number;
@@ -407,17 +423,61 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     grantsGeneratedCount: grantRows.filter((row) => row.theater_name === th.name).length,
   }));
 
+  const localProducerRows = sqlite
+    .prepare(
+      `SELECT lp.id AS producer_id, lp.venue_id, lp.discount_bps,
+              v.name, v.city, v.region,
+              COALESCE(s.baskets_sold, 0) AS baskets_sold,
+              COALESCE(s.volume_cents, 0) AS volume_cents,
+              COALESCE(s.km_avoided_total, 0) AS km_avoided_total,
+              COALESCE(s.co2_avoided_kg, 0) AS co2_avoided_kg,
+              (SELECT COUNT(*) FROM local_products p WHERE p.producer_id = lp.id AND p.active = 1) AS products_count
+       FROM local_producers lp
+       JOIN venues v ON v.id = lp.venue_id
+       LEFT JOIN v_local_producer_stats s ON s.producer_id = lp.id
+       ORDER BY co2_avoided_kg DESC, v.name`,
+    )
+    .all() as Array<{
+    producer_id: number;
+    venue_id: number;
+    discount_bps: number;
+    name: string;
+    city: string;
+    region: string;
+    baskets_sold: number;
+    volume_cents: number;
+    km_avoided_total: number;
+    co2_avoided_kg: number;
+    products_count: number;
+  }>;
+
+  const localProducers: PromoterLocalProducerRow[] = localProducerRows.map((row) => ({
+    producerId: row.producer_id,
+    venueId: row.venue_id,
+    name: row.name,
+    city: row.city,
+    region: row.region,
+    discountBps: row.discount_bps,
+    basketsSold: row.baskets_sold,
+    volumeCents: row.volume_cents,
+    kmAvoidedTotal: row.km_avoided_total,
+    co2AvoidedKg: Number(row.co2_avoided_kg),
+    productsCount: row.products_count,
+  }));
+
   return {
     promoterUser,
     economics,
     companies,
     providers,
+    localProducers,
     voucherFunnel,
     ledger,
     pipeline,
     eventsCount: eventRows.length,
     theatersCount: theaterVenues.length,
     promotedDestinationsCount: allDestinations.length,
+    destinations: allDestinations.map((d) => ({ id: d.id, name: d.name, region: d.region })),
     grants,
     events,
     theaters,

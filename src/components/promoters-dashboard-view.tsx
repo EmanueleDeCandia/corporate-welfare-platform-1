@@ -13,10 +13,11 @@ import {
   Wallet,
 } from "lucide-react";
 import { apiFetch } from "@/lib/session-client";
+import { LocalProducersPanel } from "@/components/local-producers-panel";
 import type { PromoterDashboardData, PromoterLedgerRow } from "@/lib/promoters";
 import { formatDateTime, formatEuro, grantStatusLabel, paymentStatusLabel, venueTypeLabel, voucherTypeLabel } from "@/lib/utils";
 
-type Tab = "overview" | "companies" | "providers" | "vouchers" | "grants";
+type Tab = "overview" | "companies" | "providers" | "producers" | "vouchers" | "grants";
 
 export function PromotersDashboardView({ data }: { data: PromoterDashboardData }) {
   return (
@@ -38,12 +39,13 @@ function PromotersDashboardReady({ data }: { data: PromoterDashboardData }) {
         <img src="/images/abstract-blur.jpg" alt="" className="h-36 w-full object-cover" />
         <div className="p-6 md:p-8">
         <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-olive">
-          <Sparkles size={14} /> Control Room Startup RADICI
+          <Sparkles size={14} /> Control Room Gruppo Illiria &amp; Startup RADICI
         </div>
-        <h1 className="mt-3 font-serif text-3xl md:text-5xl">Intermediario tecnologico dell&apos;ecosistema</h1>
+        <h1 className="mt-3 font-serif text-3xl md:text-5xl">Gruppo Illiria &amp; Startup RADICI</h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-olive">
-          Chiara, qui vedi il volume transato, le fee maturate, i pagamenti impresa → fornitore e i
-          flussi voucher. RADICI non emette fatture: genera il prospetto, traccia estremi e saldo.
+          Chiara, qui vedi il volume transato, le fee maturate, i pagamenti impresa → fornitore, i flussi voucher
+          e la <strong>Filiera Corta KM 0</strong>: aggiungi i Produttori Locali e tieni d&apos;occhio km evitati e CO2.
+          RADICI non emette fatture: genera il prospetto, traccia estremi e saldo.
         </p>
         <div className="mt-8 grid grid-cols-2 gap-4 border-t border-forest/10 pt-6 lg:grid-cols-4">
           <Stat label="Volume welfare (GMV)" value={formatEuro(e.gmvCents)} hint="Selezioni intermediante" />
@@ -60,6 +62,8 @@ function PromotersDashboardReady({ data }: { data: PromoterDashboardData }) {
             ["overview", "Economics"],
             ["companies", `Aziende (${data.companies.length})`],
             ["providers", `Fornitori (${data.providers.length})`],
+            ["producers", `Produttori KM 0 (${data.localProducers.length})`],
+            ["producers", `Produttori KM 0 (${data.localProducers.length})`],
             ["vouchers", "Voucher e presenze"],
             ["grants", `Matching Grant (${data.grants.length})`],
           ] as const

@@ -26,9 +26,14 @@ const ROLES: Array<{ id: RegisterableRole; title: string; hint: string }> = [
     hint: "Pannello struttura: presenze, fatture, saldo pending/settled.",
   },
   {
+    id: "producer",
+    title: "Produttore Locale KM 0 (Filiera Corta)",
+    hint: "Cestini agroalimentari con consegna in azienda (flotta Gruppo Illiria) e sconto initiative Welfare & KM 0.",
+  },
+  {
     id: "promoter",
-    title: "Promotore RADICI",
-    hint: "Control Room della startup: matching, fee, imprese e strutture.",
+    title: "Promotore RADICI / Gruppo Illiria",
+    hint: "Control Room Gruppo Illiria & Startup RADICI: matching, fee, imprese, strutture e produttori KM 0.",
   },
 ];
 
@@ -67,6 +72,10 @@ export function RegisterForm({
     venueId: "",
     venueName: "",
     venueType: "agriturismo",
+    productName: "Cesto della Filiera Corta",
+    priceEuros: "40",
+    kmAvoided: "50",
+    discountPercent: "10",
     destinationId: catalog.destinations[0] ? String(catalog.destinations[0].id) : "",
     companyMode: "new" as "new" | "existing",
     venueMode: (catalog.venues.length ? "existing" : "new") as "new" | "existing",
@@ -406,6 +415,104 @@ export function RegisterForm({
               </label>
             </div>
           )}
+        </div>
+      ) : null}
+
+      {selectedRole === "producer" ? (
+        <div className="space-y-3 rounded-2xl border border-gold/40 bg-gold/5 p-4">
+          <p className="text-sm font-medium text-forest">Produttore Locale KM 0 · Filiera Corta (Gruppo Illiria)</p>
+          <label className="block text-sm">
+            Nome del produttore / azienda agricola
+            <input
+              value={form.venueName}
+              onChange={(event) => setForm((current) => ({ ...current, venueName: event.target.value }))}
+              className="mt-1 w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3 outline-none"
+              required
+              placeholder="es. Orto di San Marcello"
+            />
+          </label>
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="block text-sm">
+              Destinazione
+              <select
+                value={form.destinationId}
+                onChange={(event) => setForm((current) => ({ ...current, destinationId: event.target.value }))}
+                className="mt-1 w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3 outline-none"
+                required
+              >
+                {catalog.destinations.map((destination) => (
+                  <option key={destination.id} value={destination.id}>
+                    {destination.name} · {destination.region}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block text-sm">
+              Città
+              <input
+                value={form.city}
+                onChange={(event) => setForm((current) => ({ ...current, city: event.target.value }))}
+                className="mt-1 w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3 outline-none"
+              />
+            </label>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="block text-sm">
+              Primo cesto (nome prodotto)
+              <input
+                value={form.productName}
+                onChange={(event) => setForm((current) => ({ ...current, productName: event.target.value }))}
+                className="mt-1 w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3 outline-none"
+                required
+              />
+            </label>
+            <label className="block text-sm">
+              Prezzo cesto (€ · da 30 a 60)
+              <input
+                type="number"
+                min={30}
+                max={60}
+                step={1}
+                value={form.priceEuros}
+                onChange={(event) => setForm((current) => ({ ...current, priceEuros: event.target.value }))}
+                className="mt-1 w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3 outline-none"
+                required
+              />
+            </label>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2">
+            <label className="block text-sm">
+              Km evitati per cesto (da 30 a 70)
+              <input
+                type="number"
+                min={30}
+                max={70}
+                step={1}
+                value={form.kmAvoided}
+                onChange={(event) => setForm((current) => ({ ...current, kmAvoided: event.target.value }))}
+                className="mt-1 w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3 outline-none"
+                required
+              />
+            </label>
+            <label className="block text-sm">
+              Sconto initiative Welfare &amp; KM 0 (%)
+              <input
+                type="number"
+                min={0}
+                max={100}
+                step={1}
+                value={form.discountPercent}
+                onChange={(event) => setForm((current) => ({ ...current, discountPercent: event.target.value }))}
+                className="mt-1 w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3 outline-none"
+                required
+              />
+            </label>
+          </div>
+          <p className="text-xs leading-5 text-olive">
+            Ogni cesto venduto evita {form.kmAvoided || 50} km di trasporto ={" "}
+            {(0.3 * Number(form.kmAvoided || 50)).toFixed(1)} kg di CO2 (0,300 kg × km). Consegna in azienda con la
+            flotta del Gruppo Illiria. Lo sconto si applica a dipendenti, amici invitati e nuovi iscritti.
+          </p>
         </div>
       ) : null}
 

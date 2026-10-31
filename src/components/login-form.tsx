@@ -34,8 +34,13 @@ const demos = [
   },
   {
     email: "chiara.promotori@radici.it",
-    label: "Chiara Valenti (Promotori)",
-    hint: "Startup RADICI · Matching Grant",
+    label: "Chiara Valenti (Promotori / Gruppo Illiria)",
+    hint: "Control Room Gruppo Illiria & Startup RADICI · Matching Grant e Produttori KM 0",
+  },
+  {
+    email: "filiera@km0.it",
+    label: "Sara Campo (Filiera Corta Km 0)",
+    hint: "Produttore Locale · cestini KM 0, consegne flotta Gruppo Illiria",
   },
 ];
 

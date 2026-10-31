@@ -8,6 +8,8 @@ import {
   grantEvents,
   grantSeats,
   invites,
+  localProducts,
+  localProducers,
   matchingGrants,
   notifications,
   shares,
@@ -319,6 +321,16 @@ async function seedDatabase() {
         badgeLevel: badgeForPoints(2).label,
         referralCode: "anna-greco",
       },
+      {
+        email: "filiera@km0.it",
+        passwordHash: DEMO_PASSWORD,
+        firstName: "Sara",
+        lastName: "Campo",
+        role: "provider",
+        impactPoints: 0,
+        badgeLevel: "Produttore Locale KM 0",
+        referralCode: "sara-campo",
+      },
     ])
     .returning();
 
@@ -332,6 +344,7 @@ async function seedDatabase() {
   const paolo = insertedUsers[8];
   const luca = insertedUsers[10];
   const anna = insertedUsers[11];
+  const sara = insertedUsers[12];
 
   await db.update(users).set({ invitedByUserId: mario.id }).where(eq(users.id, luigi.id));
 
@@ -576,6 +589,85 @@ async function seedDatabase() {
         impactPointsGenerated: 1,
         localSupportPercent: 16,
       },
+      {
+        name: "Orto di San Marcello",
+        slug: "orto-san-marcello",
+        type: "producer",
+        destinationId: marche.id,
+        city: "Cingoli",
+        province: "MC",
+        region: "Marche",
+        description:
+          "Produttore locale KM 0: cestini di frutta e verdura di stagione, consegna in azienda con la flotta del Gruppo Illiria. Sconto initiative Welfare & KM 0 per tutti.",
+        longDescription:
+          "L'Orto di San Marcello coltiva frutta e verdura a Cingoli da tre generazioni. Grazie all'iniziativa \"Welfare & KM 0\" promossa da Gruppo Illiria e Startup RADICI, i cestini arrivano direttamente in azienda con la flotta del Gruppo: niente trasporti extra, 50 km di percorso evitati per ogni cesto (0,300 kg di CO2 × km) e sconti riservati a dipendenti, amici invitati e nuovi iscritti del circuito.",
+        lat: 43.3171,
+        lng: 13.3812,
+        coverImage: "/images/produttore-orto.jpg",
+        gallery: ["/images/produttore-orto.jpg", "/images/produttore-verdure.jpg", "/images/produttore-cesto.jpg"],
+        services: [
+          "Cesto frutta e verdura di stagione",
+          "Consegna in azienda con flotta Gruppo Illiria",
+          "Sconto initiative Welfare & KM 0 (10%) per dipendenti, amici e nuovi iscritti",
+          "50 km evitati (≈15 kg CO2) per ogni cesto",
+        ],
+        checkinCode: "venue-orto-san-marcello",
+        providerUserId: sara.id,
+        impactPointsGenerated: 1,
+        localSupportPercent: 100,
+      },
+      {
+        name: "Frantoio Le Colline",
+        slug: "frantoio-le-colline",
+        type: "producer",
+        destinationId: orcia.id,
+        city: "Pienza",
+        province: "SI",
+        region: "Toscana",
+        description:
+          "Produttore locale KM 0: olio extravergine di oliva nuovo e conserve dell'orto. Consegna diretta in impresa, sconto Welfare & KM 0.",
+        longDescription:
+          "Il Frantoio Le Colline spreme olive monovarietali delle crete senesi. Con la flotta del Gruppo Illiria, olio e conserve raggiungono le imprese CSR in un solo giro a KM 0: ogni cesto evita 60 km di trasporto (18 kg di CO2 non emessi) e gode dello sconto initiative del 10% per chi acquista nel circuito Welfare & KM 0.",
+        lat: 43.0765,
+        lng: 11.6721,
+        coverImage: "/images/produttore-frantoio.jpg",
+        gallery: ["/images/produttore-frantoio.jpg", "/images/produttore-cesto.jpg", "/images/produttore-verdure.jpg"],
+        services: [
+          "Cesto olio EVO新 2026",
+          "Consegna in azienda con flotta Gruppo Illiria",
+          "Sconto initiative Welfare & KM 0 (10%)",
+          "60 km evitati (≈18 kg CO2) per ogni cesto",
+        ],
+        checkinCode: "venue-frantoio-colline",
+        impactPointsGenerated: 1,
+        localSupportPercent: 100,
+      },
+      {
+        name: "Cantina del Borgo Antico",
+        slug: "cantina-borgo-antico",
+        type: "producer",
+        destinationId: langhe.id,
+        city: "Barolo",
+        province: "CN",
+        region: "Piemonte",
+        description:
+          "Produttore locale KM 0: vini rossi delle Langhe e agrodolci in cestini regalo. Consegna in azienda, sconto Welfare & KM 0.",
+        longDescription:
+          "La Cantina del Borgo Antico imbottiglia nebbiolo e moscato d'ast delle Langhe. Grazie all'iniziativa \"Welfare & KM 0\" di Gruppo Illiria e Startup RADICI, i cestini arrivano nelle sedi aziendali con la flotta dedicata: 70 km evitati per ogni consegna (21 kg di CO2 risparmiati) e sconto del 10% riservato a dipendenti, amici invitati e nuovi iscritti.",
+        lat: 44.6125,
+        lng: 7.9456,
+        coverImage: "/images/produttore-cantina.jpg",
+        gallery: ["/images/produttore-cantina.jpg", "/images/produttore-vino.jpg", "/images/produttore-cesto.jpg"],
+        services: [
+          "Cesto vini rossi delle Langhe",
+          "Consegna in azienda con flotta Gruppo Illiria",
+          "Sconto initiative Welfare & KM 0 (10%)",
+          "70 km evitati (≈21 kg CO2) per ogni cesto",
+        ],
+        checkinCode: "venue-cantina-borgo",
+        impactPointsGenerated: 1,
+        localSupportPercent: 100,
+      },
     ])
     .returning();
 
@@ -590,11 +682,15 @@ async function seedDatabase() {
   const teatroMuse = insertedVenues[8];
   const corteUlivi = insertedVenues[9];
   const teatroAquila = insertedVenues[10];
+  const ortoSanMarcello = insertedVenues[11];
+  const frantoioColline = insertedVenues[12];
+  const cantinaBorgo = insertedVenues[13];
 
   await db.update(users).set({ venueId: laValle.id }).where(eq(users.id, elena.id));
   await db.update(users).set({ venueId: langheOro.id }).where(eq(users.id, marco.id));
   await db.update(users).set({ venueId: leGrazie.id }).where(eq(users.id, chiara.id));
   await db.update(users).set({ venueId: teatroLauro.id }).where(eq(users.id, paolo.id));
+  await db.update(users).set({ venueId: ortoSanMarcello.id }).where(eq(users.id, sara.id));
 
   await db.insert(venueOfferings).values([
     { venueId: laValle.id, benefitType: "overnight", name: "Camera Matrimoniale dei Cipressi", description: "Letto in ferro battuto, travi a vista e finestra sulla valle.", listPriceCents: 5000, acceptsWelfare: true, dailyCapacity: 4 },
@@ -613,6 +709,34 @@ async function seedDatabase() {
     { venueId: sanFelice.id, benefitType: "dinner", name: "Tramonto sul grano", description: "Crostini toscani e rosso della tenuta.", listPriceCents: 2300, acceptsWelfare: true, dailyCapacity: 12 },
     { venueId: corteUlivi.id, benefitType: "dinner", name: "Aperitivo della Corte", description: "Puccia, polpo, cicorie e negroamaro fresco.", listPriceCents: 2000, acceptsWelfare: true, dailyCapacity: 22 },
   ]);
+
+  // --- Produttori Locali KM 0 (Filiera Corta) — dati sintetici nel database ---
+  const insertedProducers = await db
+    .insert(localProducers)
+    .values([
+      { venueId: ortoSanMarcello.id, discountBps: 1000 },
+      { venueId: frantoioColline.id, discountBps: 1000 },
+      { venueId: cantinaBorgo.id, discountBps: 1200 },
+    ])
+    .returning();
+  const producerOrto = insertedProducers[0];
+  const producerFrantoio = insertedProducers[1];
+  const producerCantina = insertedProducers[2];
+
+  const insertedLocalProducts = await db
+    .insert(localProducts)
+    .values([
+      // Orto di San Marcello — prezzi 40 € / 60 €, km evitati 50 / 70
+      { producerId: producerOrto.id, name: "Cesto Frutta e Verdura", description: "Stagionale dell'orto: pomodori, zucchine, frutta di stagione e erbe aromatiche.", priceCents: 4000, kmAvoided: 50, basketsSold: 4 },
+      { producerId: producerOrto.id, name: "Cesto Stagionale Premium", description: "Versione grande con frutta esotica di serra e confetture aziendali.", priceCents: 6000, kmAvoided: 70, basketsSold: 2 },
+      // Frantoio Le Colline — prezzi 50 € / 30 €, km evitati 60 / 30
+      { producerId: producerFrantoio.id, name: "Cesto Olio EVO 2026", description: "Bottiglia 1L di olio nuovo + olive schiacciate e sott'oli dell'annata.", priceCents: 5000, kmAvoided: 60, basketsSold: 6 },
+      { producerId: producerFrantoio.id, name: "Kit Olio & Olive", description: "Bottiglia 0,5L di olio EVO e barattolo di olive denocciolate.", priceCents: 3000, kmAvoided: 30, basketsSold: 3 },
+      // Cantina del Borgo Antico — prezzi 60 € / 45 €, km evitati 70 / 45, sconto initiative 12%
+      { producerId: producerCantina.id, name: "Cesto Vini delle Langhe", description: "Nebbiolo e barbera del borgo + miele di castagno e nocciole tostate.", priceCents: 6000, kmAvoided: 70, basketsSold: 5 },
+      { producerId: producerCantina.id, name: "Selezione 2 Rossi", description: "Due bottiglie di rossi di piccoli produttori del borgo antico.", priceCents: 4500, kmAvoided: 45, basketsSold: 2 },
+    ])
+    .returning();
 
   const [acmePlan] = await db
     .insert(welfarePlans)
@@ -901,6 +1025,39 @@ async function seedDatabase() {
       createdAt: new Date("2026-04-04T19:12:00Z"),
     })
     .returning();
+
+  // --- Vendite demo Filiera Corta KM 0 (i conteggi cestini sono già in local_products.baskets_sold) ---
+  const km0Sales = [
+    { userId: luigi.id, venueId: ortoSanMarcello.id, inviteId: luigiInvite.id, product: insertedLocalProducts[0], qty: 4, when: "2026-09-12T10:30:00Z" },
+    { userId: mario.id, venueId: ortoSanMarcello.id, inviteId: null, product: insertedLocalProducts[1], qty: 2, when: "2026-10-05T15:45:00Z" },
+    { userId: luigi.id, venueId: frantoioColline.id, inviteId: luigiInvite.id, product: insertedLocalProducts[2], qty: 6, when: "2026-09-28T09:20:00Z" },
+    { userId: sofia.id, venueId: frantoioColline.id, inviteId: null, product: insertedLocalProducts[3], qty: 3, when: "2026-10-18T11:05:00Z" },
+    { userId: mario.id, venueId: cantinaBorgo.id, inviteId: null, product: insertedLocalProducts[4], qty: 5, when: "2026-10-02T17:40:00Z" },
+    { userId: luigi.id, venueId: cantinaBorgo.id, inviteId: luigiInvite.id, product: insertedLocalProducts[5], qty: 2, when: "2026-10-21T12:15:00Z" },
+  ];
+  for (const sale of km0Sales) {
+    const discountBps = sale.venueId === cantinaBorgo.id ? 1200 : 1000;
+    const listPriceCents = sale.product.priceCents * sale.qty;
+    const discountCents = Math.round((listPriceCents * discountBps) / 10000);
+    await db.insert(transactions).values({
+      kind: "consumer_payment",
+      status: "receipted",
+      userId: sale.userId,
+      venueId: sale.venueId,
+      inviteId: sale.inviteId,
+      amountCents: listPriceCents - discountCents,
+      discountCents,
+      listPriceCents,
+      serviceLabel: `Cesto KM 0 · ${sale.product.name} × ${sale.qty} · initiative Welfare & KM 0`,
+      paymentStatus: "settled",
+      commissionBps: 0,
+      commissionCents: 0,
+      providerNetCents: listPriceCents - discountCents,
+      paymentSettledAt: new Date(sale.when),
+      idempotencyKey: `km0-seed:${sale.product.id}:${sale.qty}`,
+      createdAt: new Date(sale.when),
+    });
+  }
 
   await db.insert(notifications).values([
     {

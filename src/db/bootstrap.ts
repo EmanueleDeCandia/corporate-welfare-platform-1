@@ -1,4 +1,4 @@
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export const BOOTSTRAP_SQL = `
 CREATE TABLE IF NOT EXISTS companies (
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS venues (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   slug TEXT NOT NULL UNIQUE,
-  type TEXT NOT NULL CHECK (type IN ('hotel','agriturismo','restaurant','theater','show_venue')),
+  type TEXT NOT NULL CHECK (type IN ('hotel','agriturismo','restaurant','theater','show_venue','producer')),
   destination_id INTEGER NOT NULL REFERENCES destinations(id),
   city TEXT NOT NULL,
   province TEXT NOT NULL,
@@ -241,6 +241,44 @@ CREATE TABLE IF NOT EXISTS transactions (
   created_at INTEGER NOT NULL DEFAULT (unixepoch()),
   CHECK (commission_cents + provider_net_cents = amount_cents)
 );
+
+CREATE TABLE IF NOT EXISTS local_producers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  venue_id INTEGER NOT NULL UNIQUE REFERENCES venues(id),
+  discount_bps INTEGER NOT NULL DEFAULT 1000 CHECK (discount_bps BETWEEN 0 AND 10000),
+  initiative TEXT NOT NULL DEFAULT 'Welfare & KM 0 — Gruppo Illiria e Startup RADICI',
+  created_at INTEGER NOT NULL DEFAULT (unixepoch())
+);
+
+CREATE TABLE IF NOT EXISTS local_products (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  producer_id INTEGER NOT NULL REFERENCES local_producers(id),
+  name TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  price_cents INTEGER NOT NULL DEFAULT 4000 CHECK (price_cents BETWEEN 3000 AND 6000),
+  km_avoided INTEGER NOT NULL DEFAULT 50 CHECK (km_avoided BETWEEN 30 AND 70),
+  baskets_sold INTEGER NOT NULL DEFAULT 0 CHECK (baskets_sold >= 0),
+  active INTEGER NOT NULL DEFAULT 1,
+  created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+  UNIQUE (producer_id, name)
+);
+
+CREATE INDEX IF NOT EXISTS ix_local_product_producer ON local_products(producer_id);
+
+-- Statistiche della filiera corta calcolate lato server:
+-- cestini venduti, km evitati totali, CO2 evitata (0,300 kg * km) e volume vendite.
+CREATE VIEW IF NOT EXISTS v_local_producer_stats AS
+SELECT
+  lp.id AS producer_id,
+  lp.venue_id,
+  lp.discount_bps,
+  COALESCE(SUM(p.baskets_sold), 0) AS baskets_sold,
+  COALESCE(SUM(p.baskets_sold * p.km_avoided), 0) AS km_avoided_total,
+  ROUND(0.300 * COALESCE(SUM(p.baskets_sold * p.km_avoided), 0), 3) AS co2_avoided_kg,
+  COALESCE(SUM(p.baskets_sold * p.price_cents), 0) AS volume_cents
+FROM local_producers lp
+LEFT JOIN local_products p ON p.producer_id = lp.id
+GROUP BY lp.id;
 
 CREATE TABLE IF NOT EXISTS notifications (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -438,6 +476,7 @@ GROUP BY vn.id;
 
 export const DROP_ALL_SQL = `
 PRAGMA foreign_keys = OFF;
+DROP VIEW IF EXISTS v_local_producer_stats;
 DROP VIEW IF EXISTS v_venue_offer_filter;
 DROP VIEW IF EXISTS v_event_seats;
 DROP VIEW IF EXISTS v_grant_pipeline;

@@ -20,7 +20,7 @@ export type GrantStatus =
   | "no_show";
 export type GrantEventCategory = "teatro" | "musica" | "arte_cultura" | "natura_laboratorio";
 export type HolderRole = "employee" | "companion";
-export type VenueType = "hotel" | "agriturismo" | "restaurant" | "theater" | "show_venue";
+export type VenueType = "hotel" | "agriturismo" | "restaurant" | "theater" | "show_venue" | "producer";
 
 export const companies = sqliteTable("companies", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -390,6 +390,42 @@ export const transactions = sqliteTable(
   }),
 );
 
+export const localProducers = sqliteTable("local_producers", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  venueId: integer("venue_id")
+    .notNull()
+    .unique()
+    .references(() => venues.id),
+  /** Sconto variabile dell'iniziativa "Welfare & KM 0" (default 10% = 1000 bps), applicato a TUTTI gli acquirenti. */
+  discountBps: integer("discount_bps").notNull().default(1000),
+  initiative: text("initiative").notNull().default("Welfare & KM 0 — Gruppo Illiria e Startup RADICI"),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+export const localProducts = sqliteTable(
+  "local_products",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    producerId: integer("producer_id")
+      .notNull()
+      .references(() => localProducers.id),
+    name: text("name").notNull(),
+    description: text("description").notNull().default(""),
+    /** Prezzo del cesto: da 30 € a 60 € (default 40 €). */
+    priceCents: integer("price_cents").notNull().default(4000),
+    /** Km di percorso evitati per ogni cesto venduto: da 30 a 70 km (default 50). */
+    kmAvoided: integer("km_avoided").notNull().default(50),
+    basketsSold: integer("baskets_sold").notNull().default(0),
+    active: integer("active", { mode: "boolean" }).notNull().default(true),
+  },
+  (table) => ({
+    uxLocalProduct: uniqueIndex("ux_local_product").on(table.producerId, table.name),
+    ixLocalProductProducer: index("ix_local_product_producer").on(table.producerId),
+  }),
+);
+
 export const notifications = sqliteTable(
   "notifications",
   {
@@ -504,12 +540,14 @@ export const auditLog = sqliteTable("audit_log", {
     .$defaultFn(() => new Date()),
 });
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 export type Company = typeof companies.$inferSelect;
 export type Destination = typeof destinations.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type Venue = typeof venues.$inferSelect;
+export type LocalProducer = typeof localProducers.$inferSelect;
+export type LocalProduct = typeof localProducts.$inferSelect;
 export type WelfarePlan = typeof welfarePlans.$inferSelect;
 export type PlanExtraAllocation = typeof planExtraAllocations.$inferSelect;
 export type VenueOffering = typeof venueOfferings.$inferSelect;

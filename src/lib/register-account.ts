@@ -1,6 +1,7 @@
 import { sqlite } from "@/db";
 import type { UserRole } from "@/db/schema";
 import type { RegisterableRole } from "@/lib/register-types";
+import { DEFAULT_BASKET_PRICE_CENTS, DEFAULT_DISCOUNT_BPS, DEFAULT_KM_AVOIDED, createLocalProducer } from "@/lib/local-producers";
 import { WelfareError, getActivePlan, issueBaseVouchers } from "@/lib/welfare";
 import { badgeForPoints, hashPassword, randomCode, unixSeconds } from "@/lib/utils";
 
@@ -138,7 +139,7 @@ function isExpired(value: number | null | undefined) {
   return ms < Date.now();
 }
 
-export function registerAccount(input: {
+export async function registerAccount(input: {
   firstName: string;
   lastName: string;
   email: string;
@@ -153,10 +154,16 @@ export function registerAccount(input: {
   venueName?: string;
   venueType?: string;
   destinationId?: number;
+  productName?: string;
+  priceCents?: number;
+  kmAvoided?: number;
+  discountBps?: number;
 }) {
   const passwordHash = hashPassword(input.password);
+  // Il ruolo "producer" (Produttore Locale KM 0) crea un utente provider collegato a una venue "producer".
+  const effectiveRole: UserRole = input.role === "producer" ? "provider" : (input.role as UserRole);
   try {
-    return sqlite.transaction(() => {
+    const created = sqlite.transaction(() => {
     const existing = sqlite.prepare(`SELECT id FROM users WHERE email = ?`).get(input.email) as { id: number } | undefined;
     if (existing) throw new WelfareError("Esiste già un account con questa email.", 409);
 
@@ -210,7 +217,7 @@ export function registerAccount(input: {
       passwordHash,
       firstName: input.firstName,
       lastName: input.lastName,
-      role: input.role,
+      role: effectiveRole,
       companyId,
       venueId,
       invitedByUserId: input.role === "friend" ? invitedBy : null,
@@ -222,7 +229,7 @@ export function registerAccount(input: {
       sqlite.prepare(`UPDATE companies SET employees_count = employees_count + 1 WHERE id = ?`).run(companyId);
     }
 
-    if (input.role === "provider") {
+    if (input.role === "provider" && !venueId) {
       if (venueId) {
         sqlite.prepare(`UPDATE venues SET provider_user_id = ? WHERE id = ?`).run(userId, venueId);
         sqlite.prepare(`UPDATE users SET venue_id = ? WHERE id = ?`).run(venueId, userId);
@@ -248,8 +255,29 @@ export function registerAccount(input: {
         .run(userId, unixSeconds(), invite.id);
     }
 
-    return { userId, role: input.role as UserRole };
+    return { userId, role: effectiveRole };
   })();
+
+  // Produttore Locale KM 0: crea la venue "producer" + local_producers + primo cesto (prezzo 30–60 €, km 30–70).
+  if (input.role === "producer") {
+    const name = input.venueName?.trim();
+    const destinationId = Number(input.destinationId);
+    if (!name || !destinationId) throw new WelfareError("Indica il nome del produttore locale e la destinazione.");
+    const { venue } = await createLocalProducer({
+      name,
+      city: input.city,
+      destinationId,
+      productName: input.productName,
+      priceCents: input.priceCents ?? DEFAULT_BASKET_PRICE_CENTS,
+      kmAvoided: input.kmAvoided ?? DEFAULT_KM_AVOIDED,
+      discountBps: input.discountBps ?? DEFAULT_DISCOUNT_BPS,
+      description: input.venueName ? undefined : undefined,
+    });
+    sqlite.prepare(`UPDATE venues SET provider_user_id = ? WHERE id = ?`).run(created.userId, venue.id);
+    sqlite.prepare(`UPDATE users SET venue_id = ? WHERE id = ?`).run(venue.id, created.userId);
+  }
+
+  return created;
   } catch (error) {
     if (error instanceof WelfareError) throw error;
     const message = error instanceof Error ? error.message : "";

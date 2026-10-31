@@ -34,6 +34,10 @@ export async function POST(request: Request) {
     venueName?: string;
     venueType?: string;
     destinationId?: number | string;
+    productName?: string;
+    priceCents?: number | string;
+    kmAvoided?: number | string;
+    discountBps?: number | string;
   };
 
   const firstName = body.firstName?.trim();
@@ -55,7 +59,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const created = registerAccount({
+    const created = await registerAccount({
       firstName,
       lastName,
       email,
@@ -70,6 +74,10 @@ export async function POST(request: Request) {
       venueName: body.venueName,
       venueType: body.venueType,
       destinationId: optionalId(body.destinationId),
+      productName: body.productName,
+      priceCents: optionalId(body.priceCents),
+      kmAvoided: optionalId(body.kmAvoided),
+      discountBps: optionalId(body.discountBps),
     });
 
     const { token, expiresAt } = await createSession(created.userId);

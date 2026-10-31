@@ -23,7 +23,7 @@ export async function SiteHeader({ dark = false }: { dark?: boolean }) {
             Destinazioni
           </Link>
           <Link href={href("/strutture")} className="hover:text-forest">
-            Strutture
+            Strutture e Tipicità KM 0
           </Link>
           <Link href={href("/imprese")} className="hover:text-forest">
             Imprese

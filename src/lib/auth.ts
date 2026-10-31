@@ -24,7 +24,7 @@ export async function sessionCookieOptions() {
 }
 
 export function defaultPathForRole(role: string) {
-  if (role === "provider") return "/fornitore";
+  if (role === "provider" || role === "producer") return "/fornitore";
   if (role === "csr") return "/azienda";
   if (role === "promoter" || role === "admin") return "/promotori";
   return "/account";

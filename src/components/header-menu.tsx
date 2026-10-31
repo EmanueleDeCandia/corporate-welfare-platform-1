@@ -80,7 +80,7 @@ export function HeaderMenu({ sessionToken = "", user }: Props) {
               Destinazioni
             </Link>
             <Link href={href("/strutture")} onClick={() => setOpen(false)}>
-              Strutture
+              Strutture e Tipicità KM 0
             </Link>
             <Link href={href("/imprese")} onClick={() => setOpen(false)}>
               Imprese ESG

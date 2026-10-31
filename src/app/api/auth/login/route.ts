@@ -20,7 +20,7 @@ function redirectForRole(role: string, next?: string | null) {
   const safe = safeNextPath(next);
   if (!safe) return fallback;
   if (role === "csr" && safe.startsWith("/azienda")) return safe;
-  if (role === "provider" && safe.startsWith("/fornitore")) return safe;
+  if ((role === "provider" || role === "producer") && safe.startsWith("/fornitore")) return safe;
   if ((role === "promoter" || role === "admin") && safe.startsWith("/promotori")) return safe;
   if (
     (role === "employee" || role === "friend") &&
