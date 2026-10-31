@@ -63,7 +63,6 @@ function PromotersDashboardReady({ data }: { data: PromoterDashboardData }) {
             ["companies", `Aziende (${data.companies.length})`],
             ["providers", `Fornitori (${data.providers.length})`],
             ["producers", `Produttori KM 0 (${data.localProducers.length})`],
-            ["producers", `Produttori KM 0 (${data.localProducers.length})`],
             ["vouchers", "Voucher e presenze"],
             ["grants", `Matching Grant (${data.grants.length})`],
           ] as const
@@ -209,6 +208,10 @@ function PromotersDashboardReady({ data }: { data: PromoterDashboardData }) {
             </tbody>
           </table>
         </section>
+      )}
+
+      {activeTab === "producers" && (
+        <LocalProducersPanel producers={data.localProducers} destinations={data.destinations} />
       )}
 
       {activeTab === "vouchers" && (
