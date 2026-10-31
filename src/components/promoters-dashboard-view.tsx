@@ -34,20 +34,23 @@ function PromotersDashboardReady({ data }: { data: PromoterDashboardData }) {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[32px] bg-forest p-6 text-cream shadow-sm md:p-8">
-        <div className="inline-flex items-center gap-2 rounded-full bg-gold/20 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-gold">
+      <section className="overflow-hidden rounded-2xl bg-white">
+        <img src="/images/abstract-blur.jpg" alt="" className="h-36 w-full object-cover" />
+        <div className="p-6 md:p-8">
+        <div className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-olive">
           <Sparkles size={14} /> Control Room Startup RADICI
         </div>
         <h1 className="mt-3 font-serif text-3xl md:text-5xl">Intermediario tecnologico dell&apos;ecosistema</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-cream/80">
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-olive">
           Chiara, qui vedi il volume transato, le fee maturate, i pagamenti impresa → fornitore e i
           flussi voucher. RADICI non emette fatture: genera il prospetto, traccia estremi e saldo.
         </p>
-        <div className="mt-8 grid grid-cols-2 gap-4 border-t border-cream/15 pt-6 lg:grid-cols-4">
+        <div className="mt-8 grid grid-cols-2 gap-4 border-t border-forest/10 pt-6 lg:grid-cols-4">
           <Stat label="Volume welfare (GMV)" value={formatEuro(e.gmvCents)} hint="Selezioni intermediante" />
           <Stat label="Commissioni RADICI" value={formatEuro(e.commissionCents)} hint="Fee sul volume transato" />
           <Stat label="In attesa di saldo" value={formatEuro(e.pendingCents)} hint={`${e.pendingCount} documenti`} />
           <Stat label="Saldati" value={formatEuro(e.settledCents)} hint={`${e.settledCount} pagati`} />
+        </div>
         </div>
       </section>
 
@@ -382,12 +385,12 @@ function LedgerTable({ rows, canSettle }: { rows: PromoterLedgerRow[]; canSettle
 
 function Stat({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
-    <div className="rounded-2xl bg-white/5 p-4">
-      <p className="text-xs uppercase tracking-wider text-cream/70">{label}</p>
-      <p className="mt-2 font-serif text-2xl text-cream md:text-3xl" suppressHydrationWarning>
+    <div className="rounded-2xl bg-mist p-4">
+      <p className="text-xs uppercase tracking-wider text-olive">{label}</p>
+      <p className="mt-2 font-serif text-2xl text-forest md:text-3xl" suppressHydrationWarning>
         {value}
       </p>
-      <span className="mt-1 block text-[11px] text-cream/60">{hint}</span>
+      <span className="mt-1 block text-[11px] text-olive">{hint}</span>
     </div>
   );
 }

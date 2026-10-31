@@ -26,10 +26,13 @@ export default async function ExplorePage({
 
   return (
     <PublicShell>
-      <main className="mx-auto max-w-7xl px-4 py-10 md:px-6">
-        <p className="text-xs uppercase tracking-[0.18em] text-olive">Portale pubblico</p>
-        <h1 className="mt-2 font-serif text-5xl text-forest">Esplora la destinazione</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-ink/75">
+      <section className="overflow-hidden">
+        <img src="/images/langhe.jpg" alt="" className="h-44 w-full object-cover md:h-56" />
+      </section>
+      <main className="mx-auto max-w-6xl px-4 py-12 md:px-6">
+        <p className="text-[11px] uppercase tracking-[0.18em] text-olive">Portale pubblico</p>
+        <h1 className="mt-3 font-serif text-4xl text-forest md:text-5xl">Esplora la destinazione</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-olive">
           Mappa e geolocalizzazione dei territori turistici divisi per macro-aree. Filtra hotel
           partner, agriturismi gusto, teatri ed esperienze a tavola.
         </p>

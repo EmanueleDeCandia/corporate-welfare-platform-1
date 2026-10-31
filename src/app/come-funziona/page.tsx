@@ -1,19 +1,35 @@
 import Link from "next/link";
 import { PublicShell } from "@/components/public-shell";
+import { FlowDiagram } from "@/components/duna-diagrams";
 
 export default function HowItWorksPage() {
   return (
     <PublicShell>
-      <main className="mx-auto max-w-5xl px-4 py-12 md:px-6">
-        <p className="text-xs uppercase tracking-[0.18em] text-olive">Modello RADICI</p>
-        <h1 className="mt-2 font-serif text-5xl text-forest">Come funziona l&apos;ecosistema</h1>
-        <p className="mt-4 max-w-3xl text-base leading-7 text-ink/80">
-          Un circolo virtuoso: l&apos;impresa fa welfare, il dipendente scopre il territorio, la
-          community si allarga agli amici che pagano di tasca propria e i fornitori aumentano il
-          fatturato B2B e B2C.
+      <section className="overflow-hidden">
+        <img src="/images/hero.jpg" alt="" className="h-48 w-full object-cover md:h-64" />
+      </section>
+      <main className="mx-auto max-w-5xl px-4 py-16 md:px-6">
+        <p className="text-[11px] uppercase tracking-[0.18em] text-olive">Modello RADICI</p>
+        <h1 className="mt-3 max-w-3xl font-serif text-4xl leading-tight text-forest md:text-5xl">
+          Come funziona l&apos;ecosistema
+        </h1>
+        <p className="mt-4 max-w-2xl text-[15px] leading-7 text-olive">
+          Un circolo: l&apos;impresa fa welfare, il dipendente scopre il territorio, gli amici pagano di
+          tasca propria e i fornitori aumentano il fatturato B2B e B2C.
         </p>
 
-        <ol className="mt-10 space-y-5">
+        <div className="relative mt-12 overflow-hidden rounded-[28px]">
+          <img
+            src="/images/abstract-blur.jpg"
+            alt=""
+            className="absolute inset-0 h-full w-full scale-110 object-cover blur-[1px]"
+          />
+          <div className="relative py-16">
+            <FlowDiagram />
+          </div>
+        </div>
+
+        <ol className="mt-12 space-y-4">
           {[
             {
               title: "L'impresa attiva il piano",
@@ -21,7 +37,7 @@ export default function HowItWorksPage() {
             },
             {
               title: "Il dipendente seleziona data e struttura",
-              text: "Sceglie offerta, data e struttura. Un pernottamento e una cena a testa. Extra solo a ridosso della scadenza, se resta circa il 20% inutilizzato, fino al 20% di quei residui e solo a chi ha già usato i propri.",
+              text: "Sceglie offerta, data e struttura. Extra solo a ridosso della scadenza, se resta circa il 20% inutilizzato, fino al 20% di quei residui e solo a chi ha già usato i propri.",
             },
             {
               title: "Matching Grant dopo il pernottamento",
@@ -40,18 +56,18 @@ export default function HowItWorksPage() {
               text: "Alla selezione nasce il prospetto (committente, importo, Art. 51 TUIR). Il fornitore emette la fattura nel proprio gestionale e su RADICI inserisce solo numero e data, poi lo stato Da saldare → Saldato. Fee: 20% sul pernottamento, 60% sulla cena.",
             },
           ].map((step, index) => (
-            <li key={step.title} className="rounded-[28px] bg-white p-6">
-              <p className="text-xs uppercase tracking-[0.16em] text-gold">0{index + 1}</p>
-              <h2 className="mt-2 font-serif text-3xl text-forest">{step.title}</h2>
-              <p className="mt-2 text-sm leading-6 text-ink/75">{step.text}</p>
+            <li key={step.title} className="rounded-2xl bg-white p-6 md:p-8">
+              <p className="text-[11px] uppercase tracking-[0.16em] text-olive">0{index + 1}</p>
+              <h2 className="mt-2 font-serif text-2xl text-forest md:text-3xl">{step.title}</h2>
+              <p className="mt-2 text-sm leading-6 text-olive">{step.text}</p>
             </li>
           ))}
         </ol>
 
-        <div className="mt-10 rounded-[28px] bg-cream p-6">
+        <div className="mt-10 rounded-2xl bg-mist/70 p-6 md:p-8">
           <h2 className="font-serif text-2xl text-forest">Account demo</h2>
           <p className="mt-2 text-sm text-olive">Password unica: radici2026</p>
-          <ul className="mt-3 space-y-1 text-sm">
+          <ul className="mt-3 space-y-1 text-sm text-forest">
             <li>mario.rossi@acme.it — dipendente ACME</li>
             <li>luca.bianchi@acme.it — dipendente ACME</li>
             <li>luigi.bianchi@email.it — amico / consumer</li>

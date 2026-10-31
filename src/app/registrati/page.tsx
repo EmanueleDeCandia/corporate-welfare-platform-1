@@ -21,12 +21,12 @@ export default async function RegisterPage({
   return (
     <PublicShell>
       <main className="mx-auto max-w-xl px-4 py-12 md:px-6">
-        <section className="rounded-[32px] bg-white p-6 md:p-8">
+        <section className="rounded-2xl bg-white p-6 md:p-8">
           {record ? (
             <>
-              <p className="text-xs uppercase tracking-[0.18em] text-olive">Account amico / consumer</p>
+              <p className="text-[11px] uppercase tracking-[0.18em] text-olive">Account amico / consumer</p>
               <h1 className="mt-2 font-serif text-4xl text-forest">Entra nel circuito pay-local</h1>
-              <p className="mt-3 text-sm leading-6 text-ink/75">
+              <p className="mt-3 text-sm leading-6 text-olive">
                 Niente voucher aziendali: paghi i servizi locali con la tua carta e ottieni un
                 micro-sconto. Chi ti ha invitato riceve Punti Impatto.
               </p>
@@ -35,7 +35,7 @@ export default async function RegisterPage({
             <>
               <p className="text-xs uppercase tracking-[0.18em] text-olive">Nuovo account RADICI</p>
               <h1 className="mt-2 font-serif text-4xl text-forest">Crea il tuo profilo</h1>
-              <p className="mt-3 text-sm leading-6 text-ink/75">
+              <p className="mt-3 text-sm leading-6 text-olive">
                 Scegli il ruolo: nasce un utente distinto nel database, con le funzioni già previste
                 per dipendente, amico, CSR, fornitore o promotore.
               </p>

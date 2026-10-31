@@ -66,7 +66,9 @@ export function CompanyDashboardView({ data, tab }: Props) {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[32px] bg-forest p-6 text-cream md:p-8">
+      <section className="overflow-hidden rounded-2xl bg-white">
+        <img src="/images/abstract-blur.jpg" alt="" className="h-36 w-full object-cover" />
+        <div className="p-6 md:p-8">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <span className="grid h-16 w-16 place-items-center rounded-2xl text-xl font-bold" style={{ background: company.accent }}>
@@ -75,15 +77,15 @@ export function CompanyDashboardView({ data, tab }: Props) {
             <div>
               <span className="rounded-full bg-gold/20 px-3 py-0.5 text-xs font-semibold text-gold">Area Impresa · CSR & Welfare</span>
               <h1 className="mt-1 font-serif text-3xl md:text-4xl">{company.name}</h1>
-              <p className="text-xs text-cream/80">Budget virtuale fino alla selezione. Poi l&apos;impresa paga anche in caso di no-show.</p>
+              <p className="text-xs text-olive">Budget virtuale fino alla selezione. Poi l&apos;impresa paga anche in caso di no-show.</p>
             </div>
           </div>
-          <div className="rounded-2xl bg-white/10 px-4 py-3 text-right">
-            <p className="text-[11px] uppercase tracking-wider text-gold">Rating ESG</p>
+          <div className="rounded-2xl bg-mist px-4 py-3 text-right">
+            <p className="text-[11px] uppercase tracking-wider text-olive">Rating ESG</p>
             <p className="font-serif text-3xl">{company.impactRating}/100</p>
           </div>
         </div>
-        <div className="mt-8 flex gap-2 overflow-x-auto border-t border-white/15 pt-4">
+        <div className="mt-8 flex gap-2 overflow-x-auto border-t border-forest/10 pt-4">
           {(
             [
               ["overview", "Quadro e plafond"],
@@ -95,13 +97,14 @@ export function CompanyDashboardView({ data, tab }: Props) {
             <Link
               key={id}
               href={id === "overview" ? "/azienda" : `/azienda?tab=${id}`}
-              className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wider ${
-                activeTab === id ? "bg-cream text-forest" : "bg-white/10 text-cream"
+              className={`rounded-full px-4 py-2 text-xs font-medium ${
+                activeTab === id ? "bg-forest text-cream" : "bg-mist text-forest"
               }`}
             >
               {label}
             </Link>
           ))}
+        </div>
         </div>
       </section>
 

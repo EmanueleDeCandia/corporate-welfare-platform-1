@@ -112,7 +112,7 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded-2xl bg-forest py-3 text-sm font-medium text-cream disabled:opacity-60"
+          className="w-full rounded-full bg-forest py-3 text-sm text-cream disabled:opacity-60"
         >
           {pending ? "Accesso in corso…" : "Entra nel tuo spazio"}
         </button>
@@ -127,7 +127,7 @@ export function LoginForm() {
               type="button"
               disabled={pending}
               onClick={() => loginWith(demo.email, DEMO_PASSWORD)}
-              className="rounded-2xl border border-forest/10 px-4 py-3 text-left hover:border-gold disabled:opacity-60"
+              className="rounded-2xl border border-forest/10 px-4 py-3 text-left hover:border-forest/30 disabled:opacity-60"
             >
               <span className="block text-sm font-medium text-forest">{demo.label}</span>
               <span className="text-xs text-olive">{demo.hint}</span>

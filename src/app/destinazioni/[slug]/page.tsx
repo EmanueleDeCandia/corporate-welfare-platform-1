@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Compass, MapPin } from "lucide-react";
+import { ArrowLeft, Compass } from "lucide-react";
 import { PublicShell } from "@/components/public-shell";
 import { VenueCard } from "@/components/venue-card";
 import { getDestinationBySlug, getVenuesByDestination } from "@/lib/data";
@@ -20,44 +20,26 @@ export default async function DestinationDetailPage({
 
   return (
     <PublicShell>
-      {/* HERO DESTINATION */}
-      <section className="relative overflow-hidden bg-forest text-cream">
-        <div className="relative h-[48vh] min-h-[340px] w-full">
-          <img
-            src={destination.coverImage}
-            alt={destination.name}
-            className="h-full w-full object-cover opacity-60"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-forest via-forest/60 to-transparent" />
-        </div>
-
-        <div className="mx-auto -mt-32 max-w-7xl px-4 pb-12 relative z-10 md:px-6">
-          <Link
-            href="/destinazioni"
-            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-gold hover:text-cream transition-colors mb-4"
-          >
-            <ArrowLeft size={14} /> Tutte le destinazioni
-          </Link>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-gold border border-gold/30">
-              {destination.region}
-            </span>
-            <span className="flex items-center gap-1 text-xs text-cream/75">
-              <MapPin size={14} className="text-gold" /> {destination.highlight}
-            </span>
-          </div>
-
-          <h1 className="mt-3 font-serif text-4xl sm:text-5xl lg:text-6xl">{destination.name}</h1>
-          <p className="mt-2 text-xl font-light text-cream/90">{destination.tagline}</p>
-          <p className="mt-4 max-w-3xl text-sm leading-relaxed text-cream/80">
-            {destination.description}
-          </p>
-        </div>
+      <section className="overflow-hidden">
+        <img
+          src={destination.coverImage}
+          alt={destination.name}
+          className="h-[280px] w-full object-cover md:h-[380px]"
+        />
       </section>
 
+      <div className="mx-auto max-w-6xl px-4 pt-10 md:px-6">
+        <Link href="/destinazioni" className="inline-flex items-center gap-2 text-sm text-olive hover:text-forest">
+          <ArrowLeft size={14} /> Tutte le destinazioni
+        </Link>
+        <p className="mt-6 text-[11px] uppercase tracking-[0.16em] text-olive">{destination.region}</p>
+        <h1 className="mt-2 font-serif text-4xl sm:text-5xl">{destination.name}</h1>
+        <p className="mt-2 text-lg text-olive">{destination.tagline}</p>
+        <p className="mt-4 max-w-3xl text-sm leading-7 text-olive">{destination.description}</p>
+      </div>
+
       {/* VENUES IN THIS DESTINATION */}
-      <main className="mx-auto max-w-7xl px-4 py-12 md:px-6">
+      <main className="mx-auto max-w-6xl px-4 py-12 md:px-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-olive">

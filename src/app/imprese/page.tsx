@@ -10,10 +10,13 @@ export default async function CompaniesPage() {
 
   return (
     <PublicShell>
-      <main className="mx-auto max-w-7xl px-4 py-10 md:px-6">
-        <p className="text-xs uppercase tracking-[0.18em] text-olive">Trasparenza ESG</p>
-        <h1 className="mt-2 font-serif text-5xl text-forest">Imprese clienti illuminate</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-ink/75">
+      <section className="overflow-hidden">
+        <img src="/images/marche.jpg" alt="" className="h-48 w-full object-cover md:h-64" />
+      </section>
+      <main className="mx-auto max-w-6xl px-4 py-16 md:px-6">
+        <p className="text-[11px] uppercase tracking-[0.18em] text-olive">Trasparenza ESG</p>
+        <h1 className="mt-3 font-serif text-4xl text-forest md:text-5xl">Imprese clienti illuminate</h1>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-olive">
           Aziende che finanziano il circuito acquistando voucher per i propri dipendenti. Il rating
           di impatto sociale territoriale misura capitale ridistribuito e CO₂ evitata.
         </p>
@@ -22,7 +25,7 @@ export default async function CompaniesPage() {
             <Link
               key={company.id}
               href={`/imprese/${company.slug}`}
-              className="rounded-[28px] bg-white p-6 hover:shadow-lg"
+              className="rounded-2xl bg-white p-6"
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">

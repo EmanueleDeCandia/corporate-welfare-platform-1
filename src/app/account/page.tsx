@@ -38,7 +38,7 @@ export default async function AccountPage() {
   return (
     <PublicShell>
       <main className="mx-auto max-w-7xl px-4 py-10 md:px-6">
-        <div className="flex flex-col justify-between gap-6 rounded-[32px] bg-white p-6 md:flex-row md:items-end">
+        <div className="flex flex-col justify-between gap-6 rounded-2xl bg-white p-6 md:flex-row md:items-end">
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-olive">
               {user.role === "employee" ? "Account dipendente" : "Account amico / consumer"}

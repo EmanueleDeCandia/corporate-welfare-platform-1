@@ -147,10 +147,12 @@ function ProviderPanelReady({ venue, notifications: items, transactions: rows, s
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[28px] bg-forest p-6 text-cream md:p-8">
-        <p className="text-xs uppercase tracking-[0.18em] text-gold">Pannello fornitore</p>
+      <section className="overflow-hidden rounded-2xl bg-white">
+        <img src="/images/agriturismo-valle.jpg" alt="" className="h-36 w-full object-cover" />
+        <div className="p-6 md:p-8">
+        <p className="text-[11px] uppercase tracking-[0.18em] text-olive">Pannello fornitore</p>
         <h1 className="mt-2 font-serif text-4xl">{venue.name}</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-cream/75">
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-olive">
           RADICI ti consegna il prospetto (committente, importo, Art. 51 TUIR). Tu emetti la fattura
           nel tuo gestionale e qui inserisci solo numero e data. Poi segni se l&apos;accredito è arrivato.
         </p>
@@ -159,6 +161,7 @@ function ProviderPanelReady({ venue, notifications: items, transactions: rows, s
           <MiniStat label="Fee RADICI" value={formatEuro(totals.fee)} />
           <MiniStat label="Netto struttura" value={formatEuro(totals.net)} />
           <MiniStat label="In attesa di accredito" value={formatEuro(totals.pendingPay)} />
+        </div>
         </div>
       </section>
 
@@ -402,9 +405,9 @@ function ProviderPanelReady({ venue, notifications: items, transactions: rows, s
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-white/5 p-3">
-      <p className="text-[11px] uppercase tracking-wider text-cream/70">{label}</p>
-      <p className="mt-1 font-serif text-xl text-cream" suppressHydrationWarning>
+    <div className="rounded-2xl bg-mist p-3">
+      <p className="text-[11px] uppercase tracking-wider text-olive">{label}</p>
+      <p className="mt-1 font-serif text-xl text-forest" suppressHydrationWarning>
         {value}
       </p>
     </div>

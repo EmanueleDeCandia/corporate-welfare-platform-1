@@ -413,7 +413,7 @@ export function RegisterForm({
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-2xl bg-terracotta py-3 text-sm font-medium text-cream disabled:opacity-60"
+        className="w-full rounded-full bg-forest py-3 text-sm text-cream disabled:opacity-60"
       >
         {submitLabel}
       </button>

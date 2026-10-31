@@ -18,7 +18,7 @@ type Props = {
   } | null;
 };
 
-export function HeaderMenu({ dark, sessionToken = "", user }: Props) {
+export function HeaderMenu({ sessionToken = "", user }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const href = (path: string) => pathWithSession(path, sessionToken);
@@ -47,43 +47,30 @@ export function HeaderMenu({ dark, sessionToken = "", user }: Props) {
       {user ? (
         <Link
           href={accountHref}
-          className={`hidden items-center gap-2 rounded-full px-3 py-1.5 text-sm md:flex ${
-            dark ? "bg-white/10 text-cream" : "bg-forest text-cream"
-          }`}
+          className="hidden items-center gap-2 rounded-full bg-forest px-3.5 py-1.5 text-[13px] text-cream md:flex"
         >
-          <span className="font-medium">
+          <span>
             {user.firstName} {user.lastName}
           </span>
-          {user.role === "csr" ? (
-            <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[11px] text-gold">CSR Manager</span>
-          ) : user.role !== "provider" ? (
-            <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[11px] text-gold">
-              {user.impactPoints} pt
-            </span>
-          ) : (
-            <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[11px] text-gold">Fornitore</span>
-          )}
         </Link>
       ) : (
         <Link
           href="/login"
-          className={`hidden rounded-full px-4 py-2 text-sm font-medium md:inline-flex ${
-            dark ? "bg-cream text-forest" : "bg-forest text-cream"
-          }`}
+          className="hidden rounded-full bg-forest px-4 py-1.5 text-[13px] text-cream md:inline-flex"
         >
           Accedi
         </Link>
       )}
       <button
         type="button"
-        className={`rounded-full p-2 md:hidden ${dark ? "bg-white/10" : "bg-forest/5"}`}
+        className="rounded-full p-2 md:hidden"
         onClick={() => setOpen((value) => !value)}
         aria-label="Apri menu"
       >
         {open ? <X size={18} /> : <Menu size={18} />}
       </button>
       {open ? (
-        <div className="absolute left-0 right-0 top-full border-b border-forest/10 bg-paper p-4 text-forest shadow-xl md:hidden">
+        <div className="absolute left-0 right-0 top-full border-b border-forest/10 bg-cream p-5 text-forest md:hidden">
           <div className="flex flex-col gap-3 text-sm">
             <Link href={href("/esplora")} onClick={() => setOpen(false)}>
               Esplora
@@ -105,7 +92,7 @@ export function HeaderMenu({ dark, sessionToken = "", user }: Props) {
                 <Link href={accountHref} onClick={() => setOpen(false)}>
                   Area riservata
                 </Link>
-                <button type="button" className="text-left text-terracotta" onClick={logout}>
+                <button type="button" className="text-left text-olive" onClick={logout}>
                   Esci
                 </button>
               </>
