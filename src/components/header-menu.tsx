@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import { logoutClient } from "@/lib/session-client";
+import { apiFetch, clearClientSession } from "@/lib/session-client";
 import { pathWithSession } from "@/lib/session-cookie";
 
 type Props = {
@@ -29,9 +29,14 @@ export function HeaderMenu({ sessionToken = "", user }: Props) {
           ? href("/promotori")
           : href("/account");
 
-  function logout() {
+  async function logout() {
     setOpen(false);
-    void logoutClient();
+    try {
+      await apiFetch("/api/auth/logout", { method: "POST" });
+    } finally {
+      clearClientSession();
+      window.location.replace("/login");
+    }
   }
 
   return (

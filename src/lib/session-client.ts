@@ -88,15 +88,6 @@ export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
   });
 }
 
-export async function logoutClient() {
-  try {
-    await apiFetch("/api/auth/logout", { method: "POST" });
-  } finally {
-    clearClientSession();
-    window.location.replace("/login");
-  }
-}
-
 let fetchPatched = false;
 
 /** Runs in the browser bundle (no <script> in layout). Safe to call more than once. */
