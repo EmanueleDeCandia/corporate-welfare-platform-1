@@ -53,20 +53,32 @@ export default async function VenuesPage() {
           </section>
         ) : null}
 
-        <section className="mt-14">
-          <h2 className="font-serif text-2xl text-forest md:text-3xl">Hotel, agriturismi, ristoranti e teatri</h2>
-          <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {venues.map((row) => (
-              <VenueCard
-                key={row.venue.id}
-                venue={row.venue}
-                destination={row.destination}
-                sponsor={row.sponsor}
-                fromPriceCents={row.flags.fromPriceCents}
-              />
-            ))}
-          </div>
-        </section>
+        {(
+          [
+            { title: "Hotel e Agriturismi", types: ["hotel", "agriturismo"] },
+            { title: "Ristoranti", types: ["restaurant"] },
+            { title: "Teatri", types: ["theater"] },
+          ] as { title: string; types: string[] }[]
+        ).map((group) => {
+          const groupRows = venues.filter((row) => group.types.includes(row.venue.type));
+          if (groupRows.length === 0) return null;
+          return (
+            <section key={group.title} className="mt-14">
+              <h2 className="font-serif text-2xl text-forest md:text-3xl">{group.title}</h2>
+              <div className="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                {groupRows.map((row) => (
+                  <VenueCard
+                    key={row.venue.id}
+                    venue={row.venue}
+                    destination={row.destination}
+                    sponsor={row.sponsor}
+                    fromPriceCents={row.flags.fromPriceCents}
+                  />
+                ))}
+              </div>
+            </section>
+          );
+        })}
       </main>
     </PublicShell>
   );

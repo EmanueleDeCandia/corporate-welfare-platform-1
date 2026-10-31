@@ -34,7 +34,7 @@ export default async function DestinationsListPage() {
                     className="h-full w-full object-cover transition duration-700 group-hover:scale-[1.03]"
                   />
                 </div>
-                <div className="pt-4">
+                <div className="px-4 pb-5 pt-4">
                   <p className="text-[11px] uppercase tracking-[0.14em] text-olive">{destination.region}</p>
                   <h2 className="mt-1 font-serif text-3xl">{destination.name}</h2>
                   <p className="mt-2 text-sm text-olive">{destination.tagline}</p>
