@@ -1,40 +1,45 @@
 import { NextResponse } from "next/server";
 import { sqlite } from "@/db";
+import { DROP_ALL_SQL } from "@/db/bootstrap";
+import { getCurrentUser } from "@/lib/auth";
+import { isDemoMode } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export async function POST() {
+  const me = await getCurrentUser();
+  if (!isDemoMode()) {
+    return NextResponse.json({ error: "Reset demo disabilitato." }, { status: 403 });
+  }
+  if (!me || (me.role !== "admin" && me.role !== "promoter" && me.role !== "csr")) {
+    return NextResponse.json({ error: "Reset demo riservato a CSR, promotori o admin." }, { status: 403 });
+  }
+
   try {
-    // 1. Resetta tutti i voucher nel database a 'available'
-    // Ripristinando lo stato pulito iniziale per tutti i dipendenti di tutte le aziende
-    sqlite.exec(`
-      UPDATE vouchers
-      SET status = 'available',
-          venue_id = NULL,
-          theater_venue_id = NULL,
-          grant_event_id = NULL,
-          redeemed_at = NULL;
-    `);
-
-    // 2. Rimuovi le transazioni di riscatto simulate create durante i test
-    sqlite.exec(`
-      DELETE FROM transactions WHERE type = 'welfare_redeem';
-    `);
-
-    // 3. Ripristina lo stato di lettura delle notifiche ai fornitori
-    sqlite.exec(`
-      UPDATE notifications SET read = 0;
-    `);
-
+    sqlite.exec(DROP_ALL_SQL);
+    sqlite.pragma("foreign_keys = ON");
+    const { BOOTSTRAP_SQL, SCHEMA_VERSION } = await import("@/db/bootstrap");
+    sqlite.exec(BOOTSTRAP_SQL);
+    sqlite
+      .prepare(
+        "INSERT INTO app_settings (key, value_json) VALUES ('schema_version', ?) ON CONFLICT(key) DO UPDATE SET value_json = excluded.value_json",
+      )
+      .run(JSON.stringify(SCHEMA_VERSION));
+    const { ensureSeeded, resetSeedCache } = await import("@/db/seed");
+    resetSeedCache();
+    await ensureSeeded();
+    sqlite
+      .prepare(
+        `INSERT INTO audit_log (actor_user_id, action, entity, entity_id, data_json, created_at)
+         VALUES (?, 'demo.reset', 'database', 'radici', '{}', unixepoch())`,
+      )
+      .run(me.id);
     return NextResponse.json({
       success: true,
-      message: "Database globale ripristinato con successo: tutti i voucher di tutti i dipendenti sono ora disponibili e pronti per nuovi test.",
+      message: "Dati demo ripristinati. Piani, voucher e selezioni sono tornati allo stato iniziale.",
     });
   } catch (error) {
     console.error("Global reset error:", error);
-    return NextResponse.json(
-      { error: "Errore durante il ripristino globale dei dati." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Errore durante il ripristino dei dati demo." }, { status: 500 });
   }
 }

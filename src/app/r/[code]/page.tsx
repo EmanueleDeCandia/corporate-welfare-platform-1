@@ -6,7 +6,7 @@ import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { formatEuro, venueTypeLabel } from "@/lib/utils";
-import { Sparkles, Utensils, Bed, Ticket, ArrowRight, ShieldCheck } from "lucide-react";
+import { Sparkles, Utensils, Bed, ArrowRight, ShieldCheck } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -38,8 +38,8 @@ export default async function ReferralLandingPage({
           </h1>
 
           <p className="mt-3 text-sm md:text-base leading-7 text-ink/80">
-            Questo invito personale ti dà diritto al <strong>10% di sconto immediato</strong> su soggiorni,
-            cene contadine e rassegne teatrali nel circuito montano marchigiano.
+            Questo invito personale ti dà diritto al <strong>10% di sconto immediato</strong> su soggiorni
+            e cene contadine nel circuito montano marchigiano.
             Non consumi alcun buono welfare: paghi in autonomia con la tua carta beneficiando della convenzione.
           </p>
 
@@ -66,10 +66,11 @@ export default async function ReferralLandingPage({
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            {venues.slice(0, 6).map(({ venue, destination }) => {
-              const hasHotel = venue.priceHotelCents > 0;
-              const hasAperitivo = venue.priceAperitivoCents > 0;
-              const hasShow = venue.priceShowCents > 0;
+            {venues.slice(0, 6).map(({ venue, destination, offerings }) => {
+              const overnight = offerings.find((item) => item.benefitType === "overnight" && item.active);
+              const dinner = offerings.find((item) => item.benefitType === "dinner" && item.active);
+              const hasHotel = Boolean(overnight);
+              const hasAperitivo = Boolean(dinner);
 
               return (
                 <div
@@ -95,8 +96,8 @@ export default async function ReferralLandingPage({
                             <Bed size={14} /> Pernottamento:
                           </span>
                           <span>
-                            <span className="line-through text-olive/60 mr-1.5">{formatEuro(venue.priceHotelCents)}</span>
-                            <strong className="text-terracotta text-sm">{formatEuro(Math.round(venue.priceHotelCents * 0.9))}</strong>
+                            <span className="line-through text-olive/60 mr-1.5">{formatEuro(overnight!.listPriceCents)}</span>
+                            <strong className="text-terracotta text-sm">{formatEuro(Math.round((overnight!.listPriceCents * (10000 - overnight!.friendDiscountBps)) / 10000))}</strong>
                           </span>
                         </div>
                       )}
@@ -106,22 +107,12 @@ export default async function ReferralLandingPage({
                             <Utensils size={14} /> Cena / Degustazione KM 0:
                           </span>
                           <span>
-                            <span className="line-through text-olive/60 mr-1.5">{formatEuro(venue.priceAperitivoCents)}</span>
-                            <strong className="text-terracotta text-sm">{formatEuro(Math.round(venue.priceAperitivoCents * 0.9))}</strong>
+                            <span className="line-through text-olive/60 mr-1.5">{formatEuro(dinner!.listPriceCents)}</span>
+                            <strong className="text-terracotta text-sm">{formatEuro(Math.round((dinner!.listPriceCents * (10000 - dinner!.friendDiscountBps)) / 10000))}</strong>
                           </span>
                         </div>
                       )}
-                      {hasShow && (
-                        <div className="flex items-center justify-between">
-                          <span className="text-olive flex items-center gap-1.5">
-                            <Ticket size={14} /> Biglietto Spettacolo:
-                          </span>
-                          <span>
-                            <span className="line-through text-olive/60 mr-1.5">{formatEuro(venue.priceShowCents)}</span>
-                            <strong className="text-terracotta text-sm">{formatEuro(Math.round(venue.priceShowCents * 0.9))}</strong>
-                          </span>
-                        </div>
-                      )}
+
                     </div>
                   </div>
 

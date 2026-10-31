@@ -1,62 +1,86 @@
 "use client";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { persistClientSession } from "@/lib/session-client";
+
+const DEMO_PASSWORD = "radici2026";
 
 const demos = [
   {
     email: "elena.martini@acme.it",
     label: "Elena Martini (CSR)",
-    hint: "Manager CSR · ACME S.p.A. (Rendicontazione)",
+    hint: "Manager CSR · dashboard impresa ACME",
   },
   {
     email: "mario.rossi@acme.it",
-    label: "Mario Rossi",
-    hint: "Dipendente ACME · portafoglio e referral",
+    label: "Mario Rossi (Dipendente)",
+    hint: "Portafoglio welfare · pernottamento e cena",
   },
   {
-    email: "elena@lavalle.it",
-    label: "Elena Conti",
-    hint: "Fornitore · Agriturismo La Valle",
+    email: "luca.bianchi@acme.it",
+    label: "Luca Bianchi (Dipendente)",
+    hint: "Dipendente ACME · voucher cena già selezionato",
   },
   {
     email: "luigi.bianchi@email.it",
-    label: "Luigi Bianchi",
-    hint: "Amico / consumer · pagamento locale",
+    label: "Luigi Bianchi (Amico)",
+    hint: "Consumer / amico · pagamento locale e inviti",
+  },
+  {
+    email: "elena@lavalle.it",
+    label: "Elena Conti (Fornitore)",
+    hint: "Agriturismo La Valle · presenze e fatture",
   },
   {
     email: "chiara.promotori@radici.it",
     label: "Chiara Valenti (Promotori)",
-    hint: "Startup RADICI & Promotori · Fondo Matching Grant",
+    hint: "Startup RADICI · Matching Grant",
   },
 ];
 
 export function LoginForm() {
-  const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next");
+  const next = params.get("next") ?? "";
   const [email, setEmail] = useState("mario.rossi@acme.it");
-  const [password, setPassword] = useState("radici2026");
-  const [error, setError] = useState("");
+  const [password, setPassword] = useState(DEMO_PASSWORD);
+  const [error, setError] = useState(params.get("error") ?? "");
   const [pending, setPending] = useState(false);
+
+  async function loginWith(nextEmail: string, nextPassword: string) {
+    setEmail(nextEmail);
+    setPassword(nextPassword);
+    setPending(true);
+    setError("");
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: nextEmail, password: nextPassword, next }),
+      });
+      const data = (await response.json()) as { error?: string; redirectTo?: string };
+      if (!response.ok) {
+        setError(data.error ?? "Accesso non riuscito.");
+        return;
+      }
+      const dest = data.redirectTo || "/account";
+      try {
+        const sid = new URL(dest, window.location.origin).searchParams.get("sid");
+        if (sid) persistClientSession(sid);
+      } catch {
+        /* ignore */
+      }
+      window.location.assign(dest);
+    } catch {
+      setError("Connessione non riuscita. Riprova.");
+      setPending(false);
+    }
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    setPending(true);
-    setError("");
-    const response = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = (await response.json()) as { error?: string; redirectTo?: string };
-    setPending(false);
-    if (!response.ok) {
-      setError(data.error ?? "Accesso non riuscito.");
-      return;
-    }
-    router.push(next || data.redirectTo || "/account");
-    router.refresh();
+    await loginWith(email, password);
   }
 
   return (
@@ -70,6 +94,7 @@ export function LoginForm() {
             onChange={(event) => setEmail(event.target.value)}
             className="mt-1 w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3 outline-none focus:border-gold"
             required
+            autoComplete="username"
           />
         </label>
         <label className="block text-sm">
@@ -78,6 +103,7 @@ export function LoginForm() {
             type="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
+            autoComplete="current-password"
             className="mt-1 w-full rounded-2xl border border-forest/10 bg-cream px-4 py-3 outline-none focus:border-gold"
             required
           />
@@ -86,23 +112,22 @@ export function LoginForm() {
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded-2xl bg-forest py-3 text-sm font-medium text-cream disabled:opacity-60"
+          className="w-full rounded-full bg-forest py-3 text-sm text-cream disabled:opacity-60"
         >
           {pending ? "Accesso in corso…" : "Entra nel tuo spazio"}
         </button>
       </form>
       <div>
         <p className="text-xs uppercase tracking-[0.16em] text-olive">Accessi demo · password radici2026</p>
+        <p className="mt-1 text-xs text-olive">Un clic entra nell&apos;area giusta per il ruolo.</p>
         <div className="mt-3 grid gap-2">
           {demos.map((demo) => (
             <button
               key={demo.email}
               type="button"
-              onClick={() => {
-                setEmail(demo.email);
-                setPassword("radici2026");
-              }}
-              className="rounded-2xl border border-forest/10 px-4 py-3 text-left hover:border-gold"
+              disabled={pending}
+              onClick={() => loginWith(demo.email, DEMO_PASSWORD)}
+              className="rounded-2xl border border-forest/10 px-4 py-3 text-left hover:border-forest/30 disabled:opacity-60"
             >
               <span className="block text-sm font-medium text-forest">{demo.label}</span>
               <span className="text-xs text-olive">{demo.hint}</span>

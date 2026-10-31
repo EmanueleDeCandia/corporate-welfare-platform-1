@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+import { SessionBootstrap } from "@/components/session-bootstrap";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -10,8 +11,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="it">
-      <body className="bg-cream text-forest antialiased min-h-screen selection:bg-gold/30">
+    <html lang="it" suppressHydrationWarning>
+      <body className="bg-cream text-forest antialiased min-h-screen" suppressHydrationWarning>
+        <SessionBootstrap />
         {children}
       </body>
     </html>

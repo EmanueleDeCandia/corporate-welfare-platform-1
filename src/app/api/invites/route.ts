@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { invites } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
@@ -26,6 +27,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Inserisci nome, cognome e email dell'amico." }, { status: 400 });
   }
 
+  const [existing] = await db
+    .select()
+    .from(invites)
+    .where(and(eq(invites.inviterId, me.id), eq(invites.email, email)))
+    .limit(1);
+  if (existing) {
+    return NextResponse.json({ error: "Hai già inviato un invito a questa email.", invite: existing }, { status: 409 });
+  }
+
+  const expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
   const [invite] = await db
     .insert(invites)
     .values({
@@ -35,6 +46,7 @@ export async function POST(request: Request) {
       email,
       code: randomCode("ref"),
       status: "pending",
+      expiresAt,
     })
     .returning();
 

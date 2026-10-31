@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
+import { AfterHydration } from "@/components/after-hydration";
+import { pathWithSession } from "@/lib/session-cookie";
 
 type Props = {
   dark?: boolean;
+  sessionToken?: string;
   user: {
     firstName: string;
     lastName: string;
@@ -15,72 +17,88 @@ type Props = {
   } | null;
 };
 
-export function HeaderMenu({ dark, user }: Props) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const accountHref = user?.role === "provider" ? "/fornitore" : user?.role === "csr" ? "/azienda" : "/account";
+function leaveSession() {
+  void (async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } finally {
+      try {
+        window.sessionStorage.setItem("radici_logged_out", "1");
+        window.sessionStorage.removeItem("radici_session");
+        window.localStorage.removeItem("radici_session");
+      } catch {
+        /* ignore */
+      }
+      document.cookie = "radici_session=; Path=/; Max-Age=0; SameSite=Lax";
+      window.location.replace("/login");
+    }
+  })();
+}
 
-  async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    setOpen(false);
-    router.push("/");
-    router.refresh();
-  }
+export function HeaderMenu({ sessionToken = "", user }: Props) {
+  const [open, setOpen] = useState(false);
+  const href = (path: string) => pathWithSession(path, sessionToken);
+  const accountHref =
+    user?.role === "provider"
+      ? href("/fornitore")
+      : user?.role === "csr"
+        ? href("/azienda")
+        : user?.role === "promoter" || user?.role === "admin"
+          ? href("/promotori")
+          : href("/account");
 
   return (
     <div className="flex items-center gap-2">
-      {user ? (
-        <Link
-          href={accountHref}
-          className={`hidden items-center gap-2 rounded-full px-3 py-1.5 text-sm md:flex ${
-            dark ? "bg-white/10 text-cream" : "bg-forest text-cream"
-          }`}
-        >
-          <span className="font-medium">
-            {user.firstName} {user.lastName}
-          </span>
-          {user.role === "csr" ? (<span className="rounded-full bg-gold/20 px-2 py-0.5 text-[11px] text-gold">CSR Manager</span>) : user.role !== "provider" ? (
-            <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[11px] text-gold">
-              {user.impactPoints} pt
-            </span>
-          ) : (
-            <span className="rounded-full bg-gold/20 px-2 py-0.5 text-[11px] text-gold">Fornitore</span>
-          )}
-        </Link>
-      ) : (
-        <Link
-          href="/login"
-          className={`hidden rounded-full px-4 py-2 text-sm font-medium md:inline-flex ${
-            dark ? "bg-cream text-forest" : "bg-forest text-cream"
-          }`}
-        >
-          Accedi
-        </Link>
-      )}
+      <AfterHydration fallback={null}>
+        {user ? (
+          <>
+            <Link
+              href={accountHref}
+              className="hidden items-center gap-2 rounded-full bg-forest px-3.5 py-1.5 text-[13px] text-cream md:flex"
+            >
+              {user.firstName} {user.lastName}
+            </Link>
+            <button
+              type="button"
+              onClick={leaveSession}
+              className="hidden rounded-full border border-forest/15 px-3 py-1.5 text-[13px] text-olive hover:text-forest md:inline-flex"
+            >
+              Esci
+            </button>
+          </>
+        ) : (
+          <Link
+            href="/login"
+            className="hidden rounded-full bg-forest px-4 py-1.5 text-[13px] text-cream md:inline-flex"
+          >
+            Accedi
+          </Link>
+        )}
+      </AfterHydration>
       <button
         type="button"
-        className={`rounded-full p-2 md:hidden ${dark ? "bg-white/10" : "bg-forest/5"}`}
+        className="rounded-full p-2 md:hidden"
         onClick={() => setOpen((value) => !value)}
         aria-label="Apri menu"
       >
         {open ? <X size={18} /> : <Menu size={18} />}
       </button>
       {open ? (
-        <div className="absolute left-0 right-0 top-full border-b border-forest/10 bg-paper p-4 text-forest shadow-xl md:hidden">
+        <div className="absolute left-0 right-0 top-full border-b border-forest/10 bg-cream p-5 text-forest md:hidden">
           <div className="flex flex-col gap-3 text-sm">
-            <Link href="/esplora" onClick={() => setOpen(false)}>
+            <Link href={href("/esplora")} onClick={() => setOpen(false)}>
               Esplora
             </Link>
-            <Link href="/destinazioni" onClick={() => setOpen(false)}>
+            <Link href={href("/destinazioni")} onClick={() => setOpen(false)}>
               Destinazioni
             </Link>
-            <Link href="/strutture" onClick={() => setOpen(false)}>
+            <Link href={href("/strutture")} onClick={() => setOpen(false)}>
               Strutture
             </Link>
-            <Link href="/imprese" onClick={() => setOpen(false)}>
+            <Link href={href("/imprese")} onClick={() => setOpen(false)}>
               Imprese ESG
             </Link>
-            <Link href="/come-funziona" onClick={() => setOpen(false)}>
+            <Link href={href("/come-funziona")} onClick={() => setOpen(false)}>
               Come funziona
             </Link>
             {user ? (
@@ -88,7 +106,14 @@ export function HeaderMenu({ dark, user }: Props) {
                 <Link href={accountHref} onClick={() => setOpen(false)}>
                   Area riservata
                 </Link>
-                <button type="button" className="text-left text-terracotta" onClick={logout}>
+                <button
+                  type="button"
+                  className="text-left text-olive"
+                  onClick={() => {
+                    setOpen(false);
+                    leaveSession();
+                  }}
+                >
                   Esci
                 </button>
               </>

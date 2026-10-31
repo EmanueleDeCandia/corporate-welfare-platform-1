@@ -4,7 +4,7 @@ import { ArrowLeft, MapPin, Sparkles } from "lucide-react";
 import { PublicShell } from "@/components/public-shell";
 import { getCurrentUser } from "@/lib/auth";
 import { getUserVouchers, getVenueBySlug } from "@/lib/data";
-import { formatEuro, initials, matchesVoucher, venueTypeLabel } from "@/lib/utils";
+import { formatEuro, initials, venueTypeLabel } from "@/lib/utils";
 import { VenueRedeem } from "@/components/venue-redeem";
 
 export const dynamic = "force-dynamic";
@@ -17,62 +17,48 @@ export default async function VenueDetailPage({
   const { slug } = await params;
   const row = await getVenueBySlug(slug);
   if (!row) notFound();
-  const { venue, destination, sponsor } = row;
+  const { venue, destination, sponsor, offerings } = row;
   const user = await getCurrentUser();
   const vouchers = user?.role === "employee" ? await getUserVouchers(user.id) : [];
-  const redeemable = vouchers.filter(
-    (voucher) => voucher.status === "available" && matchesVoucher(venue.type, voucher.type),
+  const redeemable = vouchers.filter((voucher) =>
+    voucher.status === "assigned" &&
+    offerings.some((offering) => offering.active && offering.acceptsWelfare && offering.benefitType === voucher.benefitType),
   );
 
   const services = venue.services ?? [];
   const gallery = venue.gallery ?? [];
-  const rooms = venue.rooms ?? [];
-  const aperitivoMenu = venue.aperitivoMenu ?? [];
+  const rooms = offerings.filter((item) => item.benefitType === "overnight");
+  const aperitivoMenu = offerings.filter((item) => item.benefitType === "dinner");
 
   return (
     <PublicShell>
-      {/* HERO SECTION */}
-      <section className="relative overflow-hidden bg-forest text-cream">
-        <div className="relative h-[45vh] min-h-[320px] max-h-[460px] w-full">
-          <img
-            src={venue.coverImage}
-            alt={venue.name}
-            className="h-full w-full object-cover opacity-60"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-forest via-forest/60 to-black/30" />
-        </div>
-
-        <div className="mx-auto -mt-28 max-w-7xl px-4 pb-10 relative z-10 md:px-6">
-          <Link
-            href="/strutture"
-            className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-gold hover:text-cream transition-colors mb-4"
-          >
-            <ArrowLeft size={14} /> Tutte le strutture
-          </Link>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-gold border border-gold/30">
-              {venueTypeLabel(venue.type)}
-            </span>
-            <span className="flex items-center gap-1 text-xs text-cream/80">
-              <MapPin size={14} className="text-gold" /> {venue.city}, {destination.region}
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-cream/15 backdrop-blur-sm px-3 py-0.5 text-xs text-cream">
-              <Sparkles size={13} className="text-gold" /> +{venue.impactPointsGenerated} Punti Impatto
-            </span>
-          </div>
-
-          <h1 className="mt-3 font-serif text-4xl sm:text-5xl lg:text-6xl text-cream">{venue.name}</h1>
-          <p className="mt-2 text-sm text-cream/75 max-w-2xl">
-            Comprensorio: <span className="text-cream font-medium">{destination.name}</span> · {destination.highlight}
-          </p>
-        </div>
+      <section className="overflow-hidden">
+        <img src={venue.coverImage} alt={venue.name} className="h-[280px] w-full object-cover md:h-[380px]" />
       </section>
 
+      <div className="mx-auto max-w-6xl px-4 pt-10 md:px-6">
+        <Link href="/strutture" className="inline-flex items-center gap-2 text-sm text-olive hover:text-forest">
+          <ArrowLeft size={14} /> Tutte le strutture
+        </Link>
+        <p className="mt-6 text-[11px] uppercase tracking-[0.16em] text-olive">{venueTypeLabel(venue.type)}</p>
+        <h1 className="mt-2 font-serif text-4xl sm:text-5xl">{venue.name}</h1>
+        <p className="mt-2 flex flex-wrap items-center gap-3 text-sm text-olive">
+          <span className="inline-flex items-center gap-1">
+            <MapPin size={14} /> {venue.city}, {destination.region}
+          </span>
+          <span>
+            {destination.name} · {destination.highlight}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <Sparkles size={13} /> +{venue.impactPointsGenerated} Punti Impatto
+          </span>
+        </p>
+      </div>
+
       {/* MAIN CONTENT (PLACED CLEANLY BELOW HERO) */}
-      <main className="mx-auto max-w-7xl px-4 py-10 md:px-6">
+      <main className="mx-auto max-w-6xl px-4 py-10 md:px-6">
         <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-          <article className="rounded-[32px] bg-white p-6 shadow-sm border border-forest/5 md:p-8">
+          <article className="rounded-2xl bg-white p-6 md:p-8">
             <h2 className="font-serif text-2xl text-forest">Presentazione della struttura</h2>
             <p className="mt-4 text-base leading-relaxed text-forest/85">{venue.longDescription}</p>
 
@@ -140,10 +126,10 @@ export default async function VenueDetailPage({
                 <h2 className="font-serif text-2xl text-forest">Camere & Alloggi</h2>
                 <div className="mt-4 space-y-3">
                   {rooms.map((room) => (
-                    <div key={room.name} className="rounded-2xl bg-cream p-4">
+                    <div key={room.id} className="rounded-2xl bg-cream p-4">
                       <div className="flex items-start justify-between gap-3">
                         <p className="font-medium text-forest">{room.name}</p>
-                        <p className="font-semibold text-terracotta">{formatEuro(room.priceCents)}</p>
+                        <p className="font-semibold text-terracotta">{formatEuro(room.listPriceCents)}</p>
                       </div>
                       <p className="mt-1 text-xs text-olive leading-relaxed">{room.description}</p>
                     </div>
@@ -157,10 +143,10 @@ export default async function VenueDetailPage({
                 <h2 className="font-serif text-2xl text-forest">Menù Degustazione KM 0</h2>
                 <div className="mt-4 space-y-3">
                   {aperitivoMenu.map((item) => (
-                    <div key={item.name} className="border-b border-mist pb-3 last:border-0 last:pb-0">
+                    <div key={item.id} className="border-b border-mist pb-3 last:border-0 last:pb-0">
                       <div className="flex justify-between items-baseline gap-3">
                         <p className="font-medium text-forest">{item.name}</p>
-                        <p className="font-semibold text-terracotta text-sm">{formatEuro(item.priceCents)}</p>
+                        <p className="font-semibold text-terracotta text-sm">{formatEuro(item.listPriceCents)}</p>
                       </div>
                       <p className="mt-1 text-xs text-olive leading-relaxed">{item.description}</p>
                     </div>
@@ -178,7 +164,7 @@ export default async function VenueDetailPage({
 
               {user?.role === "employee" ? (
                 <div className="mt-4">
-                  <VenueRedeem vouchers={redeemable} venueId={venue.id} />
+                  <VenueRedeem vouchers={redeemable} venueId={venue.id} offerings={offerings} />
                 </div>
               ) : (
                 <div className="mt-5 flex flex-col gap-2.5">

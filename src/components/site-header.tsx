@@ -1,47 +1,40 @@
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getSessionToken, pathWithSession } from "@/lib/auth";
 import { HeaderMenu } from "@/components/header-menu";
+import { Mark } from "@/components/brand-mark";
 
 export async function SiteHeader({ dark = false }: { dark?: boolean }) {
   const user = await getCurrentUser();
+  const token = user ? await getSessionToken() : "";
+  const href = (path: string) => pathWithSession(path, token);
 
   return (
-    <header
-      className={`sticky top-0 z-40 border-b ${
-        dark
-          ? "border-white/10 bg-forest-deep/80 text-cream backdrop-blur-xl"
-          : "border-forest/10 bg-paper/80 text-forest backdrop-blur-xl"
-      }`}
-    >
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-6">
-        <Link href="/" className="flex items-center gap-3">
-          <img src="/images/logo.png" alt="RADICI" className="h-11 w-11 rounded-full object-cover" />
-          <span className="leading-none">
-            <span className="font-serif text-xl tracking-[0.14em]">RADICI</span>
-            <span className={`block text-[10px] uppercase tracking-[0.22em] ${dark ? "text-gold" : "text-olive"}`}>
-              Welfare territoriale
-            </span>
-          </span>
+    <header className="sticky top-0 z-40 border-b border-forest/8 bg-cream/85 text-forest backdrop-blur-xl">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3.5 md:px-6">
+        <Link href={href("/")} className="flex items-center gap-2.5">
+          <Mark className="h-8 w-8" />
+          <span className="font-serif text-[22px] tracking-[0.08em]">RADICI</span>
         </Link>
-        <nav className="hidden items-center gap-6 text-sm md:flex">
-          <Link href="/esplora" className="hover:text-terracotta">
+        <nav className="hidden items-center gap-7 text-[13px] text-olive md:flex">
+          <Link href={href("/esplora")} className="hover:text-forest">
             Esplora
           </Link>
-          <Link href="/destinazioni" className="hover:text-terracotta">
+          <Link href={href("/destinazioni")} className="hover:text-forest">
             Destinazioni
           </Link>
-          <Link href="/strutture" className="hover:text-terracotta">
+          <Link href={href("/strutture")} className="hover:text-forest">
             Strutture
           </Link>
-          <Link href="/imprese" className="hover:text-terracotta">
-            Imprese ESG
+          <Link href={href("/imprese")} className="hover:text-forest">
+            Imprese
           </Link>
-          <Link href="/come-funziona" className="hover:text-terracotta">
+          <Link href={href("/come-funziona")} className="hover:text-forest">
             Come funziona
           </Link>
         </nav>
         <HeaderMenu
           dark={dark}
+          sessionToken={token}
           user={
             user
               ? {

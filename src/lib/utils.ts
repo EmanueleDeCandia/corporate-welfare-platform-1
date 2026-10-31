@@ -1,14 +1,29 @@
-import { createHash, randomBytes } from "crypto";
+import { createHash, randomBytes, scryptSync, timingSafeEqual } from "crypto";
+import type { BenefitType } from "@/db/schema";
 
-export const PASSWORD_SALT = "radici-welfare-territoriale-v1";
+const LEGACY_PASSWORD_SALT = "radici-welfare-territoriale-v1";
+const SCRYPT_KEYLEN = 32;
+
 export const FRIEND_DISCOUNT_RATE = 0.1;
+export const DEFAULT_FRIEND_DISCOUNT_BPS = 1000;
 
 export function hashPassword(password: string) {
-  return createHash("sha256").update(`${PASSWORD_SALT}:${password}`).digest("hex");
+  const salt = randomBytes(16).toString("hex");
+  const hash = scryptSync(password, salt, SCRYPT_KEYLEN).toString("hex");
+  return `scrypt$${salt}$${hash}`;
 }
 
-export function verifyPassword(password: string, hash: string) {
-  return hashPassword(password) === hash;
+export function verifyPassword(password: string, stored: string) {
+  if (stored.startsWith("scrypt$")) {
+    const [, salt, hash] = stored.split("$");
+    if (!salt || !hash) return false;
+    const next = scryptSync(password, salt, SCRYPT_KEYLEN);
+    const prev = Buffer.from(hash, "hex");
+    if (next.length !== prev.length) return false;
+    return timingSafeEqual(next, prev);
+  }
+  const legacy = createHash("sha256").update(`${LEGACY_PASSWORD_SALT}:${password}`).digest("hex");
+  return legacy === stored;
 }
 
 export function randomToken(bytes = 32) {
@@ -19,29 +34,80 @@ export function randomCode(prefix: string) {
   return `${prefix}-${randomBytes(4).toString("hex")}`;
 }
 
+const MONTHS_IT_SHORT = ["gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic"];
+const MONTHS_IT_LONG = [
+  "gennaio",
+  "febbraio",
+  "marzo",
+  "aprile",
+  "maggio",
+  "giugno",
+  "luglio",
+  "agosto",
+  "settembre",
+  "ottobre",
+  "novembre",
+  "dicembre",
+];
+
+function asDate(value: Date | string | number) {
+  if (value instanceof Date) return new Date(value.getTime());
+  if (typeof value === "number") return new Date(value < 1e12 ? value * 1000 : value);
+  const raw = String(value).trim();
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(raw) && !/[zZ]|[+-]\d{2}:\d{2}$/.test(raw)) {
+    return new Date(`${raw}Z`);
+  }
+  return new Date(raw);
+}
+
+function lastUtcSunday(year: number, monthIndex: number) {
+  const end = new Date(Date.UTC(year, monthIndex + 1, 0));
+  end.setUTCDate(end.getUTCDate() - end.getUTCDay());
+  return end;
+}
+
+function romeOffsetHours(utcMs: number) {
+  const year = new Date(utcMs).getUTCFullYear();
+  const dstStart = lastUtcSunday(year, 2);
+  dstStart.setUTCHours(1, 0, 0, 0);
+  const dstEnd = lastUtcSunday(year, 9);
+  dstEnd.setUTCHours(1, 0, 0, 0);
+  return utcMs >= dstStart.getTime() && utcMs < dstEnd.getTime() ? 2 : 1;
+}
+
+function romeParts(value: Date | string | number) {
+  const utcMs = asDate(value).getTime();
+  const rome = new Date(utcMs + romeOffsetHours(utcMs) * 3600 * 1000);
+  return {
+    day: String(rome.getUTCDate()),
+    month: rome.getUTCMonth() + 1,
+    year: String(rome.getUTCFullYear()),
+    hour: String(rome.getUTCHours()).padStart(2, "0"),
+    minute: String(rome.getUTCMinutes()).padStart(2, "0"),
+  };
+}
+
 export function formatEuro(cents: number) {
-  return new Intl.NumberFormat("it-IT", {
-    style: "currency",
-    currency: "EUR",
-  }).format(cents / 100);
+  const amount = Number(cents);
+  if (!Number.isFinite(amount)) return "0,00 EUR";
+  const negative = amount < 0;
+  const abs = Math.abs(Math.round(amount));
+  const euros = Math.floor(abs / 100);
+  const rest = String(abs % 100).padStart(2, "0");
+  const grouped = String(euros).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return `${negative ? "-" : ""}${grouped},${rest} EUR`;
 }
 
-export function formatDate(date: Date | string) {
-  return new Intl.DateTimeFormat("it-IT", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  }).format(typeof date === "string" ? new Date(date) : date);
+export function formatDate(date: Date | string | number) {
+  const parts = romeParts(date);
+  const month = MONTHS_IT_LONG[parts.month - 1] ?? "";
+  return `${parts.day} ${month} ${parts.year}`;
 }
 
-export function formatDateTime(date: Date | string) {
-  return new Intl.DateTimeFormat("it-IT", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(typeof date === "string" ? new Date(date) : date);
+export function formatDateTime(date: Date | string | number) {
+  const parts = romeParts(date);
+  const month = MONTHS_IT_SHORT[parts.month - 1] ?? "";
+  return `${parts.day} ${month} ${parts.year}, ${parts.hour}:${parts.minute}`;
 }
 
 export function badgeForPoints(points: number) {
@@ -77,16 +143,11 @@ export function badgeForPoints(points: number) {
     label: "Esploratore",
     next: "Sostenitore Green",
     threshold: 3,
-    hint: "Riscatta, condividi o invita per sbloccare il primo badge.",
+    hint: "Seleziona un voucher, condividi o invita per sbloccare il primo badge.",
   };
 }
 
-export function haversineKm(
-  lat1: number,
-  lng1: number,
-  lat2: number,
-  lng2: number,
-) {
+export function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number) {
   const toRad = (n: number) => (n * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
@@ -104,6 +165,8 @@ export function venueTypeLabel(type: string) {
       return "Agriturismo Gusto";
     case "theater":
       return "Teatro / Spettacolo";
+    case "show_venue":
+      return "Luogo di spettacolo";
     case "restaurant":
       return "Esperienza a tavola";
     default:
@@ -113,24 +176,76 @@ export function venueTypeLabel(type: string) {
 
 export function voucherTypeLabel(type: string) {
   switch (type) {
+    case "overnight":
     case "hotel":
       return "Pernottamento";
+    case "dinner":
     case "aperitivo":
-      return "Aperitivo KM 0";
+      return "Cena KM 0";
     case "theater":
-      return "Buono Spettacolo";
+      return "Spettacolo";
     default:
       return type;
   }
 }
 
-export function matchesVoucher(venueType: string, voucherType: string) {
-  if (voucherType === "theater") return venueType === "theater";
-  if (voucherType === "hotel") return venueType === "hotel" || venueType === "agriturismo";
-  if (voucherType === "aperitivo") {
-    return venueType === "agriturismo" || venueType === "restaurant" || venueType === "hotel";
+export function voucherStatusLabel(status: string) {
+  switch (status) {
+    case "assigned":
+      return "Assegnato";
+    case "selected":
+      return "Selezionato";
+    case "attended":
+      return "Presente";
+    case "no_show":
+      return "Non presentato";
+    case "expired":
+      return "Scaduto";
+    default:
+      return status;
   }
-  return false;
+}
+
+export function paymentStatusLabel(status: string) {
+  switch (status) {
+    case "settled":
+      return "Saldato";
+    case "pending":
+      return "In attesa di pagamento";
+    default:
+      return status;
+  }
+}
+
+export function grantStatusLabel(status: string) {
+  switch (status) {
+    case "assigned":
+      return "Assegnato";
+    case "confirmation_sent":
+      return "Conferma richiesta";
+    case "confirmed":
+      return "Confermato";
+    case "declined":
+      return "Rinunciato";
+    case "expired":
+      return "Scaduto";
+    case "attended":
+      return "Presente";
+    case "no_show":
+      return "Assente";
+    default:
+      return status;
+  }
+}
+
+export function isBenefitType(value: string): value is BenefitType {
+  return value === "overnight" || value === "dinner";
+}
+
+export function normalizeBenefitType(value: string): BenefitType | null {
+  if (value === "overnight" || value === "hotel") return "overnight";
+  if (value === "dinner" || value === "aperitivo") return "dinner";
+  return null;
 }
 
 export function appUrl(path = "") {
@@ -152,22 +267,10 @@ export function initials(name: string) {
     .toUpperCase();
 }
 
-export function servicePrice(
-  venue: {
-    type: string;
-    priceHotelCents: number;
-    priceAperitivoCents: number;
-    priceShowCents: number;
-  },
-  service: "hotel" | "aperitivo" | "theater",
-) {
-  if (service === "hotel") return venue.priceHotelCents;
-  if (service === "aperitivo") return venue.priceAperitivoCents;
-  return venue.priceShowCents;
+export function isDemoMode() {
+  return process.env.DEMO_MODE !== "false";
 }
 
-export function defaultServiceForVenue(type: string): "hotel" | "aperitivo" | "theater" {
-  if (type === "theater") return "theater";
-  if (type === "restaurant") return "aperitivo";
-  return "hotel";
+export function unixSeconds(date = new Date()) {
+  return Math.floor(date.getTime() / 1000);
 }
