@@ -1,3 +1,5 @@
+"use client";
+
 export const CLIENT_SESSION_KEY = "radici_session";
 export const SESSION_HEADER = "x-radici-session";
 const LOGOUT_FLAG = "radici_logged_out";
@@ -86,6 +88,16 @@ export function apiFetch(input: RequestInfo | URL, init: RequestInit = {}) {
     credentials: init.credentials ?? "include",
     headers: sessionHeaders(init.headers),
   });
+}
+
+/** Kept as a named export so older preview bundles do not crash on Esci. */
+export async function logoutClient() {
+  try {
+    await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+  } finally {
+    clearClientSession();
+    window.location.replace("/login");
+  }
 }
 
 let fetchPatched = false;

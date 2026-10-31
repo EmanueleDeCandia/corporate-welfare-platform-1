@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import { apiFetch, clearClientSession } from "@/lib/session-client";
+import { AfterHydration } from "@/components/after-hydration";
 import { pathWithSession } from "@/lib/session-cookie";
 
 type Props = {
@@ -17,6 +17,24 @@ type Props = {
   } | null;
 };
 
+function leaveSession() {
+  void (async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+    } finally {
+      try {
+        window.sessionStorage.setItem("radici_logged_out", "1");
+        window.sessionStorage.removeItem("radici_session");
+        window.localStorage.removeItem("radici_session");
+      } catch {
+        /* ignore */
+      }
+      document.cookie = "radici_session=; Path=/; Max-Age=0; SameSite=Lax";
+      window.location.replace("/login");
+    }
+  })();
+}
+
 export function HeaderMenu({ sessionToken = "", user }: Props) {
   const [open, setOpen] = useState(false);
   const href = (path: string) => pathWithSession(path, sessionToken);
@@ -29,42 +47,34 @@ export function HeaderMenu({ sessionToken = "", user }: Props) {
           ? href("/promotori")
           : href("/account");
 
-  async function logout() {
-    setOpen(false);
-    try {
-      await apiFetch("/api/auth/logout", { method: "POST" });
-    } finally {
-      clearClientSession();
-      window.location.replace("/login");
-    }
-  }
-
   return (
     <div className="flex items-center gap-2">
-      {user ? (
-        <div className="hidden items-center gap-2 md:flex">
+      <AfterHydration fallback={null}>
+        {user ? (
+          <>
+            <Link
+              href={accountHref}
+              className="hidden items-center gap-2 rounded-full bg-forest px-3.5 py-1.5 text-[13px] text-cream md:flex"
+            >
+              {user.firstName} {user.lastName}
+            </Link>
+            <button
+              type="button"
+              onClick={leaveSession}
+              className="hidden rounded-full border border-forest/15 px-3 py-1.5 text-[13px] text-olive hover:text-forest md:inline-flex"
+            >
+              Esci
+            </button>
+          </>
+        ) : (
           <Link
-            href={accountHref}
-            className="rounded-full bg-forest px-3.5 py-1.5 text-[13px] text-cream"
+            href="/login"
+            className="hidden rounded-full bg-forest px-4 py-1.5 text-[13px] text-cream md:inline-flex"
           >
-            {user.firstName} {user.lastName}
+            Accedi
           </Link>
-          <button
-            type="button"
-            onClick={logout}
-            className="rounded-full border border-forest/15 px-3 py-1.5 text-[13px] text-olive hover:text-forest"
-          >
-            Esci
-          </button>
-        </div>
-      ) : (
-        <Link
-          href="/login"
-          className="hidden rounded-full bg-forest px-4 py-1.5 text-[13px] text-cream md:inline-flex"
-        >
-          Accedi
-        </Link>
-      )}
+        )}
+      </AfterHydration>
       <button
         type="button"
         className="rounded-full p-2 md:hidden"
@@ -96,7 +106,14 @@ export function HeaderMenu({ sessionToken = "", user }: Props) {
                 <Link href={accountHref} onClick={() => setOpen(false)}>
                   Area riservata
                 </Link>
-                <button type="button" className="text-left text-olive" onClick={logout}>
+                <button
+                  type="button"
+                  className="text-left text-olive"
+                  onClick={() => {
+                    setOpen(false);
+                    leaveSession();
+                  }}
+                >
                   Esci
                 </button>
               </>
