@@ -30,7 +30,7 @@ Documento di sintesi delle attività programmate per la prossima fase di svilupp
 ---
 
 ### [2] Completamento e Aggiornamento della Pagina "Come Funziona"
-- [ ] Aggiornare la pagina pubblica [`/come-funziona`](../src/app/come-funziona/page.tsx) per illustrare chiaramente l'intero ecosistema RADICI:
+- [x] Aggiornare la pagina pubblica [`/come-funziona`](../src/app/come-funziona/page.tsx) per illustrare chiaramente l'intero ecosistema RADICI:
   - **Per le Imprese CSR**: come finanziare il welfare territoriale, deducibilità fiscale, rating ESG, impatto sullo sviluppo locale e moltiplicatore 5,1x per l'indotto dei borghi.
   - **Per i Dipendenti**: fruizione del voucher pernottamento/cena, accesso automatico all'omaggio Matching Grant (50€ per 2 persone o 25€ singolo) erogato dai Promotori per gli eventi culturali, e acquisto cesti km 0.
   - **Per la Community / Amici Invitati**: riscatto dello sconto convenzionato del 10% tramite codice referral, prenotazioni trasparenti e conferma di presenza anti-overbooking.
