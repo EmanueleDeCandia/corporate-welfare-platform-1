@@ -48,17 +48,17 @@ type Props = {
 };
 
 const COVER_PRESETS = [
-  { label: "Agriturismo & Casale", url: "/images/agriturismo-valle.jpg" },
+  { label: "Agriturismo & Casale", url: "/images/struttura-la-valle-cover.jpg" },
   { label: "Relais tra i Filari", url: "/images/langhe.jpg" },
-  { label: "Podere Toscano & Crete", url: "/images/val-dorcia.jpg" },
+  { label: "Podere Toscano & Crete", url: "/images/struttura-fontebella-cover.webp" },
   { label: "Masseria Salentina", url: "/images/masseria-salento.jpg" },
-  { label: "Osteria & Tavola Tipica", url: "/images/tavola.jpg" },
-  { label: "Frantoio & Uliveto", url: "/images/ulivi.jpg" },
-  { label: "Caseificio & Cesto KM 0", url: "/images/tavola.jpg" },
-  { label: "Cantina & Tenuta", url: "/images/vigne.jpg" },
-  { label: "Teatro Storico Lauro Rossi", url: "/images/lauro-rossi.jpg" },
-  { label: "Teatro delle Muse", url: "/images/teatro-muse.jpg" },
-  { label: "Teatro dell'Aquila", url: "/images/teatro-aquila.jpg" },
+  { label: "Osteria & Tavola Tipica", url: "/images/struttura-tiglio-cover.jpg" },
+  { label: "Frantoio & Uliveto", url: "/images/produttore-conero-frantoio.jpg" },
+  { label: "Caseificio & Cesto KM 0", url: "/images/produttore-sibillini-casaro.jpg" },
+  { label: "Cantina & Tenuta", url: "/images/vino-vigneto.jpg" },
+  { label: "Teatro Storico Lauro Rossi", url: "/images/teatro-lauro-rossi-cover.jpg" },
+  { label: "Teatro delle Muse", url: "/images/teatro-muse-cover.jpg" },
+  { label: "Teatro dell'Aquila", url: "/images/teatro-aquila-cover.webp" },
 ];
 
 const AVAILABLE_SERVICES = [
