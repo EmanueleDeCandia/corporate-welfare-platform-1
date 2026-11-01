@@ -254,9 +254,11 @@ Regole:
 - Spaziatura verticale tra sezioni: `py-16 md:py-24`.
 - Link interni: **sempre** con `pathWithSession(path, token)` (`@/lib/session-cookie`), come fa
   `SiteHeader`; mai `href="/..."` nudo se serve mantenere la sessione.
-- Il menu desktop ha **6 voci**: resta su una riga solo da `lg` (≥1024 px) in su. Nav e pulsante
-  account usano la stessa soglia (`lg:flex` / `lg:hidden`): se ne aggiungi una settima, ricontrolla
-  a 1024 px che «Accedi» non venga spinto fuori dallo schermo.
+- Il menu desktop ha **6 voci** e si vede da `md` (≥768 px): sotto `lg` usa etichette compatte
+  («Strutture» invece di «Strutture e Tipicità KM 0»), gap 16 px e testo 12 px; da `lg` torna
+  l'etichetta completa, gap 24 px e testo 13 px. Nav e pulsante account/hamburger condividono la
+  soglia `md`, altrimenti tra 768 e 1023 px la barra sparisce e resta solo l'hamburger.
+  Se aggiungi una settima voce, rimisura: a 768 px il contenuto deve restare entro 736 px.
 - Avatar/immagini: `<img>` semplice (il progetto non usa `next/image`); se sostituisci un file JPG
   già referenziato **aggiungi `?v=N`** al percorso, altrimenti browser e proxy continuano a servire
   la versione vecchia.

@@ -15,7 +15,7 @@ export async function SiteHeader({ dark = false }: { dark?: boolean }) {
           <Mark className="h-8 w-8" />
           <span className="font-serif text-[22px] tracking-[0.08em]">RADICI</span>
         </Link>
-        <nav className="hidden items-center gap-6 whitespace-nowrap text-[13px] text-olive lg:flex">
+        <nav className="hidden items-center gap-4 whitespace-nowrap text-[12px] text-olive md:flex lg:gap-6 lg:text-[13px]">
           <Link href={href("/esplora")} className="hover:text-forest">
             Esplora
           </Link>
@@ -23,7 +23,8 @@ export async function SiteHeader({ dark = false }: { dark?: boolean }) {
             Destinazioni
           </Link>
           <Link href={href("/strutture")} className="hover:text-forest">
-            Strutture e Tipicità KM 0
+            <span className="lg:hidden">Strutture</span>
+            <span className="hidden lg:inline">Strutture e Tipicità KM 0</span>
           </Link>
           <Link href={href("/imprese")} className="hover:text-forest">
             Imprese
