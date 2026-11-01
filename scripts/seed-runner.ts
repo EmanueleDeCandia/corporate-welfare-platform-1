@@ -3,9 +3,29 @@ import path from "path";
 
 const dbPath = path.resolve(process.cwd(), "radici.db");
 
-console.log("1. Resetting database tables...");
+console.log("1. Resetting database tables and views...");
 const sqlite = new Database(dbPath);
 sqlite.pragma("foreign_keys = OFF");
+
+const views = sqlite
+  .prepare("SELECT name FROM sqlite_master WHERE type='view'")
+  .all()
+  .map((r: any) => r.name);
+for (const v of views) {
+  try {
+    sqlite.exec(`DROP VIEW IF EXISTS "${v}";`);
+  } catch (e) {}
+}
+
+const triggers = sqlite
+  .prepare("SELECT name FROM sqlite_master WHERE type='trigger'")
+  .all()
+  .map((r: any) => r.name);
+for (const trg of triggers) {
+  try {
+    sqlite.exec(`DROP TRIGGER IF EXISTS "${trg}";`);
+  } catch (e) {}
+}
 
 const tables = sqlite
   .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
@@ -14,23 +34,24 @@ const tables = sqlite
 
 for (const t of tables) {
   try {
-    sqlite.exec(`DELETE FROM ${t};`);
-    sqlite.exec(`DELETE FROM sqlite_sequence WHERE name='${t}';`);
-  } catch (e) {
-    // Ignore sequence errors
-  }
+    sqlite.exec(`DROP TABLE IF EXISTS "${t}";`);
+  } catch (e) {}
 }
 sqlite.pragma("foreign_keys = ON");
 sqlite.close();
 
-console.log("2. Running seed...");
+console.log("2. Running initDb and seed...");
 async function run() {
-  const { seedDatabase } = await import("@/db/seed");
-  await seedDatabase();
+  const { initDb } = await import("@/db");
+  await initDb();
 
   console.log("3. Verifying seeded row counts...");
   const verifyDb = new Database(dbPath);
-  for (const t of tables) {
+  const currentTables = verifyDb
+    .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'")
+    .all()
+    .map((r: any) => r.name);
+  for (const t of currentTables) {
     const count = (verifyDb.prepare(`SELECT count(*) as c FROM ${t}`).get() as any).c;
     console.log(`  - ${t}: ${count} rows`);
   }

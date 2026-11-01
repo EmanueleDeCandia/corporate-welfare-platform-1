@@ -39,10 +39,10 @@ Documento di sintesi delle attività programmate per la prossima fase di svilupp
 ---
 
 ### [3] Pulizia e Rimozione delle Imprese CSR Demo di Test
-- [ ] Eseguire una bonifica controllata delle anagrafiche demo e di test inserite durante le sessioni di verifica:
-  - Mantenere solo le aziende di riferimento per la presentazione demo (es. *ACME Corporation S.p.A.*).
-  - Rimuovere record duplicati o generati da script di test automatici che non hanno transazioni contabili attive vincolanti.
-  - Aggiornare lo script di seed [`src/db/seed.ts`](../src/db/seed.ts) per generare esclusivamente dati demo puliti, coerenti e realistici.
+- [x] Eseguire una bonifica controllata delle anagrafiche demo e di test inserite durante le sessioni di verifica:
+  - Mantenute le aziende di riferimento per la presentazione demo (*ACME S.p.A.* e *Verde Energia Italia*).
+  - Rimossi record duplicati e strutture/imprese fittizie di test senza transazioni vincolanti.
+  - Aggiornato lo script di seed [`src/db/seed.ts`](../src/db/seed.ts) per generare esclusivamente 2 imprese CSR, 8 strutture rappresentative (inclusi i 2 produttori di filiera corta con i rispettivi account fornitore) e 17 utenti demo coerenti.
 
 ---
 

@@ -594,7 +594,7 @@ function HotelDrawer({
                   Passo 2 di 2
                 </span>
                 <p className="text-xs uppercase tracking-[0.14em] font-semibold text-terracotta">
-                  Scegli l'Esperienza / Evento del Matching Grant Promotori
+                  Scegli l&apos;Esperienza / Evento del Matching Grant Promotori
                 </p>
               </div>
               <p className="mt-2 text-xs text-olive leading-relaxed">
@@ -1269,7 +1269,7 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
   const [selectedVenueId, setSelectedVenueId] = useState<number>(hospitalityVenues[0]?.id || 1);
   const [selectedEventId, setSelectedEventId] = useState<number>(grantEvents[0]?.id || 1);
   const [bookingDate, setBookingDate] = useState<string>(
-    new Date(Date.now() + 86400000 * 3).toISOString().split("T")[0]
+    () => new Date(Date.now() + 86400000 * 3).toISOString().split("T")[0]
   );
   const [timeSlot, setTimeSlot] = useState<string>("20:00");
   const [partySize, setPartySize] = useState<number>(1);

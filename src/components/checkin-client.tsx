@@ -138,7 +138,7 @@ export function CheckinClient({
               <span>Matching Grant attivo per 2 persone!</span>
             </div>
             <p className="text-xs text-olive leading-relaxed">
-              Hai già associato il tuo pernottamento welfare. Il tuo biglietto omaggio per 2 persone (25€ + 25€) e l'incontro con gli artisti sono coperti integralmente dal Fondo Promotori.
+              Hai già associato il tuo pernottamento welfare. Il tuo biglietto omaggio per 2 persone (25€ + 25€) e l&apos;incontro con gli artisti sono coperti integralmente dal Fondo Promotori.
             </p>
             <div className="pt-2">
               <Link
@@ -155,7 +155,7 @@ export function CheckinClient({
               Vuoi abbinare il Matching Grant per questo spettacolo?
             </p>
             <p className="text-xs text-olive leading-relaxed">
-              Se hai a disposizione un voucher welfare pernottamento da 50€, puoi selezionare questo teatro/evento direttamente dal tuo profilo e riscattare l'omaggio per 2 persone a costo zero.
+              Se hai a disposizione un voucher welfare pernottamento da 50€, puoi selezionare questo teatro/evento direttamente dal tuo profilo e riscattare l&apos;omaggio per 2 persone a costo zero.
             </p>
             <div className="pt-2">
               <Link

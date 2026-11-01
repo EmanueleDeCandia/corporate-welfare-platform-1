@@ -40,6 +40,8 @@ export async function initDb() {
           local_redistribution_cents INTEGER NOT NULL DEFAULT 0,
           co2_saved_kg INTEGER NOT NULL DEFAULT 0,
           description TEXT NOT NULL,
+          local_impact_description TEXT,
+          report_url TEXT,
           accent TEXT NOT NULL DEFAULT '#1C3A2E',
           created_at INTEGER NOT NULL DEFAULT (unixepoch())
         );
@@ -319,6 +321,7 @@ export async function initDb() {
           venue_id INTEGER NOT NULL REFERENCES venues(id),
           offering_id INTEGER REFERENCES venue_offerings(id),
           grant_event_id INTEGER REFERENCES grant_events(id),
+          voucher_id INTEGER REFERENCES vouchers(id),
           booking_type TEXT NOT NULL DEFAULT 'hospitality',
           booking_date TEXT NOT NULL,
           time_slot TEXT,
