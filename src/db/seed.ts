@@ -633,7 +633,7 @@ async function seedDatabase() {
         coverImage: "/images/produttore-frantoio.jpg?v=2",
         gallery: ["/images/produttore-frantoio.jpg?v=2", "/images/produttore-cesto.jpg?v=2", "/images/produttore-verdure.jpg?v=2"],
         services: [
-          "Cesto olio EVO新 2026",
+          "Cesto olio EVODEVO 2026",
           "Consegna in azienda con flotta Gruppo Illiria",
           "Sconto initiative Welfare & KM 0 (10%)",
           "60 km evitati (≈18 kg CO2) per ogni cesto",
