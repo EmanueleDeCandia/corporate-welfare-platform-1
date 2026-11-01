@@ -94,6 +94,21 @@ export function CompanyDashboardView({ data }: Props) {
   const [empStatus, setEmpStatus] = useState<string>("");
   const [addingEmp, setAddingEmp] = useState(false);
 
+  // Filtro fatture attive vs annullate
+  const [invoiceFilter, setInvoiceFilter] = useState<"active" | "cancelled" | "all">("active");
+  const activeTransactions = transactions.filter(
+    (t) => t.transaction.status !== "cancelled" && t.transaction.paymentStatus !== "cancelled"
+  );
+  const cancelledTransactions = transactions.filter(
+    (t) => t.transaction.status === "cancelled" || t.transaction.paymentStatus === "cancelled"
+  );
+  const displayedTransactions =
+    invoiceFilter === "active"
+      ? activeTransactions
+      : invoiceFilter === "cancelled"
+      ? cancelledTransactions
+      : transactions;
+
   async function handleSaveCompany(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
@@ -213,7 +228,7 @@ export function CompanyDashboardView({ data }: Props) {
               activeTab === "invoices" ? "bg-cream text-forest" : "bg-white/10 text-cream hover:bg-white/15"
             }`}
           >
-            Rendicontazione B2B ({transactions.length})
+            Rendicontazione B2B ({activeTransactions.length})
           </button>
           <button
             type="button"
@@ -467,11 +482,42 @@ export function CompanyDashboardView({ data }: Props) {
       {/* TAB 4: RENDICONTAZIONE B2B & FATTURE */}
       {activeTab === "invoices" && (
         <section className="rounded-[28px] bg-white p-6 shadow-sm border border-mist space-y-4">
-          <div className="pb-4 border-b border-mist">
-            <h2 className="font-serif text-2xl text-forest">Rendicontazione Fiscale B2B ({transactions.length})</h2>
-            <p className="text-xs text-olive">
-              Registro delle prestazioni welfare erogate a favore dei tuoi lavoratori. Tutte le spese sono esenti da contributi e oneri fiscali.
-            </p>
+          <div className="pb-4 border-b border-mist flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="font-serif text-2xl text-forest">Rendicontazione Fiscale B2B ({activeTransactions.length})</h2>
+              <p className="text-xs text-olive">
+                Registro delle prestazioni welfare erogate a favore dei tuoi lavoratori. Tutte le spese sono esenti da contributi e oneri fiscali.
+              </p>
+            </div>
+            <div className="inline-flex rounded-full bg-forest/5 p-1 shrink-0">
+              <button
+                type="button"
+                onClick={() => setInvoiceFilter("active")}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                  invoiceFilter === "active" ? "bg-forest text-cream shadow-sm" : "text-forest hover:bg-forest/10"
+                }`}
+              >
+                Da Saldare ({activeTransactions.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setInvoiceFilter("cancelled")}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                  invoiceFilter === "cancelled" ? "bg-forest text-cream shadow-sm" : "text-forest hover:bg-forest/10"
+                }`}
+              >
+                Annullate ({cancelledTransactions.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setInvoiceFilter("all")}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                  invoiceFilter === "all" ? "bg-forest text-cream shadow-sm" : "text-forest hover:bg-forest/10"
+                }`}
+              >
+                Tutte ({transactions.length})
+              </button>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -486,25 +532,65 @@ export function CompanyDashboardView({ data }: Props) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-mist">
-                {transactions.map(({ transaction, user, venue }) => (
-                  <tr key={transaction.id} className="hover:bg-sand/30 transition">
-                    <td className="py-3 text-xs text-olive">{formatDateTime(transaction.createdAt)}</td>
-                    <td className="font-medium text-forest">
-                      {user.firstName} {user.lastName}
-                    </td>
-                    <td className="text-forest">
-                      {venue.name}
-                      <span className="block text-[11px] text-olive">{venue.city}</span>
-                    </td>
-                    <td className="text-xs font-medium text-ink/80">{transaction.serviceLabel}</td>
-                    <td className="font-serif text-base text-forest">{formatEuro(transaction.amountCents)}</td>
-                    <td className="text-right">
-                      <span className="rounded-full bg-sage/20 px-2.5 py-1 text-[11px] font-semibold text-forest">
-                        Fattura B2B (Art. 51 TUIR)
-                      </span>
+                {displayedTransactions.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-xs text-olive">
+                      {invoiceFilter === "active"
+                        ? "Nessuna fattura attiva pendente di saldo."
+                        : invoiceFilter === "cancelled"
+                        ? "Nessuna selezione annullata."
+                        : "Nessun movimento registrato."}
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  displayedTransactions.map(({ transaction, user, venue }) => {
+                    const isCancelled =
+                      transaction.status === "cancelled" || transaction.paymentStatus === "cancelled";
+
+                    return (
+                      <tr
+                        key={transaction.id}
+                        className={`transition ${isCancelled ? "bg-mist/20 opacity-70" : "hover:bg-sand/30"}`}
+                      >
+                        <td className="py-3 text-xs text-olive">
+                          {formatDateTime(transaction.createdAt)}
+                          {isCancelled && (
+                            <span className="block text-[10px] text-terracotta font-medium">Revocata prima della fruizione</span>
+                          )}
+                        </td>
+                        <td className="font-medium text-forest">
+                          {user.firstName} {user.lastName}
+                        </td>
+                        <td className="text-forest">
+                          {venue.name}
+                          <span className="block text-[11px] text-olive">{venue.city}</span>
+                        </td>
+                        <td className="text-xs font-medium text-ink/80">{transaction.serviceLabel}</td>
+                        <td className="font-serif text-base text-forest">
+                          {isCancelled ? (
+                            <div>
+                              <span className="line-through text-olive/60 text-sm">{formatEuro(transaction.amountCents)}</span>
+                              <span className="block text-xs font-bold text-terracotta">0,00 € (Annullata)</span>
+                            </div>
+                          ) : (
+                            formatEuro(transaction.amountCents)
+                          )}
+                        </td>
+                        <td className="text-right">
+                          {isCancelled ? (
+                            <span className="rounded-full bg-terracotta/15 px-2.5 py-1 text-[11px] font-semibold text-terracotta">
+                              Selezione Annullata (0 € dovuto)
+                            </span>
+                          ) : (
+                            <span className="rounded-full bg-sage/20 px-2.5 py-1 text-[11px] font-semibold text-forest">
+                              Fattura B2B (Art. 51 TUIR)
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

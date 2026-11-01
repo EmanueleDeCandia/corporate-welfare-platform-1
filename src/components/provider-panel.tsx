@@ -37,7 +37,18 @@ type Props = {
 export function ProviderPanel({ venue, notifications: items, transactions: rows, bookings = [] }: Props) {
   const router = useRouter();
   const [panelTab, setPanelTab] = useState<"welfare" | "community">("welfare");
+  const [welfareFilter, setWelfareFilter] = useState<"active" | "cancelled" | "all">("active");
   const [pending, setPending] = useState<number | null>(null);
+
+  // Filtra transazioni welfare attive vs revocate
+  const activeRows = rows.filter(
+    (r) => r.transaction.status !== "cancelled" && r.transaction.paymentStatus !== "cancelled"
+  );
+  const cancelledRows = rows.filter(
+    (r) => r.transaction.status === "cancelled" || r.transaction.paymentStatus === "cancelled"
+  );
+  const displayedRows =
+    welfareFilter === "active" ? activeRows : welfareFilter === "cancelled" ? cancelledRows : rows;
 
   // Stato per l'editing degli estremi fattura inline
   const [editingTxId, setEditingTxId] = useState<number | null>(null);
@@ -174,7 +185,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
           }`}
         >
           <FileText size={16} />
-          Distinta Welfare B2B ({rows.length})
+          Distinta Welfare B2B ({activeRows.length})
         </button>
         <button
           type="button"
@@ -208,16 +219,42 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
 
           {/* Registro Prestazioni & Controllo Eventi Fiscale */}
           <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/5">
-        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="font-serif text-2xl text-forest">Distinta Prestazioni & Eventi di Pagamento</h2>
             <p className="text-xs text-olive mt-0.5">
               Registra il numero della fattura che hai emesso nel tuo gestionale contabile e indica quando l&apos;azienda ha saldato il bonifico.
             </p>
           </div>
-          <span className="text-xs rounded-full bg-forest/5 px-3 py-1 font-mono text-forest">
-            {rows.length} {rows.length === 1 ? "operazione" : "operazioni"}
-          </span>
+          <div className="inline-flex rounded-full bg-forest/5 p-1 shrink-0">
+            <button
+              type="button"
+              onClick={() => setWelfareFilter("active")}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                welfareFilter === "active" ? "bg-forest text-cream shadow-sm" : "text-forest hover:bg-forest/10"
+              }`}
+            >
+              Da Fatturare ({activeRows.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setWelfareFilter("cancelled")}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                welfareFilter === "cancelled" ? "bg-forest text-cream shadow-sm" : "text-forest hover:bg-forest/10"
+              }`}
+            >
+              Annullate ({cancelledRows.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setWelfareFilter("all")}
+              className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                welfareFilter === "all" ? "bg-forest text-cream shadow-sm" : "text-forest hover:bg-forest/10"
+              }`}
+            >
+              Tutte ({rows.length})
+            </button>
+          </div>
         </div>
 
         <div className="mt-5 overflow-x-auto">
@@ -234,123 +271,165 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
               </tr>
             </thead>
             <tbody className="divide-y divide-mist">
-              {rows.map(({ transaction: tx, user, company, attendanceStatus }) => {
-                const commission = tx.commissionAmountCents || Math.round(tx.amountCents * 0.1);
-                const net = tx.providerNetCents || tx.amountCents - commission;
-                const isEditing = editingTxId === tx.id;
-                const isSettled = tx.paymentStatus === "settled";
+              {displayedRows.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-xs text-olive">
+                    {welfareFilter === "active"
+                      ? "Nessuna prestazione welfare attiva da fatturare."
+                      : welfareFilter === "cancelled"
+                      ? "Nessuna prestazione annullata."
+                      : "Nessuna operazione registrata."}
+                  </td>
+                </tr>
+              ) : (
+                displayedRows.map(({ transaction: tx, user, company, attendanceStatus }) => {
+                  const isCancelled = tx.status === "cancelled" || tx.paymentStatus === "cancelled";
+                  const commission = tx.commissionAmountCents || Math.round(tx.amountCents * 0.1);
+                  const net = tx.providerNetCents || tx.amountCents - commission;
+                  const isEditing = editingTxId === tx.id;
+                  const isSettled = tx.paymentStatus === "settled";
 
-                return (
-                  <tr key={tx.id} className="hover:bg-sand/5 transition-colors">
-                    {/* Data */}
-                    <td className="py-4 align-top">
-                      <span className="font-medium text-forest">{formatDateTime(tx.createdAt)}</span>
-                      <span className="block text-[11px] text-olive">{tx.serviceLabel}</span>
-                    </td>
-
-                    {/* Ospite */}
-                    <td className="py-4 align-top">
-                      <span className="font-medium text-forest">
-                        {user.firstName} {user.lastName}
-                      </span>
-                      <span className="block text-xs text-olive">{user.email}</span>
-                    </td>
-
-                    {/* Committente */}
-                    <td className="py-4 align-top">
-                      {company ? (
-                        <div>
-                          <span className="font-semibold text-forest">{company.name}</span>
-                          <span className="block text-[11px] font-mono text-olive">P.IVA: {company.vatNumber}</span>
-                          <span className="inline-block mt-0.5 rounded bg-sage/20 px-1.5 py-0.5 text-[10px] text-forest font-medium">
-                            Welfare Art. 51
+                  return (
+                    <tr
+                      key={tx.id}
+                      className={`transition-colors ${
+                        isCancelled ? "bg-mist/20 opacity-70" : "hover:bg-sand/5"
+                      }`}
+                    >
+                      {/* Data */}
+                      <td className="py-4 align-top">
+                        <span className="font-medium text-forest">{formatDateTime(tx.createdAt)}</span>
+                        <span className="block text-[11px] text-olive">{tx.serviceLabel}</span>
+                        {isCancelled && (
+                          <span className="block text-[10px] text-terracotta font-medium mt-0.5">
+                            Revocata dal lavoratore
                           </span>
-                        </div>
-                      ) : (
-                        <div>
-                          <span className="text-forest">Pagamento Privato</span>
-                          <span className="block text-[11px] text-olive">Ospite consumer B2C</span>
-                        </div>
-                      )}
-                    </td>
+                        )}
+                      </td>
 
-                    {/* Importi */}
-                    <td className="py-4 align-top">
-                      <div className="text-forest">
-                        <span className="font-semibold">{formatEuro(tx.amountCents)}</span>
-                        <span className="block text-[11px] text-olive">Fee Radici (10%): -{formatEuro(commission)}</span>
-                        <span className="block text-xs font-semibold text-forest/90">Netto tuo: {formatEuro(net)}</span>
-                      </div>
-                    </td>
+                      {/* Ospite */}
+                      <td className="py-4 align-top">
+                        <span className="font-medium text-forest">
+                          {user.firstName} {user.lastName}
+                        </span>
+                        <span className="block text-xs text-olive">{user.email}</span>
+                      </td>
 
-                    {/* Presenza fisica (ESG) */}
-                    <td className="py-4 align-top">
-                      {tx.voucherId ? (
-                        <div className="space-y-1.5">
-                          {attendanceStatus === "attended" ? (
-                            <div>
-                              <span className="inline-flex items-center gap-1 rounded-full bg-forest/15 px-2.5 py-1 text-xs font-semibold text-forest">
-                                <CheckCircle2 size={13} className="text-forest" /> Presente (Convalidato)
-                              </span>
-                              <button
-                                type="button"
-                                disabled={pending === tx.voucherId}
-                                onClick={() => registerAttendance(tx.voucherId!, "no_show")}
-                                className="mt-1 block text-[10px] text-olive hover:text-terracotta underline"
-                              >
-                                Modifica in No-Show
-                              </button>
-                            </div>
-                          ) : attendanceStatus === "no_show" ? (
-                            <div>
-                              <span className="inline-flex items-center gap-1 rounded-full bg-terracotta/15 px-2.5 py-1 text-xs font-semibold text-terracotta">
-                                <UserX size={13} className="text-terracotta" /> Assente (No-Show)
-                              </span>
-                              <button
-                                type="button"
-                                disabled={pending === tx.voucherId}
-                                onClick={() => registerAttendance(tx.voucherId!, "attended")}
-                                className="mt-1 block text-[10px] text-olive hover:text-forest underline"
-                              >
-                                Modifica in Presente
-                              </button>
-                            </div>
-                          ) : (
-                            <div>
-                              <div className="inline-flex items-center gap-1.5">
-                                <button
-                                  type="button"
-                                  disabled={pending === tx.voucherId}
-                                  onClick={() => registerAttendance(tx.voucherId!, "attended")}
-                                  className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-2.5 py-1 text-[11px] font-semibold text-forest hover:bg-forest/20 transition disabled:opacity-50"
-                                  title="Convalida presenza fisica dell'ospite nel database"
-                                >
-                                  <CheckCircle2 size={12} /> Presente
-                                </button>
+                      {/* Committente */}
+                      <td className="py-4 align-top">
+                        {isCancelled ? (
+                          <div>
+                            <span className="font-semibold text-forest line-through">{company ? company.name : "N/D"}</span>
+                            <span className="block text-[11px] font-semibold text-terracotta">Selezione annullata dal cliente</span>
+                            <span className="block text-[10px] text-olive">Nessuna fattura da emettere</span>
+                          </div>
+                        ) : company ? (
+                          <div>
+                            <span className="font-semibold text-forest">{company.name}</span>
+                            <span className="block text-[11px] font-mono text-olive">P.IVA: {company.vatNumber}</span>
+                            <span className="inline-block mt-0.5 rounded bg-sage/20 px-1.5 py-0.5 text-[10px] text-forest font-medium">
+                              Welfare Art. 51
+                            </span>
+                          </div>
+                        ) : (
+                          <div>
+                            <span className="text-forest">Pagamento Privato</span>
+                            <span className="block text-[11px] text-olive">Ospite consumer B2C</span>
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Importi */}
+                      <td className="py-4 align-top">
+                        {isCancelled ? (
+                          <div>
+                            <span className="line-through text-olive/60 text-xs">{formatEuro(tx.amountCents)}</span>
+                            <span className="block text-xs font-bold text-terracotta">0,00 € (Revocato)</span>
+                            <span className="block text-[10px] text-olive">Nessun compenso dovuto</span>
+                          </div>
+                        ) : (
+                          <div className="text-forest">
+                            <span className="font-semibold">{formatEuro(tx.amountCents)}</span>
+                            <span className="block text-[11px] text-olive">Fee Radici (10%): -{formatEuro(commission)}</span>
+                            <span className="block text-xs font-semibold text-forest/90">Netto tuo: {formatEuro(net)}</span>
+                          </div>
+                        )}
+                      </td>
+
+                      {/* Presenza fisica (ESG) */}
+                      <td className="py-4 align-top">
+                        {isCancelled ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-mist/60 px-2.5 py-1 text-xs font-semibold text-olive">
+                            Non applicabile (Revocato)
+                          </span>
+                        ) : tx.voucherId ? (
+                          <div className="space-y-1.5">
+                            {attendanceStatus === "attended" ? (
+                              <div>
+                                <span className="inline-flex items-center gap-1 rounded-full bg-forest/15 px-2.5 py-1 text-xs font-semibold text-forest">
+                                  <CheckCircle2 size={13} className="text-forest" /> Presente (Convalidato)
+                                </span>
                                 <button
                                   type="button"
                                   disabled={pending === tx.voucherId}
                                   onClick={() => registerAttendance(tx.voucherId!, "no_show")}
-                                  className="inline-flex items-center gap-1 rounded-full bg-terracotta/10 px-2.5 py-1 text-[11px] font-semibold text-terracotta hover:bg-terracotta/20 transition disabled:opacity-50"
-                                  title="Registra mancato arrivo (no-show) nel database"
+                                  className="mt-1 block text-[10px] text-olive hover:text-terracotta underline"
                                 >
-                                  <UserX size={12} /> No-Show
+                                  Modifica in No-Show
                                 </button>
                               </div>
-                              <span className="block text-[10px] text-olive/80 mt-0.5">
-                                (Compenso comunque dovuto)
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-xs text-olive">Consumato in loco</span>
-                      )}
-                    </td>
+                            ) : attendanceStatus === "no_show" ? (
+                              <div>
+                                <span className="inline-flex items-center gap-1 rounded-full bg-terracotta/15 px-2.5 py-1 text-xs font-semibold text-terracotta">
+                                  <UserX size={13} className="text-terracotta" /> Assente (No-Show)
+                                </span>
+                                <button
+                                  type="button"
+                                  disabled={pending === tx.voucherId}
+                                  onClick={() => registerAttendance(tx.voucherId!, "attended")}
+                                  className="mt-1 block text-[10px] text-olive hover:text-forest underline"
+                                >
+                                  Modifica in Presente
+                                </button>
+                              </div>
+                            ) : (
+                              <div>
+                                <div className="inline-flex items-center gap-1.5">
+                                  <button
+                                    type="button"
+                                    disabled={pending === tx.voucherId}
+                                    onClick={() => registerAttendance(tx.voucherId!, "attended")}
+                                    className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-2.5 py-1 text-[11px] font-semibold text-forest hover:bg-forest/20 transition disabled:opacity-50"
+                                    title="Convalida presenza fisica dell'ospite nel database"
+                                  >
+                                    <CheckCircle2 size={12} /> Presente
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={pending === tx.voucherId}
+                                    onClick={() => registerAttendance(tx.voucherId!, "no_show")}
+                                    className="inline-flex items-center gap-1 rounded-full bg-terracotta/10 px-2.5 py-1 text-[11px] font-semibold text-terracotta hover:bg-terracotta/20 transition disabled:opacity-50"
+                                    title="Registra mancato arrivo (no-show) nel database"
+                                  >
+                                    <UserX size={12} /> No-Show
+                                  </button>
+                                </div>
+                                <span className="block text-[10px] text-olive/80 mt-0.5">
+                                  (Compenso comunque dovuto)
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-olive">Consumato in loco</span>
+                        )}
+                      </td>
 
-                    {/* Estremi Fattura Esterna */}
-                    <td className="py-4 align-top">
-                      {isEditing ? (
+                      {/* Estremi Fattura Esterna */}
+                      <td className="py-4 align-top">
+                        {isCancelled ? (
+                          <span className="text-xs text-olive italic">Non fatturabile</span>
+                        ) : isEditing ? (
                         <div className="space-y-2 rounded-xl border border-forest/20 bg-cream p-3 min-w-[200px]">
                           <div>
                             <label className="block text-[10px] uppercase font-bold text-forest">N° Fattura Gestionale</label>
@@ -457,7 +536,8 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
                     </td>
                   </tr>
                 );
-              })}
+              })
+            )}
             </tbody>
           </table>
         </div>
@@ -674,22 +754,53 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
         <div className="mt-5 space-y-4">
           {items.map((item) => {
             const payload = (item.payload ?? {}) as Record<string, any>;
+            const isCancelled =
+              Boolean(payload.cancelled) ||
+              item.title.toLowerCase().includes("annullat") ||
+              item.body.toLowerCase().includes("annullat");
+
             return (
               <article
                 key={item.id}
                 className={`rounded-3xl border p-5 ${
-                  item.type === "welfare" ? "border-gold/40 bg-cream" : "border-sage/40 bg-sage/10"
+                  isCancelled
+                    ? "border-terracotta/30 bg-terracotta/5"
+                    : item.type === "welfare"
+                    ? "border-gold/40 bg-cream"
+                    : "border-sage/40 bg-sage/10"
                 }`}
               >
-                <p className="text-[11px] uppercase tracking-[0.16em] text-olive">
-                  {item.type === "welfare" ? "Notifica riscatto welfare B2B (Dovuto per legge)" : "Notifica referral community"}
-                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] uppercase tracking-[0.16em] text-olive">
+                    {isCancelled
+                      ? "Avviso Selezione Annullata (Nessun addebito)"
+                      : item.type === "welfare"
+                      ? "Notifica riscatto welfare B2B (Dovuto per legge)"
+                      : "Notifica referral community"}
+                  </p>
+                  {isCancelled && (
+                    <span className="rounded-full bg-terracotta/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-terracotta">
+                      Non Fatturare
+                    </span>
+                  )}
+                </div>
                 <h3 className="mt-2 font-serif text-2xl text-forest">{item.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-forest/80">{item.body}</p>
                 <div className="mt-4 space-y-1 text-sm text-forest font-mono text-xs">
-                  {payload.invoiceHint ? <p className="font-bold">→ {String(payload.invoiceHint)}</p> : null}
-                  {payload.vatNote ? <p>→ {String(payload.vatNote)}</p> : null}
-                  {payload.impact ? <p>→ Impatto: {String(payload.impact)}</p> : null}
+                  {isCancelled ? (
+                    <div className="rounded-xl border border-terracotta/20 bg-white/70 p-3 text-terracotta">
+                      <p className="font-bold">⚠️ PRENOTAZIONE REVOCATA: NESSUNA FATTURA DA EMETTERE</p>
+                      <p className="text-[11px] mt-0.5 font-sans text-forest/80">
+                        Il lavoratore ha modificato o annullato la selezione prima della fruizione. Nessuna prestazione richiesta per questa struttura.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {payload.invoiceHint ? <p className="font-bold">→ {String(payload.invoiceHint)}</p> : null}
+                      {payload.vatNote ? <p>→ {String(payload.vatNote)}</p> : null}
+                      {payload.impact ? <p>→ Impatto: {String(payload.impact)}</p> : null}
+                    </>
+                  )}
                 </div>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-forest/10 pt-3">
                   <p className="text-xs text-olive">{formatDateTime(item.createdAt)}</p>

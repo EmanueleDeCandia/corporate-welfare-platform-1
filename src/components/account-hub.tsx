@@ -253,9 +253,14 @@ function WalletTab(props: Props & { grantEvents?: GrantEventLite[] }) {
         <p className="rounded-2xl bg-sage/15 px-4 py-3 text-sm text-forest">{message}</p>
       ) : null}
 
-      <section className="rounded-[28px] bg-white p-6">
+      <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/5">
         <div className="flex items-center justify-between">
-          <h3 className="font-serif text-2xl text-forest">Movimenti recenti</h3>
+          <div>
+            <h3 className="font-serif text-2xl text-forest">Movimenti e Utilizzi Welfare</h3>
+            <p className="text-xs text-olive mt-0.5">
+              Storico delle selezioni, riscatti e riaccrediti dei voucher welfare aziendali.
+            </p>
+          </div>
           {transactions.length > 5 ? (
             <span className="text-xs text-olive font-medium">
               Ultimi 5 movimenti (di {transactions.length})
@@ -264,19 +269,52 @@ function WalletTab(props: Props & { grantEvents?: GrantEventLite[] }) {
         </div>
         <div className="mt-4 space-y-3">
           {transactions.length === 0 ? (
-            <p className="text-sm text-olive">Nessun movimento. Il primo riscatto apparirà qui.</p>
+            <p className="text-sm text-olive">Nessun movimento. I voucher utilizzati appariranno qui.</p>
           ) : (
-            transactions.slice(0, 5).map(({ transaction, venue }) => (
-              <div key={transaction.id} className="flex items-center justify-between gap-4 border-b border-mist pb-3">
-                <div>
-                  <p className="font-medium text-forest">{venue.name}</p>
-                  <p className="text-sm text-olive">
-                    {transaction.serviceLabel} · {formatDateTime(transaction.createdAt)}
-                  </p>
+            transactions.slice(0, 5).map(({ transaction, venue }) => {
+              const isCancelled =
+                transaction.status === "cancelled" || transaction.paymentStatus === "cancelled";
+
+              return (
+                <div
+                  key={transaction.id}
+                  className={`flex items-center justify-between gap-4 border-b border-mist pb-3 ${
+                    isCancelled ? "opacity-75" : ""
+                  }`}
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-forest">{venue.name}</p>
+                      {isCancelled ? (
+                        <span className="inline-flex items-center rounded-full bg-terracotta/15 px-2 py-0.5 text-[10px] font-bold text-terracotta uppercase">
+                          Selezione Annullata
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center rounded-full bg-forest/15 px-2 py-0.5 text-[10px] font-bold text-forest uppercase">
+                          Welfare Attivo
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-olive mt-0.5">
+                      {transaction.serviceLabel} · {formatDateTime(transaction.createdAt)}
+                      {isCancelled && " · Voucher restituito e riutilizzabile"}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    {isCancelled ? (
+                      <div>
+                        <span className="line-through text-olive/50 text-xs block">
+                          {formatEuro(transaction.amountCents)}
+                        </span>
+                        <span className="text-sm font-semibold text-terracotta">0,00 € (Riaccreditato)</span>
+                      </div>
+                    ) : (
+                      <p className="text-sm font-semibold text-forest">{formatEuro(transaction.amountCents)}</p>
+                    )}
+                  </div>
                 </div>
-                <p className="text-sm font-semibold text-forest">{formatEuro(transaction.amountCents)}</p>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </section>

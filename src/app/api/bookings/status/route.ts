@@ -13,6 +13,7 @@ import {
   venues,
 } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import { executeVoucherCancellation } from "@/lib/welfare-cancellation";
 
 export const dynamic = "force-dynamic";
 
@@ -101,49 +102,12 @@ export async function POST(request: Request) {
   // Sincronizzazione automatica con Voucher e Matching Grant
   if (booking.voucherId) {
     if (body.status === "cancelled") {
-      // 1. Ripristina il voucher welfare ad 'available'
-      await db
-        .update(vouchers)
-        .set({
-          status: "available",
-          venueId: null,
-          theaterVenueId: null,
-          grantEventId: null,
-          redeemedAt: null,
-        })
-        .where(eq(vouchers.id, booking.voucherId));
-
-      // 2. Rimuovi la selezione da voucher_selections
-      await db.delete(voucherSelections).where(eq(voucherSelections.voucherId, booking.voucherId));
-
-      // 3. Se era legato a un Matching Grant (posti teatro), liberali immediatamente
-      const [grant] = await db
-        .select()
-        .from(matchingGrants)
-        .where(eq(matchingGrants.voucherId, booking.voucherId))
-        .limit(1);
-
-      if (grant) {
-        await db.delete(grantConfirmations).where(eq(grantConfirmations.matchingGrantId, grant.id));
-        await db.delete(grantSeats).where(eq(grantSeats.matchingGrantId, grant.id));
-        await db.delete(matchingGrants).where(eq(matchingGrants.id, grant.id));
-      }
-
-      // 4. Annulla anche la transazione B2B
-      await db
-        .update(transactions)
-        .set({
-          status: "cancelled",
-          paymentStatus: "cancelled",
-          paymentNotes: "Prenotazione annullata dal lavoratore. Voucher ripristinato.",
-        })
-        .where(and(eq(transactions.voucherId, booking.voucherId), eq(transactions.type, "welfare_redeem")));
-
-      // 5. Annulla tutte le altre prenotazioni collegate a questo stesso voucher
-      await db
-        .update(bookings)
-        .set({ status: "cancelled" })
-        .where(eq(bookings.voucherId, booking.voucherId));
+      // Esegui la cancellazione atomica condivisa (ripristino voucher, revoca grant, annullamento B2B e notifica alla struttura)
+      await executeVoucherCancellation({
+        voucherId: booking.voucherId,
+        userId: booking.userId,
+        guestName: `${me.firstName} ${me.lastName}`,
+      });
     } else if (body.status === "presence_confirmed") {
       // Se l'utente riconferma la presenza per lo spettacolo o il soggiorno
       if (booking.bookingType === "theater_event") {

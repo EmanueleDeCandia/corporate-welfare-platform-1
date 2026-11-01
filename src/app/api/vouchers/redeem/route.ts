@@ -226,6 +226,7 @@ export async function POST(request: Request) {
       invoiceHint: `EMETTI FATTURA NEL TUO GESTIONALE A: ${company?.name ?? "Azienda"} (P.IVA: ${company?.vatNumber ?? "N/D"})`,
       vatNote: `Lordo: € ${(amountCents / 100).toFixed(2)} | Fee Radici (10%): € ${(commissionAmountCents / 100).toFixed(2)} | Netto fornitore: € ${(providerNetCents / 100).toFixed(2)}`,
       transactionId: tx.id,
+      voucherId: voucher.id,
       serviceDate,
     },
     read: false,
