@@ -29,13 +29,44 @@ La pagina esiste già: usare questa sezione per **estendere** senza riscrivere.
 **Trattamento visivo delle sezioni immagine** (richiesta esplicita del committente): l'immagine è
 uno sfondo pittorico *volutamente sfocato* — è lo stesso linguaggio del diagramma in
 `/come-funziona` — e il testo, le card e i diagrammi stanno **sopra l'immagine**, non accanto.
-Tecnica: `BlurredPanel` con `img` in `absolute inset-0 object-cover`, overlay `bg-cream/NN` per il
-contrasto, contenuto in un layer `relative`. Non introdurre vignette scure: gli sfondi sono chiari,
-il testo che ci va sopra è `text-forest`.
+Tecnica: `BlurredPanel` con `img` in `absolute inset-0 object-cover` e contenuto in un layer
+`relative`.
 
-Se serve un nuovo sfondo: generare il dipinto, **sfocarlo davvero** in post-produzione
-(`convert in.jpg -resize 1600x -gaussian-blur 0x13 -modulate 103,112,100 out.jpg`), altrimenti il
-dettaglio pittorico compete con il testo.
+**Regola anti-cache (lezione pagata).** Il velo chiaro che garantisce il contrasto è **cotto dentro
+il JPEG**, non affidato a un overlay CSS. Motivo: le classi nuove (`bg-cream/45`, `bg-paper/85`,
+`backdrop-blur-sm`, `sr-only`…) compaiono solo nel CSS rigenerato; un visitatore che ha in cache il
+CSS precedente le perde e si ritrova card trasparenti e testo illeggibile sullo sfondo. Quindi:
+
+- superfici delle card: `bg-white` + `border-forest/10` (classi già presenti ovunque nel progetto);
+- sfondi: JPEG sfocato **+ velo `#f4f1ea` al 40-55%** applicato in post-produzione;
+- niente `sr-only` decorativi: se un'etichetta non deve vedersi, non renderizzarla.
+
+Non introdurre vignette scure: gli sfondi sono chiari, il testo che ci va sopra è `text-forest`
+opaco (non `/80`).
+
+Ricetta completa di uno sfondo:
+
+```bash
+convert orig.jpg -resize 1600x -gaussian-blur 0x13 -modulate 103,108,100 \
+  -fill "#f4f1ea" -colorize 42% -quality 88 public/images/vantaggi-<sezione>.jpg
+```
+
+Il terzo passaggio (`-colorize 42%`) è quello che rende il testo leggibile senza CSS.
+
+**Screenshot di verifica.** L'ambiente non ha browser: si usa Chromium impacchettato su npm, con le
+librerie e i font estratti dai bundle del pacchetto.
+
+```bash
+mkdir -p /tmp/shot && cd /tmp/shot && npm i @sparticuz/chromium puppeteer-core
+node -e "const fs=require('fs'),z=require('zlib');for(const f of ['al2023','fonts']){try{fs.writeFileSync('/tmp/'+f+'.tar', z.brotliDecompressSync(fs.readFileSync('node_modules/@sparticuz/chromium/bin/'+f+'.tar.br')))}catch(e){}}"
+mkdir -p /tmp/chromium-libs /tmp/chromium-fonts && tar -xf /tmp/al2023.tar -C /tmp/chromium-libs && tar -xf /tmp/fonts.tar -C /tmp/chromium-fonts
+# fontconfig per avere un serif (DejaVu) e il sans del progetto
+printf '%s' '<fontconfig><dir>/usr/share/fonts</dir><dir>/tmp/chromium-fonts/fonts</dir><cachedir>/tmp/fontconf/cache</cachedir><alias><family>serif</family><prefer><family>DejaVu Serif</family></prefer></alias></fontconfig>' > /tmp/fontconf/fonts.conf
+FONTCONFIG_PATH=/tmp/fontconf LD_LIBRARY_PATH=/tmp/chromium-libs/lib node shot.js http://localhost:3000/vantaggi out.png 1440 900
+```
+
+`@sparticuz/chromium` va importato come `mod.default ?? mod` (altrimenti `chromium.args is not
+iterable`) e lanciato con `headless: "shell"`.
 
 ---
 

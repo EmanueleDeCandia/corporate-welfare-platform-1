@@ -11,7 +11,7 @@ export function BlurredPanel({
   children,
   className = "",
   contentClassName = "",
-  overlayClassName = "bg-cream/35",
+  overlayClassName = "",
   rounded = "rounded-[28px]",
 }: {
   image: string;
@@ -25,7 +25,9 @@ export function BlurredPanel({
   return (
     <div className={`relative overflow-hidden ${rounded} ${className}`}>
       <img src={image} alt={alt} className="absolute inset-0 h-full w-full object-cover" />
-      <div className={`absolute inset-0 ${overlayClassName}`} aria-hidden="true" />
+      {overlayClassName ? (
+        <div className={`absolute inset-0 ${overlayClassName}`} aria-hidden="true" />
+      ) : null}
       <div className={`relative ${contentClassName}`}>{children}</div>
     </div>
   );

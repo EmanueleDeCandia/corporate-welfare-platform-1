@@ -55,20 +55,19 @@ export default async function VantaggiPage() {
           image="/images/vantaggi-hero.jpg"
           className="mx-auto max-w-6xl"
           contentClassName="px-6 py-14 md:px-14 md:py-24"
-          overlayClassName="bg-gradient-to-r from-cream/70 via-cream/45 to-cream/20"
         >
           <p className="text-[11px] uppercase tracking-[0.2em] text-olive">{POSITIONING.eyebrow}</p>
           <h1 className="mt-4 max-w-3xl font-serif text-4xl leading-[1.12] text-forest md:text-6xl">
             {POSITIONING.title}
           </h1>
-          <p className="mt-5 max-w-2xl text-[15px] leading-7 text-forest/80">{POSITIONING.subtitle}</p>
+          <p className="mt-5 max-w-2xl text-[15px] leading-7 text-forest">{POSITIONING.subtitle}</p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Link href={href("/imprese")} className="rounded-full bg-forest px-6 py-3 text-sm text-cream">
               Richiedi una convenzione
             </Link>
             <Link
               href={href("/come-funziona")}
-              className="rounded-full border border-forest/25 bg-cream/50 px-6 py-3 text-sm text-forest backdrop-blur-sm hover:bg-cream/80"
+              className="rounded-full border border-forest/25 bg-cream px-6 py-3 text-sm text-forest hover:bg-mist"
             >
               Vedi come funziona
             </Link>
@@ -92,20 +91,19 @@ export default async function VantaggiPage() {
           image="/images/vantaggi-stakeholder.jpg"
           className="mx-auto max-w-6xl"
           contentClassName="px-5 py-14 md:px-12 md:py-20"
-          overlayClassName="bg-cream/30"
         >
           <div className="max-w-3xl">
             <p className="text-[11px] uppercase tracking-[0.18em] text-olive">Valore condiviso</p>
             <h2 className="mt-3 font-serif text-3xl leading-tight text-forest md:text-4xl">
               Il valore dell&apos;ecosistema per gli stakeholder e la comunità
             </h2>
-            <p className="mt-4 text-[15px] leading-7 text-forest/80">{ECOSYSTEM_INTRO}</p>
+            <p className="mt-4 text-[15px] leading-7 text-forest">{ECOSYSTEM_INTRO}</p>
           </div>
           <div className="mt-10 grid gap-4 md:grid-cols-2">
             {stakeholders.map((item) => (
               <article
                 key={item.key}
-                className="rounded-2xl border border-white/50 bg-paper/85 p-6 backdrop-blur-sm md:p-7"
+                className="rounded-2xl border border-forest/10 bg-white p-6 md:p-7"
               >
                 <h3 className="font-serif text-xl text-forest md:text-2xl">{item.label}</h3>
                 <p className="mt-3 text-sm leading-6 text-olive">{item.benefit}</p>
@@ -121,7 +119,6 @@ export default async function VantaggiPage() {
           image="/images/vantaggi-moduli.jpg"
           className="mx-auto max-w-6xl"
           contentClassName="px-5 py-14 md:px-12 md:py-20"
-          overlayClassName="bg-cream/25"
         >
           <div className="max-w-2xl">
             <p className="text-[11px] uppercase tracking-[0.18em] text-olive">Come funziona l&apos;ecosistema</p>
@@ -133,7 +130,7 @@ export default async function VantaggiPage() {
             {modules.map((module) => (
               <article
                 key={module.key}
-                className="flex flex-col rounded-2xl border border-white/50 bg-paper/85 p-6 backdrop-blur-sm md:p-7"
+                className="flex flex-col rounded-2xl border border-forest/10 bg-white p-6 md:p-7"
               >
                 <p className="font-serif text-3xl text-gold">{module.index}</p>
                 <h3 className="mt-3 font-serif text-xl leading-snug text-forest">{module.title}</h3>
@@ -224,10 +221,9 @@ export default async function VantaggiPage() {
       {/* 6 — Processo di coinvolgimento (sfondo sfocato + diagramma + testo dentro l'immagine) */}
       <section className="px-3 md:px-6">
         <BlurredPanel
-          image="/images/abstract-blur.jpg"
+          image="/images/vantaggi-processo.jpg"
           className="mx-auto max-w-6xl"
           contentClassName="px-5 py-14 md:px-12 md:py-20"
-          overlayClassName="bg-cream/20"
         >
           <div className="max-w-2xl">
             <p className="text-[11px] uppercase tracking-[0.18em] text-olive">Il percorso</p>
@@ -244,7 +240,7 @@ export default async function VantaggiPage() {
             {processSteps.map((step, index) => (
               <article
                 key={step.key}
-                className="rounded-2xl border border-white/50 bg-cream/70 p-6 backdrop-blur-sm"
+                className="rounded-2xl border border-forest/10 bg-white p-6"
               >
                 <p className="text-[11px] uppercase tracking-[0.16em] text-olive">0{index + 1}</p>
                 <h3 className="mt-2 font-serif text-lg leading-snug text-forest">{step.title}</h3>
@@ -261,21 +257,20 @@ export default async function VantaggiPage() {
           image="/images/vantaggi-impatto.jpg"
           className="mx-auto max-w-6xl"
           contentClassName="px-5 py-14 md:px-12 md:py-20"
-          overlayClassName="bg-cream/35"
         >
           <div className="max-w-3xl">
             <p className="text-[11px] uppercase tracking-[0.18em] text-olive">Misurazione</p>
             <h2 className="mt-3 font-serif text-3xl leading-tight text-forest md:text-4xl">
               Gli indicatori di impatto dell&apos;ecosistema
             </h2>
-            <p className="mt-4 text-[15px] leading-7 text-forest/80">{IMPACT_INTRO}</p>
+            <p className="mt-4 text-[15px] leading-7 text-forest">{IMPACT_INTRO}</p>
           </div>
 
           <div className="mt-10 grid gap-4 md:grid-cols-2">
-            {impactIndicators.map((indicator, index) => (
+            {impactIndicators.map((indicator) => (
               <article
                 key={indicator.key}
-                className="rounded-2xl border border-white/50 bg-paper/85 p-6 backdrop-blur-sm md:p-7"
+                className="rounded-2xl border border-forest/10 bg-white p-6 md:p-7"
               >
                 <h3 className="font-serif text-xl text-forest">{indicator.title}</h3>
                 <p className="mt-3 text-sm leading-6 text-olive">{indicator.text}</p>
@@ -294,9 +289,6 @@ export default async function VantaggiPage() {
                     Imprese aderenti con reporting attivo: <span className="text-forest">{stats.companies}</span>
                   </p>
                 )}
-                <span className="sr-only">
-                  Indicatore {index + 1} di {impactIndicators.length}
-                </span>
               </article>
             ))}
           </div>
