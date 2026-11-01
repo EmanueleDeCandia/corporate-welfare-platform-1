@@ -48,12 +48,17 @@ type Props = {
 };
 
 const COVER_PRESETS = [
-  { label: "🌿 Agriturismo KM 0", url: "/images/agriturismo-valle.jpg" },
-  { label: "🍷 Relais Tra i Filari", url: "/images/langhe.jpg" },
-  { label: "🍽️ Osteria & Borgo", url: "/images/val-dorcia.jpg" },
-  { label: "🧺 Frantoio & Cesto KM 0", url: "/images/agriturismo-fontebella.jpg" },
-  { label: "🎭 Teatro Storico", url: "/images/lauro-rossi.jpg" },
-  { label: "☀️ Masseria Bianca", url: "/images/masseria-salento.jpg" },
+  { label: "🌿 Agriturismo & Casale", url: "/images/agriturismo-valle.jpg" },
+  { label: "🍷 Relais tra i Filari", url: "/images/langhe.jpg" },
+  { label: "🏛️ Podere Toscano & Crete", url: "/images/val-dorcia.jpg" },
+  { label: "☀️ Masseria Salentina", url: "/images/masseria-salento.jpg" },
+  { label: "🍽️ Osteria & Tavola Tipica", url: "/images/tavola.jpg" },
+  { label: "🫒 Frantoio & Uliveto", url: "/images/produttore-olia-frantoio.jpg" },
+  { label: "🧺 Caseificio & Cesto KM 0", url: "/images/produttore-cesto-2.jpg" },
+  { label: "🍇 Cantina & Barrique", url: "/images/produttore-botte-cantina.jpg" },
+  { label: "🎭 Teatro Storico Lauro Rossi", url: "/images/lauro-rossi.jpg" },
+  { label: "🎼 Teatro delle Muse", url: "/images/teatro-muse.jpg" },
+  { label: "🎟️ Teatro dell'Aquila", url: "/images/teatro-aquila.jpg" },
 ];
 
 const AVAILABLE_SERVICES = [
