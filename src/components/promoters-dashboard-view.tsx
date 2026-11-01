@@ -1689,7 +1689,7 @@ export function PromotersDashboardView({ data }: Props) {
                 </div>
                 <h2 className="font-serif text-2xl text-forest">Filiera Produttori KM 0 & Cesti Territoriali</h2>
                 <p className="text-xs text-olive mt-0.5">
-                  Supervisione degli acquisti di cesti tipici effettuati da lavoratori ed ospiti, calcolo trasparente dei km evitati rispetto alla logistica industriale e stato delle consegne.
+                  Supervisione degli acquisti di cesti tipici. I km logistici dedicati sono azzerati grazie al ritiro diretto in loco durante il soggiorno o alla consegna di prossimità sul tragitto ordinario del produttore.
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -1712,9 +1712,9 @@ export function PromotersDashboardView({ data }: Props) {
                 <p className="text-[11px] text-olive mt-0.5">100% reinvestito sul territorio</p>
               </div>
               <div className="rounded-2xl border border-forest/10 bg-cream/40 p-4">
-                <span className="text-[11px] uppercase tracking-wider text-olive font-medium">Km Logistici Evitati</span>
+                <span className="text-[11px] uppercase tracking-wider text-olive font-medium">Km Dedicati Azzerati</span>
                 <p className="font-serif text-2xl text-forest mt-1">~{data.totalKmAvoided.toLocaleString()} km</p>
-                <p className="text-[11px] text-olive mt-0.5">rispetto alla GDO industriale</p>
+                <p className="text-[11px] text-olive mt-0.5">ritiro in loco / tragitto proprio</p>
               </div>
               <div className="rounded-2xl border border-forest/10 bg-cream/40 p-4">
                 <span className="text-[11px] uppercase tracking-wider text-olive font-medium">Produttori Locali Attivi</span>
@@ -1898,10 +1898,10 @@ export function PromotersDashboardView({ data }: Props) {
                             ) : (
                               <div className="inline-flex flex-col items-center">
                                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
-                                  ~{order.kmAvoided} km evitati
+                                  ~{order.kmAvoided} km dedicati azzerati
                                 </span>
                                 <span className="text-[10px] text-olive mt-0.5">
-                                  -{order.co2SavedKg} kg CO₂
+                                  ritiro in loco / tragitto proprio
                                 </span>
                               </div>
                             )}

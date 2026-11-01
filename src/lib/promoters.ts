@@ -621,8 +621,11 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       r.booking.finalPriceCents || (r.booking.totalAmountCents - r.booking.discountCents);
     const commission = Math.round(finalPrice * 0.1);
     const net = finalPrice - commission;
-    const kmAvoided = qty * 850;
-    const co2SavedKg = Number((qty * 14.5).toFixed(1));
+    // Logistica a impatto marginale zero: ritiro diretto in loco durante il soggiorno
+    // o consegna lungo il tragitto ordinario del produttore, azzerando corrieri dedicati (~45 km a tratta).
+    const kmAvoided = qty * 45;
+    // Risparmio CO2 da imballaggi monouso e trasporti express eliminati (~3.2 kg CO2 a confezione)
+    const co2SavedKg = Number((qty * 3.2).toFixed(1));
 
     return {
       id: r.booking.id,

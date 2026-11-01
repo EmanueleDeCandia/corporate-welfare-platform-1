@@ -21,6 +21,10 @@ for (const t of tables) {
   for (const r of rows) {
     for (const [col, val] of Object.entries(r)) {
       if (typeof val === "string" && (val.startsWith("[") || val.startsWith("{"))) {
+        // Skip text fields that might use bracket prefixes like "[ANNULLATO]"
+        if (col === "title" || col === "description" || col === "notes" || col === "reason") {
+          continue;
+        }
         try {
           JSON.parse(val);
         } catch (e) {
