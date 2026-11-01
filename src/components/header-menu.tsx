@@ -41,14 +41,14 @@ export function HeaderMenu({ sessionToken = "", user }: Props) {
           <>
             <Link
               href={accountHref}
-              className="hidden items-center gap-2 rounded-full bg-forest px-3.5 py-1.5 text-[13px] text-cream md:flex"
+              className="hidden items-center gap-2 rounded-full bg-forest px-3.5 py-1.5 text-[13px] text-cream lg:flex"
             >
               {user.firstName} {user.lastName}
             </Link>
             <button
               type="button"
               onClick={leaveSession}
-              className="hidden rounded-full border border-forest/15 px-3 py-1.5 text-[13px] text-olive hover:text-forest md:inline-flex"
+              className="hidden rounded-full border border-forest/15 px-3 py-1.5 text-[13px] text-olive hover:text-forest lg:inline-flex"
             >
               Esci
             </button>
@@ -56,7 +56,7 @@ export function HeaderMenu({ sessionToken = "", user }: Props) {
         ) : (
           <Link
             href="/login"
-            className="hidden rounded-full bg-forest px-4 py-1.5 text-[13px] text-cream md:inline-flex"
+            className="hidden rounded-full bg-forest px-4 py-1.5 text-[13px] text-cream lg:inline-flex"
           >
             Accedi
           </Link>
@@ -64,7 +64,7 @@ export function HeaderMenu({ sessionToken = "", user }: Props) {
       </AfterHydration>
       <button
         type="button"
-        className="rounded-full p-2 md:hidden"
+        className="rounded-full p-2 lg:hidden"
         onClick={() => setOpen((value) => !value)}
         aria-label="Apri menu"
       >
@@ -84,6 +84,9 @@ export function HeaderMenu({ sessionToken = "", user }: Props) {
             </Link>
             <Link href={href("/imprese")} onClick={() => setOpen(false)}>
               Imprese ESG
+            </Link>
+            <Link href={href("/vantaggi")} onClick={() => setOpen(false)}>
+              Valore Condiviso
             </Link>
             <Link href={href("/come-funziona")} onClick={() => setOpen(false)}>
               Come funziona

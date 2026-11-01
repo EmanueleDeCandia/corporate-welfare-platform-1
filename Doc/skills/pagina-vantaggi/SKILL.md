@@ -24,7 +24,7 @@ La pagina esiste già: usare questa sezione per **estendere** senza riscrivere.
 | Pannello con sfondo sfocato | `src/components/vantaggi/panel.tsx` (`BlurredPanel`) |
 | Diagramma del processo | `StepsDiagram` in `src/components/duna-diagrams.tsx` (accetta `steps`, `tone`) |
 | Sfondi pittorici sfocati | `public/images/vantaggi-{hero,stakeholder,moduli,impatto}.jpg` + `abstract-blur.jpg` |
-| Link entrata | footer «I vantaggi della partecipazione», pulsante in home |
+| Link entrata | **menu desktop e mobile «Valore Condiviso»** (tra Imprese e Come funziona), footer «I vantaggi della partecipazione», pulsante in home |
 
 **Trattamento visivo delle sezioni immagine** (richiesta esplicita del committente): l'immagine è
 uno sfondo pittorico *volutamente sfocato* — è lo stesso linguaggio del diagramma in
@@ -93,7 +93,7 @@ le pagine di catalogo (`/destinazioni`, `/strutture`, `/esplora`) o le dashboard
 | File contenuti | `src/content/vantaggi.ts` — copy editoriale tipizzato (fonte unica) |
 | File costanti | `src/content/vantaggi-claims.ts` — numeri dichiarati (deducibilità, churn, moltiplicatore) con commento di provenienza |
 | Componenti | `src/components/vantaggi/*.tsx` se una sezione supera ~80 righe |
-| Nav | voce nella `SiteHeader` **solo se** la pagina è primaria; altrimenti link dal footer e dalla home |
+| Nav | voce «Valore Condiviso» in `SiteHeader` (desktop) **e** in `header-menu.tsx` (mobile): sono due menu distinti, vanno aggiornati entrambi |
 | CTA | 1 primaria («Richiedi una convenzione» → `/imprese`), 1 secondaria («Vedi come funziona» → `/come-funziona`), 1 terza («Prova la piattaforma» → `/login`) |
 
 **Criterio di successo:** un direttore HR e un produttore locale capiscono, senza scorrere
@@ -254,6 +254,9 @@ Regole:
 - Spaziatura verticale tra sezioni: `py-16 md:py-24`.
 - Link interni: **sempre** con `pathWithSession(path, token)` (`@/lib/session-cookie`), come fa
   `SiteHeader`; mai `href="/..."` nudo se serve mantenere la sessione.
+- Il menu desktop ha **6 voci**: resta su una riga solo da `lg` (≥1024 px) in su. Nav e pulsante
+  account usano la stessa soglia (`lg:flex` / `lg:hidden`): se ne aggiungi una settima, ricontrolla
+  a 1024 px che «Accedi» non venga spinto fuori dallo schermo.
 - Avatar/immagini: `<img>` semplice (il progetto non usa `next/image`); se sostituisci un file JPG
   già referenziato **aggiungi `?v=N`** al percorso, altrimenti browser e proxy continuano a servire
   la versione vecchia.
