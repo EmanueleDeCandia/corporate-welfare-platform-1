@@ -622,10 +622,12 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     const commission = Math.round(finalPrice * 0.1);
     const net = finalPrice - commission;
     // Logistica a impatto marginale zero: ritiro diretto in loco durante il soggiorno
-    // o consegna lungo il tragitto ordinario del produttore, azzerando corrieri dedicati (~45 km a tratta).
-    const kmAvoided = qty * 45;
-    // Risparmio CO2 da imballaggi monouso e trasporti express eliminati (~3.2 kg CO2 a confezione)
-    const co2SavedKg = Number((qty * 3.2).toFixed(1));
+    // o consegna di prossimità sul tragitto ordinario di un'impresa con sinergia di trasporto.
+    // Tratta di trasporto espressa dedicata ELIMINATA: 50 km a tratta (range 40-75 km).
+    const kmAvoided = qty * 50;
+    // Calcolo scientifico CO2 da tabella emissioni (furgone diesel 10 L/100km, 2.65 kg CO2/L => 0.265 kg CO2/km):
+    // 50 km × 0.265 kg CO2/km = 13.25 kg CO2 per cesto
+    const co2SavedKg = Number((kmAvoided * 0.265).toFixed(1));
 
     return {
       id: r.booking.id,

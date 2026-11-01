@@ -1689,7 +1689,7 @@ export function PromotersDashboardView({ data }: Props) {
                 </div>
                 <h2 className="font-serif text-2xl text-forest">Filiera Produttori KM 0 & Cesti Territoriali</h2>
                 <p className="text-xs text-olive mt-0.5">
-                  Supervisione degli acquisti di cesti tipici. I km logistici dedicati sono azzerati grazie al ritiro diretto in loco durante il soggiorno o alla consegna di prossimità sul tragitto ordinario del produttore.
+                  I km logistici dedicati sono azzerati grazie al ritiro diretto in loco durante il soggiorno o alla consegna di prossimità sul tragitto ordinario di una impresa che consegna propri prodotti (non quelli dei produttori = sinergie di trasporto) e mette a disposizione la propria rete a km marginali zero per i produttori.
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -1898,10 +1898,10 @@ export function PromotersDashboardView({ data }: Props) {
                             ) : (
                               <div className="inline-flex flex-col items-center">
                                 <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
-                                  ~{order.kmAvoided} km dedicati azzerati
+                                  {order.quantity > 1 ? `~${order.kmAvoided} km dedicati azzerati` : "da 40 a 70 km dedicati azzerati"}
                                 </span>
                                 <span className="text-[10px] text-olive mt-0.5">
-                                  ritiro in loco / tragitto proprio
+                                  ritiro in loco / tragitto proprio ({order.co2SavedKg} kg CO₂)
                                 </span>
                               </div>
                             )}
