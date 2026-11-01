@@ -69,8 +69,24 @@ const AVAILABLE_SERVICES = [
 export function PromotersDashboardView({ data }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "economics" | "companies" | "venues" | "vouchers" | "grants" | "bookings"
+    "economics" | "companies" | "venues" | "vouchers" | "grants" | "bookings" | "producers"
   >("economics");
+
+  // Filtro ordini filiera corta produttori KM 0
+  const [producerFilter, setProducerFilter] = useState<"all" | "active" | "attended" | "cancelled">("all");
+  const activeProducerOrders = data.producerOrders.filter(
+    (o) => o.status !== "cancelled" && o.status !== "attended"
+  );
+  const deliveredProducerOrders = data.producerOrders.filter((o) => o.status === "attended");
+  const cancelledProducerOrders = data.producerOrders.filter((o) => o.status === "cancelled");
+  const displayedProducerOrders =
+    producerFilter === "active"
+      ? activeProducerOrders
+      : producerFilter === "attended"
+      ? deliveredProducerOrders
+      : producerFilter === "cancelled"
+      ? cancelledProducerOrders
+      : data.producerOrders;
 
   // Filtro transazioni piattaforma (attive vs annullate)
   const [txFilter, setTxFilter] = useState<"active" | "cancelled" | "all">("active");
@@ -845,6 +861,18 @@ export function PromotersDashboardView({ data }: Props) {
               <AlertTriangle size={10} /> {data.overbookingAlertsCount} a rischio
             </span>
           )}
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("producers")}
+          className={`inline-flex items-center gap-1.5 px-4 py-3 text-sm font-medium transition cursor-pointer ${
+            activeTab === "producers"
+              ? "border-b-2 border-forest font-semibold text-forest"
+              : "text-olive hover:text-forest"
+          }`}
+        >
+          <ShoppingBag size={15} />
+          <span>Filiera Produttori KM 0 ({data.producerOrders.length})</span>
         </button>
       </div>
 
@@ -1645,6 +1673,328 @@ export function PromotersDashboardView({ data }: Props) {
                 </table>
               </div>
             )}
+          </div>
+        </section>
+      )}
+
+      {/* TAB 7: FILIERA PRODUTTORI KM 0 & SOSTENIBILITA */}
+      {activeTab === "producers" && (
+        <section className="space-y-6">
+          {/* Header & KPI Card Filiera Corta */}
+          <div className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-mist">
+              <div>
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-forest/5 px-3 py-1 text-xs font-semibold text-forest mb-2">
+                  <ShoppingBag size={14} /> Ecosistema Agroalimentare a Filiera Corta
+                </div>
+                <h2 className="font-serif text-2xl text-forest">Filiera Produttori KM 0 & Cesti Territoriali</h2>
+                <p className="text-xs text-olive mt-0.5">
+                  Supervisione degli acquisti di cesti tipici effettuati da lavoratori ed ospiti, calcolo trasparente dei km evitati rispetto alla logistica industriale e stato delle consegne.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="rounded-full bg-emerald-100 px-3.5 py-1 text-xs font-bold text-emerald-800">
+                  🌱 {data.totalCo2SavedKg} kg CO₂ risparmiati
+                </span>
+              </div>
+            </div>
+
+            {/* Grid 4 KPI Fondamentali */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="rounded-2xl border border-forest/10 bg-cream/40 p-4">
+                <span className="text-[11px] uppercase tracking-wider text-olive font-medium">Cesti KM 0 Ordinati</span>
+                <p className="font-serif text-2xl text-forest mt-1">{data.totalProducerBasketsSold}</p>
+                <p className="text-[11px] text-olive mt-0.5">confezioni a filiera diretta</p>
+              </div>
+              <div className="rounded-2xl border border-forest/10 bg-cream/40 p-4">
+                <span className="text-[11px] uppercase tracking-wider text-olive font-medium">Valore Economico Diretto</span>
+                <p className="font-serif text-2xl text-forest mt-1">{formatEuro(data.totalProducerRevenueCents)}</p>
+                <p className="text-[11px] text-olive mt-0.5">100% reinvestito sul territorio</p>
+              </div>
+              <div className="rounded-2xl border border-forest/10 bg-cream/40 p-4">
+                <span className="text-[11px] uppercase tracking-wider text-olive font-medium">Km Logistici Evitati</span>
+                <p className="font-serif text-2xl text-forest mt-1">~{data.totalKmAvoided.toLocaleString()} km</p>
+                <p className="text-[11px] text-olive mt-0.5">rispetto alla GDO industriale</p>
+              </div>
+              <div className="rounded-2xl border border-forest/10 bg-cream/40 p-4">
+                <span className="text-[11px] uppercase tracking-wider text-olive font-medium">Produttori Locali Attivi</span>
+                <p className="font-serif text-2xl text-forest mt-1">{data.producersCount}</p>
+                <p className="text-[11px] text-olive mt-0.5">presidi agricoli e frantoi</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Registro Ordini & Tracciamento Dettagliato */}
+          <div className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-mist">
+              <div>
+                <h3 className="font-serif text-2xl text-forest">Registro Ordini, Acquirenti & Consegne</h3>
+                <p className="text-xs text-olive">
+                  Dettaglio analitico: chi acquista, impresa di appartenenza, produttore fornitore, cesto ordinato, prezzo e km evitati.
+                </p>
+              </div>
+              <div className="inline-flex rounded-full bg-forest/5 p-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setProducerFilter("all")}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition cursor-pointer ${
+                    producerFilter === "all" ? "bg-forest text-cream shadow-sm" : "text-forest hover:bg-forest/10"
+                  }`}
+                >
+                  Tutti ({data.producerOrders.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProducerFilter("active")}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition cursor-pointer ${
+                    producerFilter === "active" ? "bg-forest text-cream shadow-sm" : "text-forest hover:bg-forest/10"
+                  }`}
+                >
+                  In Consegna ({activeProducerOrders.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProducerFilter("attended")}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition cursor-pointer ${
+                    producerFilter === "attended" ? "bg-forest text-cream shadow-sm" : "text-forest hover:bg-forest/10"
+                  }`}
+                >
+                  Consegnati ({deliveredProducerOrders.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProducerFilter("cancelled")}
+                  className={`rounded-full px-3 py-1 text-xs font-semibold transition cursor-pointer ${
+                    producerFilter === "cancelled" ? "bg-forest text-cream shadow-sm" : "text-forest hover:bg-forest/10"
+                  }`}
+                >
+                  Annullati ({cancelledProducerOrders.length})
+                </button>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1050px] text-left text-sm">
+                <thead className="text-[11px] uppercase tracking-wider text-olive border-b border-mist">
+                  <tr>
+                    <th className="py-3">Data & ID</th>
+                    <th className="py-3">Acquirente</th>
+                    <th className="py-3">Impresa / Provenienza</th>
+                    <th className="py-3">Produttore & Territorio</th>
+                    <th className="py-3">Cesto & Quantità</th>
+                    <th className="py-3 text-right">Prezzo Pagato</th>
+                    <th className="py-3 text-right text-gold">Fee Radici</th>
+                    <th className="py-3 text-center">Impatto KM 0</th>
+                    <th className="py-3 text-center">Stato Consegna</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-mist">
+                  {displayedProducerOrders.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="py-8 text-center text-xs text-olive">
+                        {producerFilter === "active"
+                          ? "Nessun ordine di cesti in consegna."
+                          : producerFilter === "attended"
+                          ? "Nessun ordine consegnato registrato."
+                          : producerFilter === "cancelled"
+                          ? "Nessun ordine annullato."
+                          : "Nessun ordine registrato nella filiera corta."}
+                      </td>
+                    </tr>
+                  ) : (
+                    displayedProducerOrders.map((order) => {
+                      const isCancelled = order.status === "cancelled";
+                      const isAttended = order.status === "attended";
+                      const isPresenceConfirmed = order.status === "presence_confirmed";
+
+                      return (
+                        <tr
+                          key={order.id}
+                          className={`transition ${isCancelled ? "bg-mist/20 opacity-70" : "hover:bg-cream/40"}`}
+                        >
+                          {/* Data & ID */}
+                          <td className="py-3 font-mono text-xs text-olive">
+                            {formatDate(order.createdAt)}
+                            <span className="block text-[10px] text-ink/40">#{order.id}</span>
+                          </td>
+
+                          {/* Acquirente */}
+                          <td className="py-3 font-medium text-forest">
+                            {order.buyerName}
+                            <span className="block text-[11px] text-olive">{order.buyerEmail}</span>
+                            <span className="inline-block mt-0.5 rounded bg-forest/5 px-2 py-0.5 text-[10px] font-semibold text-forest">
+                              {order.buyerRole === "employee" ? "Dipendente Welfare" : "Ospite Community"}
+                            </span>
+                          </td>
+
+                          {/* Impresa */}
+                          <td className="py-3 text-forest">
+                            {order.companyName ? (
+                              <div>
+                                <span className="font-semibold text-forest">{order.companyName}</span>
+                                <span className="block text-[10px] text-olive">Convenzione Welfare</span>
+                              </div>
+                            ) : (
+                              <div>
+                                <span className="text-forest">Privato / Community</span>
+                                <span className="block text-[10px] text-olive">Acquisto Diretto</span>
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Produttore */}
+                          <td className="py-3 text-forest">
+                            <span className="font-semibold text-forest">{order.producerName}</span>
+                            <span className="block text-[11px] text-olive">
+                              {order.producerCity} ({order.producerRegion})
+                            </span>
+                          </td>
+
+                          {/* Cesto & Qty */}
+                          <td className="py-3">
+                            <div className="font-medium text-forest">{order.basketName}</div>
+                            <span className="inline-flex items-center gap-1 rounded bg-amber-100/60 px-2 py-0.5 text-[11px] font-bold text-amber-900 mt-0.5">
+                              {order.quantity} {order.quantity === 1 ? "cesto" : "cesti"}
+                            </span>
+                            {order.notes && (
+                              <p className="text-[10px] text-olive mt-1 italic max-w-[200px] truncate" title={order.notes}>
+                                {order.notes}
+                              </p>
+                            )}
+                          </td>
+
+                          {/* Prezzo Pagato */}
+                          <td className="py-3 text-right">
+                            {isCancelled ? (
+                              <div>
+                                <span className="line-through text-olive/60 text-xs block">{formatEuro(order.totalListPriceCents)}</span>
+                                <span className="text-xs font-bold text-terracotta">0,00 € (Annullato)</span>
+                              </div>
+                            ) : (
+                              <div>
+                                <span className="font-medium text-forest">{formatEuro(order.finalPriceCents)}</span>
+                                {order.discountPercent > 0 && (
+                                  <span className="block text-[10px] text-emerald-700 font-medium">
+                                    -{order.discountPercent}% sconto amico
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Fee Radici (10%) */}
+                          <td className="py-3 text-right font-semibold text-gold bg-gold/5">
+                            {isCancelled ? (
+                              <span className="text-xs text-olive/60">0,00 €</span>
+                            ) : (
+                              `+${formatEuro(order.commissionCents)}`
+                            )}
+                          </td>
+
+                          {/* Impatto KM 0 */}
+                          <td className="py-3 text-center">
+                            {isCancelled ? (
+                              <span className="text-xs text-olive/60">-</span>
+                            ) : (
+                              <div className="inline-flex flex-col items-center">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
+                                  ~{order.kmAvoided} km evitati
+                                </span>
+                                <span className="text-[10px] text-olive mt-0.5">
+                                  -{order.co2SavedKg} kg CO₂
+                                </span>
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Stato Consegna */}
+                          <td className="py-3 text-center">
+                            {isCancelled ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-semibold text-rose-800">
+                                <Ban size={12} /> Annullato
+                              </span>
+                            ) : isAttended ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-[11px] font-semibold text-purple-800">
+                                <CheckCircle2 size={12} /> Ritirato / Consegnato
+                              </span>
+                            ) : isPresenceConfirmed ? (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800">
+                                <CheckCircle2 size={12} /> Consegna Riconfermata
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
+                                <Clock size={12} /> In Elaborazione
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Vetrina Produttori Locali Convenzionati */}
+          <div className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm space-y-4">
+            <div className="border-b border-mist pb-4">
+              <h3 className="font-serif text-2xl text-forest">Presidi & Produttori Convenzionati nel Circuito</h3>
+              <p className="text-xs text-olive">
+                I produttori a km 0 accreditati sulla piattaforma RADICI che forniscono cesti biologici e artigianali del territorio.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {data.venuesList
+                .filter((v) => v.type === "producer")
+                .map((p) => {
+                  const pOrders = data.producerOrders.filter((o) => o.producerId === p.id && o.status !== "cancelled");
+                  const pBasketsCount = pOrders.reduce((sum, o) => sum + o.quantity, 0);
+                  const pRevenueCents = pOrders.reduce((sum, o) => sum + o.finalPriceCents, 0);
+
+                  return (
+                    <div
+                      key={p.id}
+                      className="rounded-2xl border border-forest/10 bg-cream/30 p-5 space-y-3 flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <span className="inline-flex items-center gap-1 rounded bg-forest/10 px-2 py-0.5 text-[10px] font-semibold text-forest uppercase">
+                              <Store size={11} /> Produttore KM 0
+                            </span>
+                            <h4 className="font-serif text-xl text-forest mt-1">{p.name}</h4>
+                            <p className="text-xs text-olive flex items-center gap-1 mt-0.5">
+                              <MapPin size={11} /> {p.city} ({p.region})
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-xs font-semibold text-forest block">
+                              {formatEuro(p.priceBasketCents)}
+                            </span>
+                            <span className="text-[10px] text-olive">listino cesto</span>
+                          </div>
+                        </div>
+
+                        {/* Cesto info */}
+                        <div className="mt-3 rounded-xl border border-forest/10 bg-white p-3">
+                          <p className="text-xs font-bold text-forest">{p.basketName || "Cesto Tipico KM 0"}</p>
+                          <p className="text-[11px] text-ink/75 mt-0.5 leading-relaxed">
+                            {p.basketDescription || "Selezione di prodotti biologici e artigianali del territorio."}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Statistiche vendite produttore */}
+                      <div className="pt-2 border-t border-forest/10 flex items-center justify-between text-xs text-olive">
+                        <span>Cesti consegnati: <strong className="text-forest font-semibold">{pBasketsCount}</strong></span>
+                        <span>Fatturato generato: <strong className="text-forest font-semibold">{formatEuro(pRevenueCents)}</strong></span>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
           </div>
         </section>
       )}

@@ -61,6 +61,35 @@ export type PlatformTransactionRow = {
   voucherId: number | null;
 };
 
+export type ProducerOrderRow = {
+  id: number;
+  createdAt: Date;
+  orderDate: string;
+  timeSlot: string | null;
+  buyerName: string;
+  buyerEmail: string;
+  buyerRole: string;
+  companyName: string | null;
+  producerId: number;
+  producerName: string;
+  producerCity: string;
+  producerRegion: string;
+  basketName: string;
+  basketDescription: string | null;
+  quantity: number;
+  unitPriceCents: number;
+  totalListPriceCents: number;
+  discountPercent: number;
+  discountCents: number;
+  finalPriceCents: number;
+  commissionCents: number;
+  producerNetCents: number;
+  kmAvoided: number;
+  co2SavedKg: number;
+  status: string;
+  notes: string | null;
+};
+
 export type CompanyOverview = {
   id: number;
   name: string;
@@ -213,6 +242,14 @@ export type PromoterDashboardData = {
   totalCommunityConfirmedCount: number;
   totalCommunityPendingCount: number;
   overbookingAlertsCount: number;
+
+  // Filiera Corta & Produttori KM 0
+  producerOrders: ProducerOrderRow[];
+  totalProducerBasketsSold: number;
+  totalProducerRevenueCents: number;
+  totalKmAvoided: number;
+  totalCo2SavedKg: number;
+  producersCount: number;
 };
 
 export async function getPromotersDashboardData(promoterUserId: number): Promise<PromoterDashboardData | null> {
@@ -570,6 +607,62 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     region: th.region,
   }));
 
+  // 5. Filiera Corta & Produttori KM 0
+  const producerOrderRows = allBookingsRows.filter(
+    (r) => r.booking.bookingType === "local_basket" || r.venue.type === "producer"
+  );
+
+  const producerOrders: ProducerOrderRow[] = producerOrderRows.map((r) => {
+    const userCompany = r.user.companyId ? companyMap.get(r.user.companyId) : null;
+    const qty = Math.max(1, r.booking.partySize || 1);
+    const unitPrice =
+      r.venue.priceBasketCents || Math.round(r.booking.totalAmountCents / qty) || 3800;
+    const finalPrice =
+      r.booking.finalPriceCents || (r.booking.totalAmountCents - r.booking.discountCents);
+    const commission = Math.round(finalPrice * 0.1);
+    const net = finalPrice - commission;
+    const kmAvoided = qty * 850;
+    const co2SavedKg = Number((qty * 14.5).toFixed(1));
+
+    return {
+      id: r.booking.id,
+      createdAt: r.booking.createdAt,
+      orderDate: r.booking.bookingDate,
+      timeSlot: r.booking.timeSlot,
+      buyerName: r.booking.guestName || `${r.user.firstName} ${r.user.lastName}`,
+      buyerEmail: r.booking.guestEmail || r.user.email,
+      buyerRole: r.user.role,
+      companyName: userCompany ? userCompany.name : null,
+      producerId: r.venue.id,
+      producerName: r.venue.name,
+      producerCity: r.venue.city,
+      producerRegion: r.venue.region,
+      basketName: r.venue.basketName || "Cesto Tipico KM 0",
+      basketDescription: r.venue.basketDescription,
+      quantity: qty,
+      unitPriceCents: unitPrice,
+      totalListPriceCents: r.booking.totalAmountCents,
+      discountPercent: r.booking.discountPercent,
+      discountCents: r.booking.discountCents,
+      finalPriceCents: finalPrice,
+      commissionCents: commission,
+      producerNetCents: net,
+      kmAvoided,
+      co2SavedKg,
+      status: r.booking.status,
+      notes: r.booking.notes,
+    };
+  });
+
+  const activeProducerOrders = producerOrders.filter((o) => o.status !== "cancelled");
+  const totalProducerBasketsSold = activeProducerOrders.reduce((sum, o) => sum + o.quantity, 0);
+  const totalProducerRevenueCents = activeProducerOrders.reduce((sum, o) => sum + o.finalPriceCents, 0);
+  const totalKmAvoided = activeProducerOrders.reduce((sum, o) => sum + o.kmAvoided, 0);
+  const totalCo2SavedKg = Number(
+    activeProducerOrders.reduce((sum, o) => sum + o.co2SavedKg, 0).toFixed(1)
+  );
+  const producersCount = allVenues.filter((v) => v.type === "producer").length;
+
   return {
     promoterUser,
     totalGmvCents,
@@ -609,5 +702,11 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     totalCommunityConfirmedCount,
     totalCommunityPendingCount,
     overbookingAlertsCount,
+    producerOrders,
+    totalProducerBasketsSold,
+    totalProducerRevenueCents,
+    totalKmAvoided,
+    totalCo2SavedKg,
+    producersCount,
   };
 }
