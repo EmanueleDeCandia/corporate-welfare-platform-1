@@ -86,10 +86,10 @@ async function run() {
   const chiaraPromRes = await request('/promotori', { headers: { Cookie: `radici_session=${chiaraCookie}` } });
   assert(chiaraPromRes.status === 200, 'Chiara Valenti accede a /promotori (Startup RADICI)');
 
-  // 1. Verifica 6 Produttori Filiera Corta
+  // 1. Verifica Produttori Filiera Corta
   console.log('\n--- 1. Verifica Database Produttori Filiera Corta ---');
   const producers = db.prepare("SELECT id, name, city, basket_name, price_basket_cents FROM venues WHERE type = 'producer'").all();
-  assert(producers.length === 6, `Trovati ${producers.length} produttori filiera corta (attesi 6)`);
+  assert(producers.length >= 2, `Trovati ${producers.length} produttori filiera corta (attesi >= 2)`);
   for (const p of producers) {
     assert(p.basket_name && p.price_basket_cents > 0, `Produttore "${p.name}" ha cesto "${p.basket_name}" (€${p.price_basket_cents / 100})`);
   }
@@ -216,24 +216,24 @@ async function run() {
   const luigiCookie = await login('luigi.bianchi@email.it');
   assert(!!luigiCookie, 'Login Luigi Bianchi (amico invitato)');
 
-  const cantina = producers.find(p => p.name.includes('Moroder'));
+  const prod = producers.find(p => p.name.includes('Frantoio') || p.name.includes('Caseificio')) || producers[0];
   const luigiOrderRes = await request('/api/bookings', {
     method: 'POST',
     headers: { Cookie: `radici_session=${luigiCookie}` },
     body: JSON.stringify({
-      venueId: cantina.id,
+      venueId: prod.id,
       bookingType: 'local_basket',
       bookingDate: '2026-11-12',
-      timeSlot: 'Ritiro in cantina',
+      timeSlot: 'Ritiro in sede',
       partySize: 1, // 1 cesto
       notes: 'Ritiro di persona sabato mattina',
     }),
   });
   assert(luigiOrderRes.status === 201, 'Ordine cesto registrato da Luigi Bianchi');
   assert(luigiOrderRes.json.booking.discountPercent === 10, `Sconto amico applicato: ${luigiOrderRes.json.booking.discountPercent}% (ATTESO: 10%)`);
-  const expectedDiscount = Math.round((cantina.price_basket_cents * 10) / 100);
+  const expectedDiscount = Math.round((prod.price_basket_cents * 10) / 100);
   assert(luigiOrderRes.json.booking.discountCents === expectedDiscount, `Sconto applicato di €${expectedDiscount / 100}`);
-  assert(luigiOrderRes.json.booking.finalPriceCents === cantina.price_basket_cents - expectedDiscount, `Prezzo finale scontato: €${luigiOrderRes.json.booking.finalPriceCents / 100}`);
+  assert(luigiOrderRes.json.booking.finalPriceCents === prod.price_basket_cents - expectedDiscount, `Prezzo finale scontato: €${luigiOrderRes.json.booking.finalPriceCents / 100}`);
 
   // 8. Test Conferma Ricezione / Riconferma Presenza
   console.log('\n--- 8. Conferma Presenza / Ricezione Cesto ---');

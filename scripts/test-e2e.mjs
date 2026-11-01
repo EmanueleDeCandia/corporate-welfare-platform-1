@@ -2,6 +2,7 @@
 import Database from 'better-sqlite3';
 
 const BASE_URL = 'http://localhost:3000';
+const db = new Database('radici.db');
 
 async function request(path, options = {}) {
   const url = `${BASE_URL}${path}`;
@@ -390,11 +391,12 @@ async function testCommunityBookingsAndOverbookingPrevention() {
   );
 
   // 5. Test ANTI-OVERBOOKING per Spettacoli Teatrali a Posti Limitati
+  const theaterVenue = db.prepare("SELECT id FROM venues WHERE type = 'theater' LIMIT 1").get();
   const overbookingRes = await request('/api/bookings', {
     method: 'POST',
     headers: friendHeaders,
     body: JSON.stringify({
-      venueId: 11,
+      venueId: theaterVenue ? theaterVenue.id : 5,
       grantEventId: 1, // Spettacolo con capienza 50
       bookingType: 'theater_event',
       bookingDate: '2026-12-10',
