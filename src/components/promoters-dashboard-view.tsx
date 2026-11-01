@@ -1639,10 +1639,11 @@ export function PromotersDashboardView({ data }: Props) {
                           <p className="text-[11px] text-olive">{b.venueCity} ({b.venueType})</p>
                         </td>
                         <td className="py-3 text-forest">
-                          {b.eventTitle ? (
-                            <span className="font-bold text-forest">{b.eventTitle}</span>
-                          ) : (
-                            <span className="text-olive capitalize">{b.venueType}</span>
+                          <span className="font-semibold text-forest block">
+                            {b.eventTitle || b.serviceLabel || b.venueType}
+                          </span>
+                          {b.eventTitle && (
+                            <span className="text-[11px] text-olive block">{b.serviceLabel}</span>
                           )}
                         </td>
                         <td className="py-3 text-center">

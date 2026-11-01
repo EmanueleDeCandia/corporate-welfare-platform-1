@@ -1122,7 +1122,7 @@ export async function seedDatabase() {
   const defaultGrantEvent = insertedGrantEvents[0];
 
   const employeeSeeds = [
-    { user: mario, companyId: acme.id, planId: acmePlan.id, hotelRedeemed: true },
+    { user: mario, companyId: acme.id, planId: acmePlan.id, hotelRedeemed: false },
     { user: giulia, companyId: acme.id, planId: acmePlan.id, hotelRedeemed: false },
     { user: sofia, companyId: verde.id, planId: verdePlan.id, hotelRedeemed: false },
     { user: davide, companyId: acme.id, planId: acmePlan.id, hotelRedeemed: false },
@@ -1153,7 +1153,7 @@ export async function seedDatabase() {
       })
       .returning();
 
-    if (employee.user.id === mario.id) {
+    if (employee.hotelRedeemed && employee.user.id === mario.id) {
       marioOvernightVoucherId = insertedHotelVoucher.id;
 
       // Creazione selezione puntuale e tracciamento presenza per Mario
@@ -1268,43 +1268,7 @@ export async function seedDatabase() {
   const insertedTx = await db
     .insert(transactions)
     .values([
-      {
-        type: "welfare_redeem",
-        status: "completed",
-        userId: mario.id,
-        venueId: laValle.id,
-        companyId: acme.id,
-        voucherId: marioOvernightVoucherId,
-        amountCents: 5000,
-        discountCents: 0,
-        listPriceCents: 5000,
-        serviceLabel: "Pernottamento in Camera Matrimoniale",
-        invoiceNumber: "FATT-2026/088",
-        invoiceDate: "2026-03-15",
-        paymentStatus: "settled",
-        commissionBps: 1000,
-        commissionAmountCents: 500,
-        providerNetCents: 4500,
-        createdAt: new Date("2026-03-12T18:40:00Z"),
-      },
-      {
-        type: "welfare_redeem",
-        status: "completed",
-        userId: mario.id,
-        venueId: teatroLauro.id,
-        companyId: null,
-        amountCents: 1500,
-        discountCents: 0,
-        listPriceCents: 1500,
-        serviceLabel: "Buono Spettacolo · platea",
-        invoiceNumber: null,
-        invoiceDate: null,
-        paymentStatus: "pending",
-        commissionBps: 1000,
-        commissionAmountCents: 150,
-        providerNetCents: 1350,
-        createdAt: new Date("2026-02-20T20:00:00Z"),
-      },
+      // Transazione privata community: Luigi Bianchi (amico invitato, paga quota propria)
       {
         type: "consumer_payment",
         status: "receipted",
@@ -1321,45 +1285,10 @@ export async function seedDatabase() {
         providerNetCents: 4050,
         createdAt: new Date("2026-04-04T19:12:00Z"),
       },
-      {
-        type: "welfare_redeem",
-        status: "completed",
-        userId: sofia.id,
-        venueId: osteriaTiglio.id, // Osteria del Tiglio
-        companyId: verde.id,
-        amountCents: 2500,
-        discountCents: 0,
-        listPriceCents: 2500,
-        serviceLabel: "Cena di Campagna sotto il Tiglio (KM 0)",
-        invoiceNumber: "FATT-TIGLIO-26/01",
-        invoiceDate: "2026-03-25",
-        paymentStatus: "settled",
-        commissionBps: 1000,
-        commissionAmountCents: 250,
-        providerNetCents: 2250,
-        createdAt: new Date("2026-03-22T19:30:00Z"),
-      },
     ])
     .returning();
 
   await db.insert(notifications).values([
-    {
-      venueId: laValle.id,
-      type: "welfare",
-      title: "Notifica welfare · riscatto istantaneo",
-      body: 'L\'utente dipendente "Mario Rossi" ha appena cliccato RISCATTA.',
-      payload: {
-        guest: "Mario Rossi",
-        company: "ACME S.p.A.",
-        vat: "01234567890",
-        amountCents: 5000,
-        invoiceHint: "EMETTI FATTURA DIRETTA A: Impresa Cliente ACME S.p.A. (P.IVA: 01234567890)",
-        vatNote: "Importo da fatturare: € 50,00 (IVA 10% inclusa)",
-        transactionId: insertedTx[0].id,
-      },
-      read: false,
-      createdAt: new Date("2026-03-12T18:40:00Z"),
-    },
     {
       venueId: laValle.id,
       type: "referral",
@@ -1372,46 +1301,10 @@ export async function seedDatabase() {
         invoiceHint: "INCASSO RICEVUTO: € 45,00 (pagato direttamente dall'utente via carta)",
         vatNote: "Emettere normale scontrino/corrispettivo fiscale all'ospite.",
         impact: "Assegnato +1 Punto Impatto a Mario Rossi",
-        transactionId: insertedTx[2].id,
+        transactionId: insertedTx[0].id,
       },
       read: false,
       createdAt: new Date("2026-04-04T19:12:00Z"),
-    },
-    {
-      venueId: teatroLauro.id,
-      type: "welfare",
-      title: "Buono spettacolo riscattato",
-      body: 'Mario Rossi ha usato un omaggio loyalty da 15€ per la stagione di prosa.',
-      payload: {
-        guest: "Mario Rossi",
-        company: "ACME S.p.A.",
-        vat: "01234567890",
-        amountCents: 1500,
-        invoiceHint: "OMAGGIO PROMOTORI: Biglietto Spettacolo (Non fatturabile all'azienda)",
-        vatNote: "Importo da fatturare: € 15,00",
-        transactionId: insertedTx[1].id,
-      },
-      read: true,
-      createdAt: new Date("2026-02-20T20:00:00Z"),
-    },
-    {
-      venueId: osteriaTiglio.id, // Osteria del Tiglio
-      type: "welfare",
-      title: "Notifica riscatto cena KM 0 · Debito B2B dovuto",
-      body: 'L\'utente dipendente "Sofia Neri" ha riscattato un voucher cena welfare per la tua Osteria.',
-      payload: {
-        guest: "Sofia Neri",
-        company: "Verde Energia Italia",
-        vat: "01877654321",
-        amountCents: 2500,
-        commissionAmountCents: 250,
-        providerNetCents: 2250,
-        invoiceHint: "EMETTI FATTURA NEL TUO GESTIONALE A: Verde Energia Italia (P.IVA: 01877654321)",
-        vatNote: "Importo: € 25,00 (Lordo) | Fee Radici (10%): € 2,50 | Netto Osteria: € 22,50",
-        transactionId: insertedTx[3].id,
-      },
-      read: true,
-      createdAt: new Date("2026-03-22T19:30:00Z"),
     },
   ]);
 

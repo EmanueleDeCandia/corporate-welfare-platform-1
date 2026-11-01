@@ -237,6 +237,8 @@ export type PromoterDashboardData = {
     venueName: string;
     venueCity: string;
     venueType: string;
+    bookingType: string;
+    serviceLabel: string;
     eventTitle: string | null;
     finalPriceCents: number;
     notes: string | null;
@@ -352,7 +354,9 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
   // 3. Panoramica Imprese CSR
   const companiesList: CompanyOverview[] = allCompanies.map((c) => {
     const compVouchers = allVouchers.filter((v) => v.companyId === c.id);
-    const compTx = platformTransactions.filter((tx) => tx.companyName === c.name);
+    const compTx = platformTransactions.filter(
+      (tx) => tx.companyName === c.name && tx.status !== "cancelled" && tx.paymentStatus !== "cancelled"
+    );
 
     const totalDebt = compTx.reduce((sum, tx) => sum + tx.amountCents, 0);
     const totalSettled = compTx
@@ -392,7 +396,9 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
   const compMap = new Map(allCompanies.map((c) => [c.id, c]));
 
   const venuesList: VenueOverview[] = allVenues.map((v) => {
-    const venueTx = platformTransactions.filter((tx) => tx.venueName === v.name);
+    const venueTx = platformTransactions.filter(
+      (tx) => tx.venueName === v.name && tx.status !== "cancelled" && tx.paymentStatus !== "cancelled"
+    );
     const venueSelections = allSelections.filter((s) => s.venueId === v.id);
 
     const grossVolume = venueTx.reduce((sum, tx) => sum + tx.amountCents, 0);
@@ -494,7 +500,8 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
   const grantFundCapacityCents = 2500000; // 25.000 € stanziati per il fondo matching grant iniziale
   const grantFundSpentCents = grants.reduce((sum, g) => sum + g.grantValueCents, 0);
 
-  // 4. Caricamento Prenotazioni Community per il controllo di capienza e overbooking
+  // 4. Caricamento Prenotazioni Community Turistico-Culturali (Soggiorni, Cene e Spettacoli a Teatro)
+  // I cesti alimentari KM 0 appartengono ESCLUSIVAMENTE al tab "Filiera Corta & Produttori KM 0" e non a capienza/overbooking teatri
   const allBookingsRows = await db
     .select({
       booking: bookings,
@@ -508,23 +515,40 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     .leftJoin(grantEvents, eq(bookings.grantEventId, grantEvents.id))
     .orderBy(desc(bookings.createdAt));
 
-  const communityBookings = allBookingsRows.map((r) => ({
-    id: r.booking.id,
-    createdAt: r.booking.createdAt,
-    bookingDate: r.booking.bookingDate,
-    timeSlot: r.booking.timeSlot,
-    partySize: r.booking.partySize,
-    status: r.booking.status,
-    guestName: r.booking.guestName,
-    guestEmail: r.booking.guestEmail,
-    guestPhone: r.booking.guestPhone,
-    venueName: r.venue.name,
-    venueCity: r.venue.city,
-    venueType: r.venue.type,
-    eventTitle: r.grantEvent?.title ?? null,
-    finalPriceCents: r.booking.finalPriceCents,
-    notes: r.booking.notes,
-  }));
+  // Filtra SOLO prenotazioni di ospitalità, ristorazione e spettacoli teatrali (esclusi tassativamente i cesti dei produttori)
+  const communityBookingsRows = allBookingsRows.filter(
+    (r) => r.booking.bookingType !== "local_basket" && r.venue.type !== "producer"
+  );
+
+  const communityBookings = communityBookingsRows.map((r) => {
+    const bType = r.booking.bookingType as string;
+    let serviceLabel = "Soggiorno / Ospitalità";
+    if (r.booking.grantEventId || r.venue.type === "theater" || bType === "theater_event") {
+      serviceLabel = r.grantEvent?.title ? `Teatro: ${r.grantEvent.title}` : "Spettacolo Teatrale";
+    } else if (bType === "dinner" || bType === "aperitivo" || r.venue.type === "restaurant") {
+      serviceLabel = "Ristorazione / Cena";
+    }
+
+    return {
+      id: r.booking.id,
+      createdAt: r.booking.createdAt,
+      bookingDate: r.booking.bookingDate,
+      timeSlot: r.booking.timeSlot,
+      partySize: r.booking.partySize,
+      status: r.booking.status,
+      guestName: r.booking.guestName,
+      guestEmail: r.booking.guestEmail,
+      guestPhone: r.booking.guestPhone,
+      venueName: r.venue.name,
+      venueCity: r.venue.city,
+      venueType: r.venue.type,
+      bookingType: bType,
+      serviceLabel,
+      eventTitle: r.grantEvent?.title ?? null,
+      finalPriceCents: r.booking.finalPriceCents,
+      notes: r.booking.notes,
+    };
+  });
 
   const totalCommunityBookingsCount = communityBookings.length;
   const totalCommunityBookingsSeats = communityBookings.reduce((sum, b) => sum + b.partySize, 0);
@@ -545,10 +569,10 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     );
     const welfareSeats = eventGrants.reduce((sum, g) => sum + g.seatsRequested, 0);
 
-    // Posti occupati da Prenotazioni Community Amici
+    // Posti occupati da Prenotazioni Community Amici allo spettacolo
     const eventCommunity = communityBookings.filter(
       (b) =>
-        allBookingsRows.find((r) => r.booking.id === b.id)?.booking.grantEventId === ge.id &&
+        communityBookingsRows.find((r) => r.booking.id === b.id)?.booking.grantEventId === ge.id &&
         b.status !== "rejected" &&
         b.status !== "cancelled"
     );
