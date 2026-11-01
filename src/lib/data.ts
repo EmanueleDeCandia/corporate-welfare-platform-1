@@ -1,4 +1,4 @@
-import { desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, ne } from "drizzle-orm";
 import { db, initDb } from "@/db";
 import {
   certificates,
@@ -42,6 +42,12 @@ export async function getCompanies() {
 export async function getCompanyBySlug(slug: string) {
   await initDb();
   const [row] = await db.select().from(companies).where(eq(companies.slug, slug)).limit(1);
+  return row ?? null;
+}
+
+export async function getCompanyById(id: number) {
+  await initDb();
+  const [row] = await db.select().from(companies).where(eq(companies.id, id)).limit(1);
   return row ?? null;
 }
 
@@ -115,6 +121,50 @@ export async function getVenuesByCompany(companyId: number) {
     .from(venues)
     .innerJoin(destinations, eq(venues.destinationId, destinations.id))
     .where(eq(venues.sponsorCompanyId, companyId));
+}
+
+export type ProducerVenueStats = {
+  basketsSold: number;
+  totalRevenueCents: number;
+  freeBasketThreshold: number;
+  freeBasketsEarned: number;
+  basketsProgressToNextGift: number;
+  kmAvoidedTotal: number;
+  co2SavedKg: number;
+};
+
+export async function getProducerVenueStats(venueId: number): Promise<ProducerVenueStats> {
+  await initDb();
+  const [venue] = await db.select().from(venues).where(eq(venues.id, venueId)).limit(1);
+  const threshold = venue?.freeBasketThreshold || 10;
+
+  const activeBasketBookings = await db
+    .select()
+    .from(bookings)
+    .where(
+      and(
+        eq(bookings.venueId, venueId),
+        eq(bookings.bookingType, "local_basket"),
+        ne(bookings.status, "cancelled")
+      )
+    );
+
+  const basketsSold = activeBasketBookings.reduce((sum, b) => sum + (b.partySize || 1), 0);
+  const totalRevenueCents = activeBasketBookings.reduce((sum, b) => sum + (b.finalPriceCents || 0), 0);
+  const freeBasketsEarned = Math.floor(basketsSold / threshold);
+  const basketsProgressToNextGift = basketsSold % threshold;
+  const kmAvoidedTotal = basketsSold * 50;
+  const co2SavedKg = Number((kmAvoidedTotal * 0.265).toFixed(1));
+
+  return {
+    basketsSold,
+    totalRevenueCents,
+    freeBasketThreshold: threshold,
+    freeBasketsEarned,
+    basketsProgressToNextGift,
+    kmAvoidedTotal,
+    co2SavedKg,
+  };
 }
 
 export async function getUserVouchers(userId: number) {

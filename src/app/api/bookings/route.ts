@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { db } from "@/db";
 import {
   bookings,
@@ -170,9 +170,10 @@ export async function POST(request: Request) {
 
   // 3. Se acquisto cesto di filiera corta, registra transazione consumer e assegna punti impatto
   if (bookingType === "local_basket") {
-    const commissionBps = 1000;
-    const commissionAmountCents = Math.round((finalPriceCents * commissionBps) / 10000);
-    const providerNetCents = finalPriceCents - commissionAmountCents;
+    // BUSINESS RULE: Zero commissioni della startup per i produttori locali (100% dell'incasso all'operatore)
+    const commissionBps = 0;
+    const commissionAmountCents = 0;
+    const providerNetCents = finalPriceCents;
 
     await db.insert(transactions).values({
       type: "consumer_payment",
@@ -188,11 +189,30 @@ export async function POST(request: Request) {
       commissionBps,
       commissionAmountCents,
       providerNetCents,
-      paymentNotes: `Acquisto Cesto Enogastronomico Filiera Corta da ${guestName}`,
+      paymentNotes: `Acquisto Cesto Enogastronomico Filiera Corta da ${guestName} (0% fee startup)`,
     });
 
+    // BUSINESS RULE 10:1: Aggiornamento progressivo cesti venduti e cesti omaggio maturati per addetti CSR
+    const threshold = venue.freeBasketThreshold || 10;
+    const activeBasketBookings = await db
+      .select()
+      .from(bookings)
+      .where(
+        and(
+          eq(bookings.venueId, venue.id),
+          eq(bookings.bookingType, "local_basket"),
+          ne(bookings.status, "cancelled")
+        )
+      );
+    const totalSold = activeBasketBookings.reduce((sum, b) => sum + b.partySize, 0);
+    const earned = Math.floor(totalSold / threshold);
+    await db
+      .update(venues)
+      .set({ freeBasketsEarned: earned })
+      .where(eq(venues.id, venue.id));
+
     const { awardImpact } = await import("@/lib/data");
-    await awardImpact(me.id, venue.impactPointsGenerated || 2);
+    await awardImpact(me.id, (venue.impactPointsGenerated || 2) * partySize);
   }
 
   // 4. Genera Notifica per la struttura fornitrice o produttore
