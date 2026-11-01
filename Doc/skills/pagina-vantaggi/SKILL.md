@@ -12,6 +12,31 @@ Non è un documento di marketing: è un **contratto di implementazione**. Contie
 autoritativo (da non riscrivere), l'architettura della pagina, le regole sui dati, il design
 system e i criteri di accettazione.
 
+## 0. Stato dell'implementazione
+
+La pagina esiste già: usare questa sezione per **estendere** senza riscrivere.
+
+| Artefatto | Percorso |
+| :--- | :--- |
+| Pagina | `src/app/vantaggi/page.tsx` |
+| Copy | `src/content/vantaggi.ts` |
+| Claim di modello | `src/content/vantaggi-claims.ts` |
+| Pannello con sfondo sfocato | `src/components/vantaggi/panel.tsx` (`BlurredPanel`) |
+| Diagramma del processo | `StepsDiagram` in `src/components/duna-diagrams.tsx` (accetta `steps`, `tone`) |
+| Sfondi pittorici sfocati | `public/images/vantaggi-{hero,stakeholder,moduli,impatto}.jpg` + `abstract-blur.jpg` |
+| Link entrata | footer «I vantaggi della partecipazione», pulsante in home |
+
+**Trattamento visivo delle sezioni immagine** (richiesta esplicita del committente): l'immagine è
+uno sfondo pittorico *volutamente sfocato* — è lo stesso linguaggio del diagramma in
+`/come-funziona` — e il testo, le card e i diagrammi stanno **sopra l'immagine**, non accanto.
+Tecnica: `BlurredPanel` con `img` in `absolute inset-0 object-cover`, overlay `bg-cream/NN` per il
+contrasto, contenuto in un layer `relative`. Non introdurre vignette scure: gli sfondi sono chiari,
+il testo che ci va sopra è `text-forest`.
+
+Se serve un nuovo sfondo: generare il dipinto, **sfocarlo davvero** in post-produzione
+(`convert in.jpg -resize 1600x -gaussian-blur 0x13 -modulate 103,112,100 out.jpg`), altrimenti il
+dettaglio pittorico compete con il testo.
+
 ---
 
 ## 1. Quando attivare questa skill

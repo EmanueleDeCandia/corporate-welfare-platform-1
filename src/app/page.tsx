@@ -46,6 +46,9 @@ export default async function HomePage() {
           <Link href="/esplora" className="rounded-full bg-forest px-5 py-2 text-sm text-cream">
             Esplora
           </Link>
+          <Link href="/vantaggi" className="rounded-full border border-forest/15 px-5 py-2 text-sm text-forest">
+            I vantaggi per chi partecipa
+          </Link>
           {user ? (
             <Link href={accountPath} className="rounded-full border border-forest/15 px-5 py-2 text-sm text-forest">
               Il tuo spazio

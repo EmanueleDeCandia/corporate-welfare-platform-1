@@ -34,6 +34,9 @@ export async function SiteFooter() {
             <Link href={href("/come-funziona")} className="hover:text-olive">
               Modello pay-per-use
             </Link>
+            <Link href={href("/vantaggi")} className="hover:text-olive">
+              I vantaggi della partecipazione
+            </Link>
           </div>
         </div>
         <div>
