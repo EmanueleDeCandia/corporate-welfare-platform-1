@@ -127,12 +127,13 @@ export async function POST(request: Request) {
         longDescription: `${venueName} accoglie i dipendenti delle imprese clienti con fatturazione diretta per i buoni welfare e i membri della community con sconti convenzionati.`,
         lat: 43.3,
         lng: 13.4,
-        coverImage: "/images/cipressi.jpg",
+        coverImage: "/image/agriturismo-colle-di-caldarola.jpg",
         gallery: [
-          "/images/cipressi.jpg",
-          "/images/piscina.jpg",
-          "/images/camera.jpg",
-          "/images/tavola.jpg",
+          "/image/agriturismo-colle-di-caldarola.jpg",
+          "/image/agriturismo-colle-di-caldarola-galleria.jpg",
+          "/image/agriturismo-colle-di-caldarola-galleria-1.jpg",
+          "/image/agriturismo-colle-di-caldarola-interni.webp",
+          "/image/agriturismo-colle-di-caldarola-interni-galleria-3.webp",
         ],
         services: [
           "Pernottamento in Camera Rustica Panoramica",
