@@ -98,7 +98,7 @@ L'applicazione utilizza **SQLite** integrato tramite **`better-sqlite3`** e tipi
 - **Affidabilità e Concorrenza**: Modalità WAL abilitata (`PRAGMA journal_mode = WAL`) e integrità referenziale attiva (`PRAGMA foreign_keys = ON`).
 - **Auto-Provisioning**: All'avvio dell'applicazione (`src/db/index.ts`), la funzione `initDb()` esegue in modo atomico le query DDL `CREATE TABLE IF NOT EXISTS` e attiva il seed automatico se il database è vuoto.
 
-*(Nota: Nel repository sono presenti pacchetti accessori quali `@electric-sql/pglite` e stringhe di connessione Postgres nel file `.env`, residui di prototipi iniziali; il runtime effettivo e la configurazione `drizzle.config.ts` operano esclusivamente su SQLite).*
+*(Nota storica: il progetto è nato da uno scaffold che includeva `pg`, `pg-mem`, `@electric-sql/pglite` e `dotenv`, mai usati da alcun file. Sono stati rimossi: il runtime e la configurazione `drizzle.config.ts` operano esclusivamente su SQLite.)*
 
 ### Schema delle Tabelle Principali
 
