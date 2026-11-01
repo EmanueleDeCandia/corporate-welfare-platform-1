@@ -65,6 +65,12 @@ const demos: DemoUser[] = [
     category: "Fornitore Locale",
     hint: "Produttore Filiera Corta · Frantoio del Conero (Cesti Olio Bio)",
   },
+  {
+    email: "filiera@km0.it",
+    label: "Sara Campo",
+    category: "Fornitore Locale",
+    hint: "Produttore Filiera Corta · Caseificio Bio dei Sibillini (Cesti Formaggi)",
+  },
   // 5. Dipendenti Welfare
   {
     email: "mario.rossi@acme.it",
@@ -73,10 +79,10 @@ const demos: DemoUser[] = [
     hint: "Dipendente ACME · Pernottamento e Matching Grant attivi",
   },
   {
-    email: "davide.ferri@bancaadriatica.it",
+    email: "davide.ferri@acme.it",
     label: "Davide Ferri",
     category: "Dipendente Welfare",
-    hint: "Dipendente Banca Adriatica · 2 voucher disponibili da scegliere",
+    hint: "Dipendente ACME · 2 voucher disponibili da scegliere",
   },
   // 6. Amici Community
   {
