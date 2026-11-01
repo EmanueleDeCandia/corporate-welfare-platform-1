@@ -20,12 +20,12 @@ Documento di sintesi delle attività programmate per la prossima fase di svilupp
 ---
 
 ### [1] Inserimento Foto Reali delle Località e Realistiche dei Fornitori
-- [ ] Reperire e integrare fotografie ad alta risoluzione e realistiche per:
+- [x] Reperire e integrare fotografie ad alta risoluzione e realistiche per:
   - Destinazioni e borghi storici (Conero, Sibillini, Val d'Orcia, Langhe, Salento).
   - Strutture ricettive autentiche (casali in pietra, agriturismi a conduzione familiare, relais).
   - Produttori della filiera corta (frantoi, cantine, caseifici artigianali, pastifici).
   - Teatri storici e spazi culturali convenzionati (Teatro Lauro Rossi, palcoscenici storici).
-- [ ] Sostituire i mockup grafici temporanei con immagini coerenti nel database di seed e nei preset del CMS (`COVER_PRESETS`).
+- [x] Sostituire i mockup grafici temporanei con immagini coerenti nel database di seed e nei preset del CMS (`COVER_PRESETS`).
 
 ---
 
