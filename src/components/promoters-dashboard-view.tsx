@@ -49,6 +49,7 @@ type Props = {
 
 const COVER_PRESETS = [
   { label: "Agriturismo & Casale", url: "/images/struttura-la-valle-cover.jpg" },
+  { label: "Agriturismo Colle (Caldarola)", url: "/images/agriturismo-colle-di-caldarola.jpg" },
   { label: "Relais tra i Filari", url: "/images/langhe.jpg" },
   { label: "Podere Toscano & Crete", url: "/images/struttura-fontebella-cover.webp" },
   { label: "Masseria Salentina", url: "/images/masseria-salento.jpg" },

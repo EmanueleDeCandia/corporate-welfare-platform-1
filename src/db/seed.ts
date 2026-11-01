@@ -359,6 +359,16 @@ export async function seedDatabase() {
         badgeLevel: "Partner Filiera Corta",
         referralCode: "marco-silvestri",
       },
+      {
+        email: "sandro@agriturismocolle.it",
+        passwordHash: DEMO_PASSWORD,
+        firstName: "Sandro",
+        lastName: "Conti",
+        role: "provider",
+        impactPoints: 0,
+        badgeLevel: "Partner Locale",
+        referralCode: "sandro-conti",
+      },
     ])
     .returning();
 
@@ -379,6 +389,7 @@ export async function seedDatabase() {
   const giovanni = insertedUsers[14];
   const saraCaseificio = insertedUsers[15];
   const marcoFrantoio = insertedUsers[16];
+  const sandroColle = insertedUsers[17];
 
   await db
     .update(users)
@@ -797,6 +808,79 @@ export async function seedDatabase() {
         impactPointsGenerated: 2,
         localSupportPercent: 20,
       },
+      {
+        name: "Agriturismo Colle",
+        slug: "agriturismo-colle",
+        type: "agriturismo",
+        destinationId: marche.id,
+        city: "Caldarola",
+        province: "MC",
+        region: "Marche",
+        description:
+          "Antico casale rurale sui colli di Caldarola, nel cuore dei Monti Azzurri. Camere rustiche con vista, piscina e cucina autentica dell'entroterra a KM 0.",
+        longDescription:
+          "Nel suggestivo entroterra maceratese, ai piedi dei Sibillini e a pochi passi dal Castello Pallotta di Caldarola, l'Agriturismo Colle incarna la vocazione rurale e la resilienza delle aree interne marchigiane. La tenuta è circondata da uliveti secolari della pregiata cultivar Coroncina e da coltivazioni biologiche. I dipendenti delle imprese CSR e gli ospiti della community godono di un'ospitalità familiare a ritmo lento, con colazioni casalinghe e degustazioni di salumi tipici dei Sibillini, formaggi d'alpeggio e vini del comprensorio montano.",
+        lat: 43.1388,
+        lng: 13.2261,
+        coverImage: "/images/agriturismo-colle-di-caldarola.jpg",
+        gallery: [
+          "/images/agriturismo-colle-di-caldarola.jpg",
+          "/images/agriturismo-colle-di-caldarola-galleria.jpg",
+          "/images/agriturismo-colle-di-caldarola-galleria-1.jpg",
+          "/images/agriturismo-colle-di-caldarola-interni.webp",
+          "/images/agriturismo-colle-di-caldarola-interni-galleria-3.webp",
+        ],
+        services: [
+          "Pernottamento in Camera Rustica Panoramica",
+          "Cucina Contadina e Degustazione KM 0",
+          "Piscina Panoramica tra i Colli Maceratesi",
+          "Degustazione Olio Monovarietale Coroncina di Caldarola",
+          "Orto Biologico e Frutteto Antico",
+          "Noleggio E-bike per i sentieri dei Monti Sibillini",
+        ],
+        aperitivoMenu: [
+          {
+            name: "Tagliere dei Monti Azzurri",
+            description: "Ciauscolo morbido IGP di Caldarola, pecorino semistagionato dei Sibillini, focaccia calda e miele biologico.",
+            priceCents: 2400,
+          },
+          {
+            name: "Crescia Marchigiana e Salumi di Collina",
+            description: "Crescia sfogliata cotta su pietra con lonzino marinato alle erbe e pecorino fresco con marmellata di fichi.",
+            priceCents: 1800,
+          },
+          {
+            name: "Bruschette all'Olio Monocultivar Coroncina",
+            description: "Pane di grani antichi tostato a legna, olio extravergine Coroncina e calice di Ribona Colli Maceratesi DOC.",
+            priceCents: 1200,
+          },
+        ],
+        rooms: [
+          {
+            name: "Camera Il Colle Panoramica",
+            description: "Arredi in legno massello, travi in quercia a vista e ampia finestra sui colli di Caldarola.",
+            capacity: 2,
+            priceCents: 5000,
+          },
+          {
+            name: "Suite La Torre dei Monti Azzurri",
+            description: "Spaziosa suite con camino rustico, letto matrimoniale in ferro battuto e terrazzino affacciato sui Sibillini.",
+            capacity: 3,
+            priceCents: 7500,
+          },
+        ],
+        priceHotelCents: 5000,
+        priceAperitivoCents: 2400,
+        priceShowCents: 0,
+        basketName: "Cesto delle Aree Interne di Caldarola",
+        basketDescription: "Selezione artigianale: Olio Monovarietale Coroncina (500ml), Ciauscolo marchigiano IGP, Composta biologica di mele rosa dei Sibillini e biscotti della tradizione.",
+        priceBasketCents: 3500,
+        checkinCode: "venue-agriturismo-colle",
+        providerUserId: sandroColle.id,
+        sponsorCompanyId: acme.id,
+        impactPointsGenerated: 1,
+        localSupportPercent: 18,
+      },
     ])
     .returning();
 
@@ -810,6 +894,7 @@ export async function seedDatabase() {
   const osteriaTiglio = insertedVenues.find((v) => v.slug === "osteria-del-tiglio")!;
   const frantoioConero = insertedVenues.find((v) => v.slug === "frantoio-del-conero")!;
   const caseificioSibillini = insertedVenues.find((v) => v.slug === "caseificio-bio-sibillini")!;
+  const agriturismoColle = insertedVenues.find((v) => v.slug === "agriturismo-colle")!;
 
   await db.update(users).set({ venueId: laValle.id }).where(eq(users.id, elena.id));
   await db.update(users).set({ venueId: relaisLanghe.id }).where(eq(users.id, marco.id));
@@ -819,6 +904,7 @@ export async function seedDatabase() {
   await db.update(users).set({ venueId: osteriaTiglio.id }).where(eq(users.id, matteo.id));
   await db.update(users).set({ venueId: frantoioConero.id }).where(eq(users.id, marcoFrantoio.id));
   await db.update(users).set({ venueId: caseificioSibillini.id }).where(eq(users.id, saraCaseificio.id));
+  await db.update(users).set({ venueId: agriturismoColle.id }).where(eq(users.id, sandroColle.id));
 
   await db.update(venues).set({ providerUserId: elena.id }).where(eq(venues.id, laValle.id));
   await db.update(venues).set({ providerUserId: marco.id }).where(eq(venues.id, relaisLanghe.id));
@@ -828,6 +914,7 @@ export async function seedDatabase() {
   await db.update(venues).set({ providerUserId: matteo.id }).where(eq(venues.id, osteriaTiglio.id));
   await db.update(venues).set({ providerUserId: marcoFrantoio.id }).where(eq(venues.id, frantoioConero.id));
   await db.update(venues).set({ providerUserId: saraCaseificio.id }).where(eq(venues.id, caseificioSibillini.id));
+  await db.update(venues).set({ providerUserId: sandroColle.id }).where(eq(venues.id, agriturismoColle.id));
 
   // POPOLAMENTO OFFERTE SERVIZI STRUTTURE (PERNOTTAMENTO, CENA O ENTRAMBI)
   const insertedOfferings = await db
@@ -918,6 +1005,25 @@ export async function seedDatabase() {
         listPriceCents: 2500,
         acceptsWelfare: true,
         dailyCapacity: 25,
+      },
+      // Agriturismo Colle: entrambi
+      {
+        venueId: agriturismoColle.id,
+        benefitType: "overnight",
+        name: "Camera Il Colle Panoramica",
+        description: "Pernottamento per il lavoratore con prima colazione artigianale con crostate fatte in casa e prodotti dell'orto.",
+        listPriceCents: 5000,
+        acceptsWelfare: true,
+        dailyCapacity: 4,
+      },
+      {
+        venueId: agriturismoColle.id,
+        benefitType: "dinner",
+        name: "Degustazione dei Monti Azzurri & Cena Tipica",
+        description: "Menu tradizionale dell'entroterra con salumi dei Sibillini, pecorino di fossa, pasta fresca al matterello e vino locale.",
+        listPriceCents: 2400,
+        acceptsWelfare: true,
+        dailyCapacity: 16,
       },
     ])
     .returning();

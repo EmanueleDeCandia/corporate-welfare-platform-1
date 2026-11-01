@@ -261,19 +261,19 @@ async function testNewRegistrations() {
     );
   }
 
-  // 2. Nuovo Fornitore
+  // 2. Nuovo Fornitore (Test Registrazione dinamica struttura rurale)
   const provRes = await request('/api/auth/register', {
     method: 'POST',
     body: JSON.stringify({
       role: 'provider',
-      firstName: 'Sandro',
-      lastName: 'Conti',
-      email: `info${rand}@casaleconero.it`,
+      firstName: 'Andrea',
+      lastName: 'Mori',
+      email: `info${rand}@locandasibillini.it`,
       password: 'password123',
-      venueName: `Casale del Conero ${rand}`,
+      venueName: `Locanda dei Sibillini ${rand}`,
       venueType: 'agriturismo',
-      venueCity: 'Sirolo',
-      venueProvince: 'AN',
+      venueCity: 'Sarnano',
+      venueProvince: 'MC',
       venueRegion: 'Marche',
     }),
   });
@@ -282,7 +282,7 @@ async function testNewRegistrations() {
     `Registrazione nuovo fornitore struttura ricettiva (Status: ${provRes.status})`
   );
 
-  const newProvToken = await login(`info${rand}@casaleconero.it`, 'password123');
+  const newProvToken = await login(`info${rand}@locandasibillini.it`, 'password123');
   assert(!!newProvToken, 'Login del nuovo fornitore registrato');
   if (newProvToken) {
     const provDash = await request('/fornitore', { headers: { Cookie: `radici_session=${newProvToken}` } });

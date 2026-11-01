@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { ArrowLeft, MapPin, Sparkles, ShoppingBag, Leaf, Gift, Landmark, Calendar, Ticket } from "lucide-react";
 import { PublicShell } from "@/components/public-shell";
 import { getCurrentUser } from "@/lib/auth";
@@ -22,6 +22,9 @@ export default async function VenueDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  if (slug === "casale-del-conero-5000-477" || slug.startsWith("casale-del-conero")) {
+    redirect("/strutture/agriturismo-colle");
+  }
   const row = await getVenueBySlug(slug);
   if (!row) notFound();
   const { venue, destination, sponsor } = row;

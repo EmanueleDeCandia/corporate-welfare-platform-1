@@ -127,7 +127,34 @@ export async function POST(request: Request) {
         longDescription: `${venueName} accoglie i dipendenti delle imprese clienti con fatturazione diretta per i buoni welfare e i membri della community con sconti convenzionati.`,
         lat: 43.3,
         lng: 13.4,
-        coverImage: "/images/agriturismo-valle.jpg",
+        coverImage: "/images/cipressi.jpg",
+        gallery: [
+          "/images/cipressi.jpg",
+          "/images/piscina.jpg",
+          "/images/camera.jpg",
+          "/images/tavola.jpg",
+        ],
+        services: [
+          "Pernottamento in Camera Rustica Panoramica",
+          "Cucina Contadina e Degustazione KM 0",
+          "Parcheggio e Wi-Fi inclusi",
+          "Orto Biologico e Prodotti Locali",
+        ],
+        aperitivoMenu: [
+          {
+            name: "Tagliere Tipico della Tradizione",
+            description: "Selezione di salumi e formaggi del comprensorio con bruschette all'olio EVO.",
+            priceCents: 2500,
+          },
+        ],
+        rooms: [
+          {
+            name: "Camera Matrimoniale Rustica",
+            description: "Camera confortevole con travi a vista e vista panoramica sulla vallata.",
+            capacity: 2,
+            priceCents: 5000,
+          },
+        ],
         checkinCode,
         impactPointsGenerated: 1,
         localSupportPercent: 15,
