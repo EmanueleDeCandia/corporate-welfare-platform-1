@@ -42,10 +42,12 @@ export type PlatformTransactionRow = {
   createdAt: Date;
   serviceLabel: string;
   type: string;
+  status: string;
   amountCents: number;
   commissionCents: number;
   providerNetCents: number;
   paymentStatus: string;
+  paymentNotes: string | null;
   settledAt: Date | null;
   invoiceNumber: string | null;
   invoiceDate: string | null;
@@ -261,10 +263,12 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       createdAt: tx.createdAt,
       serviceLabel: tx.serviceLabel,
       type: tx.type,
+      status: tx.status,
       amountCents: tx.amountCents,
       commissionCents: commission,
       providerNetCents: net,
       paymentStatus: tx.paymentStatus || "pending",
+      paymentNotes: tx.paymentNotes,
       settledAt: tx.settledAt,
       invoiceNumber: tx.invoiceNumber,
       invoiceDate: tx.invoiceDate,
@@ -279,13 +283,18 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     };
   });
 
-  // KPI Economici
-  const totalGmvCents = platformTransactions.reduce((sum, tx) => sum + tx.amountCents, 0);
-  const totalCommissionsCents = platformTransactions.reduce((sum, tx) => sum + tx.commissionCents, 0);
-  const totalSettledCents = platformTransactions
+  // KPI Economici (escludendo transazioni annullate / revocate)
+  const activePlatformTransactions = platformTransactions.filter(
+    (tx) => tx.paymentStatus !== "cancelled" && tx.status !== "cancelled"
+  );
+  const totalGmvCents = activePlatformTransactions.reduce((sum, tx) => sum + tx.amountCents, 0);
+  const totalCommissionsCents = activePlatformTransactions.reduce((sum, tx) => sum + tx.commissionCents, 0);
+  const totalSettledCents = activePlatformTransactions
     .filter((tx) => tx.paymentStatus === "settled")
     .reduce((sum, tx) => sum + tx.amountCents, 0);
-  const totalPendingCents = totalGmvCents - totalSettledCents;
+  const totalPendingCents = activePlatformTransactions
+    .filter((tx) => tx.paymentStatus === "pending")
+    .reduce((sum, tx) => sum + tx.amountCents, 0);
 
   // Statistiche Voucher
   const totalVouchersIssued = allVouchers.length;

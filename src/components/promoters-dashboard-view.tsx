@@ -37,6 +37,7 @@ import {
   ShoppingBag,
   Info,
   Lock,
+  Ban,
 } from "lucide-react";
 import type { PromoterDashboardData } from "@/lib/promoters";
 import { formatDate, formatDateTime, formatEuro } from "@/lib/utils";
@@ -70,6 +71,17 @@ export function PromotersDashboardView({ data }: Props) {
   const [activeTab, setActiveTab] = useState<
     "economics" | "companies" | "venues" | "vouchers" | "grants" | "bookings"
   >("economics");
+
+  // Filtro transazioni piattaforma (attive vs annullate)
+  const [txFilter, setTxFilter] = useState<"active" | "cancelled" | "all">("active");
+  const activeTx = data.platformTransactions.filter(
+    (tx) => tx.paymentStatus !== "cancelled" && tx.status !== "cancelled"
+  );
+  const cancelledTx = data.platformTransactions.filter(
+    (tx) => tx.paymentStatus === "cancelled" || tx.status === "cancelled"
+  );
+  const displayedTx =
+    txFilter === "active" ? activeTx : txFilter === "cancelled" ? cancelledTx : data.platformTransactions;
 
   // CMS Modals State
   const [isAddCompanyOpen, setIsAddCompanyOpen] = useState(false);
@@ -846,10 +858,34 @@ export function PromotersDashboardView({ data }: Props) {
                 Supervisione delle transazioni intermediate, calcolo automatico della commissione Radici (10%) e stato dei saldi aziende-fornitori.
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <span className="rounded-full bg-forest/5 px-3 py-1 text-xs font-mono text-forest">
-                Totale record: {data.platformTransactions.length}
-              </span>
+            <div className="inline-flex rounded-full bg-forest/5 p-1 shrink-0">
+              <button
+                type="button"
+                onClick={() => setTxFilter("active")}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                  txFilter === "active" ? "bg-forest text-cream shadow-sm" : "text-forest hover:bg-forest/10"
+                }`}
+              >
+                Attive ({activeTx.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTxFilter("cancelled")}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                  txFilter === "cancelled" ? "bg-forest text-cream shadow-sm" : "text-forest hover:bg-forest/10"
+                }`}
+              >
+                Annullate ({cancelledTx.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setTxFilter("all")}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                  txFilter === "all" ? "bg-forest text-cream shadow-sm" : "text-forest hover:bg-forest/10"
+                }`}
+              >
+                Tutte ({data.platformTransactions.length})
+              </button>
             </div>
           </div>
 
@@ -869,51 +905,98 @@ export function PromotersDashboardView({ data }: Props) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-mist">
-                {data.platformTransactions.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-cream/40 transition">
-                    <td className="py-3 font-mono text-xs text-olive">
-                      {formatDate(tx.createdAt)}
-                      <span className="block text-[10px] text-ink/40">#{tx.id}</span>
-                    </td>
-                    <td className="py-3 font-medium text-forest">
-                      {tx.userName}
-                      <span className="block text-[11px] text-olive">{tx.userEmail}</span>
-                    </td>
-                    <td className="py-3 text-forest">
-                      {tx.companyName || "Acquisto Diretto"}
-                      {tx.companyVat ? (
-                        <span className="block text-[10px] text-olive font-mono">P.IVA {tx.companyVat}</span>
-                      ) : null}
-                    </td>
-                    <td className="py-3 text-forest">
-                      {tx.venueName}
-                      <span className="block text-[11px] text-olive">{tx.venueCity} ({tx.venueType})</span>
-                    </td>
-                    <td className="py-3 text-xs capitalize text-forest">
-                      {tx.serviceLabel}
-                    </td>
-                    <td className="py-3 text-right font-medium text-forest">
-                      {formatEuro(tx.amountCents)}
-                    </td>
-                    <td className="py-3 text-right font-semibold text-gold bg-gold/5">
-                      +{formatEuro(tx.commissionCents)}
-                    </td>
-                    <td className="py-3 text-right font-medium text-forest">
-                      {formatEuro(tx.providerNetCents)}
-                    </td>
-                    <td className="py-3 text-center">
-                      {tx.paymentStatus === "settled" ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800">
-                          <CheckCircle2 size={12} /> Saldato
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
-                          <Clock size={12} /> In attesa
-                        </span>
-                      )}
+                {displayedTx.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} className="py-8 text-center text-xs text-olive">
+                      {txFilter === "active"
+                        ? "Nessuna transazione attiva."
+                        : txFilter === "cancelled"
+                        ? "Nessuna transazione annullata."
+                        : "Nessun record presente."}
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  displayedTx.map((tx) => {
+                    const isCancelled = tx.paymentStatus === "cancelled" || tx.status === "cancelled";
+
+                    return (
+                      <tr
+                        key={tx.id}
+                        className={`transition ${isCancelled ? "bg-mist/20 opacity-70" : "hover:bg-cream/40"}`}
+                      >
+                        <td className="py-3 font-mono text-xs text-olive">
+                          {formatDate(tx.createdAt)}
+                          <span className="block text-[10px] text-ink/40">#{tx.id}</span>
+                          {isCancelled && (
+                            <span className="block text-[10px] text-terracotta font-medium mt-0.5">Revocata</span>
+                          )}
+                        </td>
+                        <td className="py-3 font-medium text-forest">
+                          {tx.userName}
+                          <span className="block text-[11px] text-olive">{tx.userEmail}</span>
+                        </td>
+                        <td className="py-3 text-forest">
+                          {tx.companyName || "Acquisto Diretto"}
+                          {tx.companyVat ? (
+                            <span className="block text-[10px] text-olive font-mono">P.IVA {tx.companyVat}</span>
+                          ) : null}
+                        </td>
+                        <td className="py-3 text-forest">
+                          {tx.venueName}
+                          <span className="block text-[11px] text-olive">{tx.venueCity} ({tx.venueType})</span>
+                        </td>
+                        <td className="py-3 text-xs capitalize text-forest">
+                          {tx.serviceLabel}
+                        </td>
+                        <td className="py-3 text-right font-medium text-forest">
+                          {isCancelled ? (
+                            <div>
+                              <span className="line-through text-olive/60 text-xs block">{formatEuro(tx.amountCents)}</span>
+                              <span className="text-xs font-bold text-terracotta">0,00 €</span>
+                            </div>
+                          ) : (
+                            formatEuro(tx.amountCents)
+                          )}
+                        </td>
+                        <td className="py-3 text-right font-semibold text-gold bg-gold/5">
+                          {isCancelled ? (
+                            <div>
+                              <span className="line-through text-olive/60 text-xs block">+{formatEuro(tx.commissionCents)}</span>
+                              <span className="text-xs font-bold text-terracotta">0,00 €</span>
+                            </div>
+                          ) : (
+                            `+${formatEuro(tx.commissionCents)}`
+                          )}
+                        </td>
+                        <td className="py-3 text-right font-medium text-forest">
+                          {isCancelled ? (
+                            <div>
+                              <span className="line-through text-olive/60 text-xs block">{formatEuro(tx.providerNetCents)}</span>
+                              <span className="text-xs font-bold text-terracotta">0,00 €</span>
+                            </div>
+                          ) : (
+                            formatEuro(tx.providerNetCents)
+                          )}
+                        </td>
+                        <td className="py-3 text-center">
+                          {isCancelled ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-semibold text-rose-800">
+                              <Ban size={12} /> Annullata
+                            </span>
+                          ) : tx.paymentStatus === "settled" ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800">
+                              <CheckCircle2 size={12} /> Saldato
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
+                              <Clock size={12} /> In attesa
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
