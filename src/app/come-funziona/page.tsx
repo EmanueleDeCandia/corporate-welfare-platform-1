@@ -4,19 +4,18 @@ import {
   Users,
   HeartHandshake,
   Store,
-  Ticket,
   Sparkles,
   ArrowRight,
-  ShieldCheck,
   CheckCircle2,
   Leaf,
-  Gift,
-  Coins,
-  TrendingUp,
-  MapPin,
-  FileText,
+  Landmark,
 } from "lucide-react";
 import { PublicShell } from "@/components/public-shell";
+import {
+  RoleBadge,
+  SurfaceCard,
+  SectionHeader,
+} from "@/components/design-system";
 
 export const metadata = {
   title: "Come Funziona · RADICI Welfare Territoriale",
@@ -31,7 +30,7 @@ export default function HowItWorksPage() {
       <section className="relative overflow-hidden bg-forest text-cream py-20 px-4 md:px-6">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-white/10 via-forest/80 to-forest" />
         <div className="relative mx-auto max-w-5xl text-center space-y-4">
-          <div className="inline-flex items-center gap-1.5 rounded-full bg-gold/20 px-4 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-gold border border-gold/30">
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-gold/15 px-4 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-gold border border-gold/30">
             <Sparkles size={14} /> Ecosistema di Welfare Territoriale Circolare
           </div>
           <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl text-cream font-medium tracking-tight">
@@ -47,25 +46,21 @@ export default function HowItWorksPage() {
       <main className="mx-auto max-w-6xl px-4 py-16 space-y-20 md:px-6">
         {/* I 4 PILASTRI DELL'ECOSISTEMA */}
         <section className="space-y-8">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-gold">I Protagonisti</span>
-            <h2 className="font-serif text-3xl sm:text-4xl text-forest">Quattro attori, un unico circolo virtuoso</h2>
-            <p className="text-sm text-olive">
-              Ogni soggetto dell&apos;ecosistema interagisce con regole contabili, fiscali ed etiche chiare e trasparenti.
-            </p>
-          </div>
+          <SectionHeader
+            eyebrow="I Protagonisti"
+            title="Quattro attori, un unico circolo virtuoso"
+            description="Ogni soggetto dell'ecosistema interagisce con regole contabili, fiscali ed etiche chiare e trasparenti."
+          />
 
           <div className="grid md:grid-cols-2 gap-8">
             {/* 1. IMPRESE CSR */}
-            <div className="rounded-[32px] bg-white p-8 shadow-sm border border-forest/10 flex flex-col justify-between space-y-6 hover:shadow-md transition">
+            <SurfaceCard variant="white" className="flex flex-col justify-between space-y-6 hover:shadow-md transition">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="h-12 w-12 rounded-2xl bg-forest/10 text-forest flex items-center justify-center">
                     <Building2 size={24} />
                   </div>
-                  <span className="rounded-full bg-forest/5 px-3 py-1 text-xs font-bold text-forest uppercase tracking-wider">
-                    01 · Impresa CSR
-                  </span>
+                  <RoleBadge role="csr" />
                 </div>
                 <h3 className="font-serif text-2xl text-forest">Sostenibilità & Impatto Territoriale</h3>
                 <p className="text-sm text-forest/80 leading-relaxed">
@@ -73,19 +68,19 @@ export default function HowItWorksPage() {
                 </p>
                 <ul className="space-y-2.5 text-xs text-forest/90 pt-2 border-t border-mist">
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
                     <span><strong>Deducibilità fiscale integrale (Art. 51 TUIR)</strong>: 0% cuneo fiscale su soggiorni e cene welfare.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
                     <span><strong>Moltiplicatore Economico 5,1x</strong>: ogni 1.000€ investiti generano 5.100€ di indotto economico per le comunità locali.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
                     <span><strong>Rating ESG Certificato</strong>: bilancio di sostenibilità con tracciamento CO₂ risparmiata e capitale ridistribuito.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
                     <span><strong>Reciprocità Territoriale 10:1</strong>: ogni 10 cesti acquistati nel circuito, i produttori offrono 1 Cesto Omaggio agli addetti aziendali.</span>
                   </li>
                 </ul>
@@ -98,18 +93,16 @@ export default function HowItWorksPage() {
                   Accedi come Impresa CSR <ArrowRight size={14} />
                 </Link>
               </div>
-            </div>
+            </SurfaceCard>
 
             {/* 2. DIPENDENTI & LAVORATORI */}
-            <div className="rounded-[32px] bg-white p-8 shadow-sm border border-forest/10 flex flex-col justify-between space-y-6 hover:shadow-md transition">
+            <SurfaceCard variant="white" className="flex flex-col justify-between space-y-6 hover:shadow-md transition">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="h-12 w-12 rounded-2xl bg-gold/15 text-gold flex items-center justify-center">
+                  <div className="h-12 w-12 rounded-2xl bg-forest/10 text-forest flex items-center justify-center">
                     <Users size={24} />
                   </div>
-                  <span className="rounded-full bg-gold/15 px-3 py-1 text-xs font-bold text-forest uppercase tracking-wider">
-                    02 · Dipendenti & Famiglie
-                  </span>
+                  <RoleBadge role="employee" />
                 </div>
                 <h3 className="font-serif text-2xl text-forest">Welfare Esperienziale & Cultura</h3>
                 <p className="text-sm text-forest/80 leading-relaxed">
@@ -117,19 +110,19 @@ export default function HowItWorksPage() {
                 </p>
                 <ul className="space-y-2.5 text-xs text-forest/90 pt-2 border-t border-mist">
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
                     <span><strong>Zero Anticipi</strong>: pernottamenti in casali e cene degustazione interamente saldati tramite voucher aziendale.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
                     <span><strong>Matching Grant Cultura (50€ Coppia / 25€ Singolo)</strong>: omaggio erogato dai Promotori per biglietti teatrali ed eventi storici nei borghi.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
                     <span><strong>Flessibilità Totale & Annullamento Sicuro</strong>: modifica o revoca selezione in 1 click con riaccredito istantaneo nel portafoglio.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
                     <span><strong>Cesti Filiera Corta KM 0</strong>: acquisto con ritiro in loco o consegna senza imballaggi monouso.</span>
                   </li>
                 </ul>
@@ -142,18 +135,16 @@ export default function HowItWorksPage() {
                   Esplora le strutture disponibili <ArrowRight size={14} />
                 </Link>
               </div>
-            </div>
+            </SurfaceCard>
 
             {/* 3. COMMUNITY & AMICI INVITATI */}
-            <div className="rounded-[32px] bg-white p-8 shadow-sm border border-forest/10 flex flex-col justify-between space-y-6 hover:shadow-md transition">
+            <SurfaceCard variant="white" className="flex flex-col justify-between space-y-6 hover:shadow-md transition">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="h-12 w-12 rounded-2xl bg-terracotta/10 text-terracotta flex items-center justify-center">
+                  <div className="h-12 w-12 rounded-2xl bg-forest/10 text-forest flex items-center justify-center">
                     <HeartHandshake size={24} />
                   </div>
-                  <span className="rounded-full bg-terracotta/10 px-3 py-1 text-xs font-bold text-terracotta uppercase tracking-wider">
-                    03 · Community & Amici
-                  </span>
+                  <RoleBadge role="friend" />
                 </div>
                 <h3 className="font-serif text-2xl text-forest">Turismo Partecipato & Sconto 10%</h3>
                 <p className="text-sm text-forest/80 leading-relaxed">
@@ -161,19 +152,19 @@ export default function HowItWorksPage() {
                 </p>
                 <ul className="space-y-2.5 text-xs text-forest/90 pt-2 border-t border-mist">
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
                     <span><strong>Micro-Sconto Community 10%</strong>: applicato all&apos;istante su soggiorni, degustazioni e cesti tipici tramite link invito.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
                     <span><strong>Separazione Fiscale Garante</strong>: se accompagnano un dipendente, la quota welfare del lavoratore resta a 0€ e l&apos;ospite salda la propria quota scontata.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
                     <span><strong>Anti-Overbooking Etico</strong>: riconferma di presenza obbligatoria per tutelare la disponibilità dei posti per tutti.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
                     <span><strong>Punti Impatto Sociale</strong>: ogni prenotazione conclusa assegna punti reputazionali anche a chi ha inviato l&apos;invito.</span>
                   </li>
                 </ul>
@@ -186,18 +177,16 @@ export default function HowItWorksPage() {
                   Unisciti alla Community <ArrowRight size={14} />
                 </Link>
               </div>
-            </div>
+            </SurfaceCard>
 
             {/* 4. FORNITORI, TEATRI & PRODUTTORI */}
-            <div className="rounded-[32px] bg-white p-8 shadow-sm border border-forest/10 flex flex-col justify-between space-y-6 hover:shadow-md transition">
+            <SurfaceCard variant="white" className="flex flex-col justify-between space-y-6 hover:shadow-md transition">
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <div className="h-12 w-12 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
+                  <div className="h-12 w-12 rounded-2xl bg-forest/10 text-forest flex items-center justify-center">
                     <Store size={24} />
                   </div>
-                  <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 uppercase tracking-wider">
-                    04 · Fornitori & Territorio
-                  </span>
+                  <RoleBadge role="provider" />
                 </div>
                 <h3 className="font-serif text-2xl text-forest">Trasparenza Contabile & Zero Fee</h3>
                 <p className="text-sm text-forest/80 leading-relaxed">
@@ -205,19 +194,19 @@ export default function HowItWorksPage() {
                 </p>
                 <ul className="space-y-2.5 text-xs text-forest/90 pt-2 border-t border-mist">
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
                     <span><strong>Fatturazione B2B Diretta alle Imprese</strong>: istruzioni chiare e fatture generate solo su soggiorni realmente confermati.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
                     <span><strong>Zero Fee sui Produttori Locali</strong>: la startup trattiene 0% di commissioni sui cesti a KM 0 (100% dell&apos;incasso all&apos;agricoltore).</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
                     <span><strong>Botteghino Teatrale Digitale</strong>: convalida istantanea dei posti Matching Grant omaggio finanziati dai Promotori.</span>
                   </li>
                   <li className="flex items-start gap-2">
-                    <CheckCircle2 size={16} className="text-emerald-700 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
                     <span><strong>Nessun Addebito su Annullamenti</strong>: il server blocca la fatturazione ed emette avviso immediato in caso di revoca dell&apos;ospite.</span>
                   </li>
                 </ul>
@@ -230,22 +219,20 @@ export default function HowItWorksPage() {
                   Accedi all&apos;Area Operatori <ArrowRight size={14} />
                 </Link>
               </div>
-            </div>
+            </SurfaceCard>
           </div>
         </section>
 
         {/* WORKFLOW CICLICO IN 4 FASI */}
-        <section className="rounded-[32px] bg-cream/40 border border-forest/10 p-8 sm:p-12 space-y-8">
-          <div className="text-center max-w-2xl mx-auto space-y-2">
-            <span className="text-xs font-semibold uppercase tracking-[0.16em] text-gold">Il Ciclo Operativo</span>
-            <h2 className="font-serif text-3xl sm:text-4xl text-forest">Come si sviluppa l&apos;esperienza</h2>
-            <p className="text-sm text-olive">
-              Dalla stipula del piano welfare aziendale fino alla convalida sul territorio.
-            </p>
-          </div>
+        <SurfaceCard variant="cream" className="space-y-8">
+          <SectionHeader
+            eyebrow="Il Ciclo Operativo"
+            title="Come si sviluppa l'esperienza"
+            description="Dalla stipula del piano welfare aziendale fino alla convalida sul territorio."
+          />
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="rounded-2xl bg-white p-6 border border-forest/5 shadow-sm space-y-3">
+            <div className="rounded-2xl bg-white p-6 border border-forest/10 shadow-sm space-y-3">
               <span className="font-mono text-2xl font-bold text-gold">Step 01</span>
               <h4 className="font-serif text-lg font-bold text-forest">Accordo & Plafond CSR</h4>
               <p className="text-xs text-forest/75 leading-relaxed">
@@ -253,7 +240,7 @@ export default function HowItWorksPage() {
               </p>
             </div>
 
-            <div className="rounded-2xl bg-white p-6 border border-forest/5 shadow-sm space-y-3">
+            <div className="rounded-2xl bg-white p-6 border border-forest/10 shadow-sm space-y-3">
               <span className="font-mono text-2xl font-bold text-gold">Step 02</span>
               <h4 className="font-serif text-lg font-bold text-forest">Scelta Borgo & Omaggio</h4>
               <p className="text-xs text-forest/75 leading-relaxed">
@@ -261,7 +248,7 @@ export default function HowItWorksPage() {
               </p>
             </div>
 
-            <div className="rounded-2xl bg-white p-6 border border-forest/5 shadow-sm space-y-3">
+            <div className="rounded-2xl bg-white p-6 border border-forest/10 shadow-sm space-y-3">
               <span className="font-mono text-2xl font-bold text-gold">Step 03</span>
               <h4 className="font-serif text-lg font-bold text-forest">Conferma & Check-in QR</h4>
               <p className="text-xs text-forest/75 leading-relaxed">
@@ -269,7 +256,7 @@ export default function HowItWorksPage() {
               </p>
             </div>
 
-            <div className="rounded-2xl bg-white p-6 border border-forest/5 shadow-sm space-y-3">
+            <div className="rounded-2xl bg-white p-6 border border-forest/10 shadow-sm space-y-3">
               <span className="font-mono text-2xl font-bold text-gold">Step 04</span>
               <h4 className="font-serif text-lg font-bold text-forest">Reciprocità & Rendiconto</h4>
               <p className="text-xs text-forest/75 leading-relaxed">
@@ -277,20 +264,20 @@ export default function HowItWorksPage() {
               </p>
             </div>
           </div>
-        </section>
+        </SurfaceCard>
 
         {/* LOGISTICA SOSTENIBILE & TABELLA SCIENTIFICA CO2 */}
-        <section className="rounded-[32px] bg-forest text-cream p-8 sm:p-12 space-y-6">
+        <SurfaceCard variant="forest" className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-white/10">
             <div>
               <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs text-gold">
                 <Leaf size={14} /> Principio di Sostenibilità Ambientale Marginale Zero
               </div>
-              <h3 className="font-serif text-2xl sm:text-3xl text-cream mt-2">
+              <h3 className="font-serif text-2xl sm:text-3xl text-cream mt-2 font-medium">
                 Filiera Corta Senza Spedizioni a Vuoto
               </h3>
             </div>
-            <span className="rounded-full bg-emerald-800/80 px-3.5 py-1 text-xs font-bold text-cream border border-emerald-600/40 shrink-0">
+            <span className="rounded-full bg-white/10 px-3.5 py-1 text-xs font-semibold text-gold border border-gold/25 shrink-0">
               0,265 kg CO₂ evitati per km
             </span>
           </div>
@@ -333,14 +320,14 @@ export default function HowItWorksPage() {
               </tbody>
             </table>
           </div>
-        </section>
+        </SurfaceCard>
 
         {/* TABELLA ACCOUNT DEMO OPERATIVI PER LA PROVA */}
-        <section className="rounded-[32px] bg-white p-8 sm:p-12 shadow-sm border border-forest/10 space-y-6">
+        <SurfaceCard variant="white" className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-mist">
             <div>
               <span className="text-xs font-semibold uppercase tracking-[0.16em] text-gold">Ambiente Interattivo Demo</span>
-              <h3 className="font-serif text-2xl sm:text-3xl text-forest mt-1">Credenziali di Accesso ai Ruoli</h3>
+              <h3 className="font-serif text-2xl sm:text-3xl text-forest mt-1 font-medium">Credenziali di Accesso ai Ruoli</h3>
               <p className="text-xs text-olive mt-0.5">
                 Accedi con uno dei profili pre-configurati per esplorare in tempo reale le dashboard e i flussi dell&apos;ecosistema.
               </p>
@@ -350,56 +337,45 @@ export default function HowItWorksPage() {
             </div>
           </div>
 
+          {/* I 6 RUOLI: ORA RIGOROSAMENTE DISCIPLINATI DAL DESIGN SYSTEM CON ROLEBADGE */}
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 pt-2">
-            <div className="rounded-2xl bg-cream/30 p-4 border border-forest/5 space-y-1">
-              <span className="text-[10px] uppercase font-bold text-forest bg-forest/10 px-2 py-0.5 rounded">
-                Startup Promotrice
-              </span>
+            <div className="rounded-2xl bg-cream/30 p-4 border border-forest/10 space-y-1">
+              <RoleBadge role="promoter" />
               <p className="font-medium text-sm text-forest mt-2">Chiara Valenti</p>
               <p className="font-mono text-xs text-olive truncate">chiara.promotori@radici.it</p>
               <p className="text-[11px] text-forest/70 pt-1">Cruscotto Promotori, Matching Grant, CMS e Filiera KM 0</p>
             </div>
 
-            <div className="rounded-2xl bg-cream/30 p-4 border border-forest/5 space-y-1">
-              <span className="text-[10px] uppercase font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
-                Impresa CSR
-              </span>
+            <div className="rounded-2xl bg-cream/30 p-4 border border-forest/10 space-y-1">
+              <RoleBadge role="csr" />
               <p className="font-medium text-sm text-forest mt-2">Elena Martini</p>
               <p className="font-mono text-xs text-olive truncate">elena.martini@acme.it</p>
               <p className="text-[11px] text-forest/70 pt-1">Pannello Aziendale ACME, Plafond, Fatture B2B e Rating ESG</p>
             </div>
 
-            <div className="rounded-2xl bg-cream/30 p-4 border border-forest/5 space-y-1">
-              <span className="text-[10px] uppercase font-bold text-gold bg-gold/15 px-2 py-0.5 rounded">
-                Dipendente Welfare
-              </span>
+            <div className="rounded-2xl bg-cream/30 p-4 border border-forest/10 space-y-1">
+              <RoleBadge role="employee" />
               <p className="font-medium text-sm text-forest mt-2">Mario Rossi</p>
               <p className="font-mono text-xs text-olive truncate">mario.rossi@acme.it</p>
               <p className="text-[11px] text-forest/70 pt-1">Portafoglio voucher, omaggio Matching Grant e cesti</p>
             </div>
 
-            <div className="rounded-2xl bg-cream/30 p-4 border border-forest/5 space-y-1">
-              <span className="text-[10px] uppercase font-bold text-terracotta bg-terracotta/10 px-2 py-0.5 rounded">
-                Ospite Community
-              </span>
+            <div className="rounded-2xl bg-cream/30 p-4 border border-forest/10 space-y-1">
+              <RoleBadge role="friend" />
               <p className="font-medium text-sm text-forest mt-2">Luigi Bianchi</p>
               <p className="font-mono text-xs text-olive truncate">luigi.bianchi@email.it</p>
               <p className="text-[11px] text-forest/70 pt-1">Amico invitato con sconto convenzione del 10%</p>
             </div>
 
-            <div className="rounded-2xl bg-cream/30 p-4 border border-forest/5 space-y-1">
-              <span className="text-[10px] uppercase font-bold text-purple-800 bg-purple-100 px-2 py-0.5 rounded">
-                Fornitore Ricettivo
-              </span>
+            <div className="rounded-2xl bg-cream/30 p-4 border border-forest/10 space-y-1">
+              <RoleBadge role="provider" />
               <p className="font-medium text-sm text-forest mt-2">Elena Conti</p>
               <p className="font-mono text-xs text-olive truncate">elena@lavalle.it</p>
               <p className="text-[11px] text-forest/70 pt-1">Agriturismo La Valle: distinta B2B e convalida presenze</p>
             </div>
 
-            <div className="rounded-2xl bg-cream/30 p-4 border border-forest/5 space-y-1">
-              <span className="text-[10px] uppercase font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded">
-                Teatro Convenzionato
-              </span>
+            <div className="rounded-2xl bg-cream/30 p-4 border border-forest/10 space-y-1">
+              <RoleBadge role="theater" />
               <p className="font-medium text-sm text-forest mt-2">Paolo Luzi</p>
               <p className="font-mono text-xs text-olive truncate">paolo@teatrolauro.it</p>
               <p className="text-[11px] text-forest/70 pt-1">Teatro Lauro Rossi: botteghino Matching Grant 2 posti</p>
@@ -425,7 +401,7 @@ export default function HowItWorksPage() {
               </Link>
             </div>
           </div>
-        </section>
+        </SurfaceCard>
       </main>
     </PublicShell>
   );
