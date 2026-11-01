@@ -19,6 +19,34 @@ export const DEFAULT_BASKET_PRICE_CENTS = 4000; // 40 €
 export const DEFAULT_KM_AVOIDED = 50;
 export const DEFAULT_DISCOUNT_BPS = 1000; // 10%
 
+/**
+ * Cesti della filiera corta disponibili come immagine di copertina dei nuovi
+ * Produttori Locali KM 0: si ruota sull'insieme per evitare che due produttori
+ * creati dal Control Room mostrino lo stesso cesto.
+ */
+const BASKET_COVERS = [
+  "/images/produttore-cesto-2.jpg",
+  "/images/produttore-cesta-orto.jpg",
+  "/images/produttore-olia-frantoio.jpg",
+  "/images/produttore-botte-cantina.jpg",
+];
+
+function pickBasketCover(usedCovers: string[]): string {
+  const counts = new Map<string, number>(BASKET_COVERS.map((src) => [src, 0]));
+  for (const cover of usedCovers) {
+    if (counts.has(cover)) counts.set(cover, (counts.get(cover) ?? 0) + 1);
+  }
+  const min = Math.min(...counts.values());
+  const candidates = BASKET_COVERS.filter((src) => counts.get(src) === min);
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
+/** Galleria di default: cesto scelto + due immagini di prodotto a rotazione. */
+function defaultProducerGallery(cover: string): string[] {
+  const others = ["/images/produttore-orto.jpg?v=2", "/images/produttore-verdure.jpg?v=2", "/images/produttore-cesto-2.jpg"];
+  return [cover, ...others.filter((src) => src !== cover)];
+}
+
 export type LocalProducerStats = {
   producerId: number;
   venueId: number;
@@ -229,6 +257,11 @@ export async function createLocalProducer(input: {
   const kmAvoided = Math.max(30, Math.min(70, Math.round(input.kmAvoided ?? DEFAULT_KM_AVOIDED)));
   const discountBps = Math.max(0, Math.min(10000, Math.round(input.discountBps ?? DEFAULT_DISCOUNT_BPS)));
   const city = input.city?.trim() || dest.name;
+  const existingProducers = await db
+    .select({ coverImage: venues.coverImage })
+    .from(venues)
+    .where(eq(venues.type, "producer"));
+  const basketCover = pickBasketCover(existingProducers.map((row) => row.coverImage));
 
   const [venue] = await db
     .insert(venues)
@@ -247,8 +280,8 @@ export async function createLocalProducer(input: {
         `Iniziativa "Welfare & KM 0" promossa da Gruppo Illiria e Startup RADICI: ${input.name} porta prodotti freschi e locali direttamente nelle imprese CSR con la flotta del Gruppo Illiria, abbattendo le emissioni di CO2 (0,300 kg per ogni km non percorso) e valorizzando la filiera locale.`,
       lat: dest.lat + (Math.random() - 0.5) * 0.08,
       lng: dest.lng + (Math.random() - 0.5) * 0.08,
-      coverImage: "/images/produttore-cesto-2.jpg",
-      gallery: ["/images/produttore-cesto-2.jpg", "/images/produttore-orto.jpg?v=2", "/images/produttore-verdure.jpg?v=2"],
+      coverImage: basketCover,
+      gallery: defaultProducerGallery(basketCover),
       services: ["Consegna in azienda con flotta Gruppo Illiria", `Sconto initiative Welfare & KM 0 del ${discountBps / 100}%`, `${kmAvoided} km evitati per cesto`],
       checkinCode: randomCode("chk"),
       impactPointsGenerated: 1,

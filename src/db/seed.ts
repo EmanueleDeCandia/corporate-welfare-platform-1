@@ -604,7 +604,7 @@ async function seedDatabase() {
         lat: 43.3171,
         lng: 13.3812,
         coverImage: "/images/produttore-orto.jpg?v=2",
-        gallery: ["/images/produttore-orto.jpg?v=2", "/images/produttore-verdure.jpg?v=2", "/images/produttore-cesto.jpg?v=2"],
+        gallery: ["/images/produttore-orto.jpg?v=2", "/images/produttore-verdure.jpg?v=2", "/images/produttore-cesta-orto.jpg"],
         services: [
           "Cesto frutta e verdura di stagione",
           "Consegna in azienda con flotta Gruppo Illiria",
@@ -631,7 +631,7 @@ async function seedDatabase() {
         lat: 43.0765,
         lng: 11.6721,
         coverImage: "/images/produttore-frantoio.jpg?v=2",
-        gallery: ["/images/produttore-frantoio.jpg?v=2", "/images/produttore-cesto.jpg?v=2", "/images/produttore-verdure.jpg?v=2"],
+        gallery: ["/images/produttore-frantoio.jpg?v=2", "/images/produttore-olia-frantoio.jpg", "/images/produttore-verdure.jpg?v=2"],
         services: [
           "Cesto olio EVODEVO 2026",
           "Consegna in azienda con flotta Gruppo Illiria",
@@ -657,7 +657,7 @@ async function seedDatabase() {
         lat: 44.6125,
         lng: 7.9456,
         coverImage: "/images/produttore-cantina.jpg?v=2",
-        gallery: ["/images/produttore-cantina.jpg?v=2", "/images/produttore-vino.jpg?v=2", "/images/produttore-cesto.jpg?v=2"],
+        gallery: ["/images/produttore-cantina.jpg?v=2", "/images/produttore-vino.jpg?v=2", "/images/produttore-botte-cantina.jpg"],
         services: [
           "Cesto vini rossi delle Langhe",
           "Consegna in azienda con flotta Gruppo Illiria",
