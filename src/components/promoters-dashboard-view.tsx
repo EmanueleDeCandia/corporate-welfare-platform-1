@@ -48,17 +48,17 @@ type Props = {
 };
 
 const COVER_PRESETS = [
-  { label: "🌿 Agriturismo & Casale", url: "/images/agriturismo-valle.jpg" },
-  { label: "🍷 Relais tra i Filari", url: "/images/langhe.jpg" },
-  { label: "🏛️ Podere Toscano & Crete", url: "/images/val-dorcia.jpg" },
-  { label: "☀️ Masseria Salentina", url: "/images/masseria-salento.jpg" },
-  { label: "🍽️ Osteria & Tavola Tipica", url: "/images/tavola.jpg" },
-  { label: "🫒 Frantoio & Uliveto", url: "/images/produttore-olia-frantoio.jpg" },
-  { label: "🧺 Caseificio & Cesto KM 0", url: "/images/produttore-cesto-2.jpg" },
-  { label: "🍇 Cantina & Barrique", url: "/images/produttore-botte-cantina.jpg" },
-  { label: "🎭 Teatro Storico Lauro Rossi", url: "/images/lauro-rossi.jpg" },
-  { label: "🎼 Teatro delle Muse", url: "/images/teatro-muse.jpg" },
-  { label: "🎟️ Teatro dell'Aquila", url: "/images/teatro-aquila.jpg" },
+  { label: "Agriturismo & Casale", url: "/images/agriturismo-valle.jpg" },
+  { label: "Relais tra i Filari", url: "/images/langhe.jpg" },
+  { label: "Podere Toscano & Crete", url: "/images/val-dorcia.jpg" },
+  { label: "Masseria Salentina", url: "/images/masseria-salento.jpg" },
+  { label: "Osteria & Tavola Tipica", url: "/images/tavola.jpg" },
+  { label: "Frantoio & Uliveto", url: "/images/ulivi.jpg" },
+  { label: "Caseificio & Cesto KM 0", url: "/images/tavola.jpg" },
+  { label: "Cantina & Tenuta", url: "/images/vigne.jpg" },
+  { label: "Teatro Storico Lauro Rossi", url: "/images/lauro-rossi.jpg" },
+  { label: "Teatro delle Muse", url: "/images/teatro-muse.jpg" },
+  { label: "Teatro dell'Aquila", url: "/images/teatro-aquila.jpg" },
 ];
 
 const AVAILABLE_SERVICES = [
@@ -699,15 +699,15 @@ export function PromotersDashboardView({ data }: Props) {
     <div className="space-y-8">
       {/* NOTIFICHE OPERATIVE DI SISTEMA */}
       {actionSuccess && (
-        <div className="rounded-2xl border border-emerald-300 bg-emerald-50 p-4 text-emerald-900 shadow-sm flex items-center justify-between">
+        <div className="rounded-2xl border border-forest/15 bg-cream p-4 text-forest shadow-xs flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CheckCircle2 size={18} className="text-emerald-700 shrink-0" />
+            <CheckCircle2 size={18} className="text-forest shrink-0" />
             <p className="text-sm font-medium">{actionSuccess}</p>
           </div>
           <button
             type="button"
             onClick={() => setActionSuccess(null)}
-            className="text-emerald-700 hover:text-emerald-900 cursor-pointer"
+            className="text-olive hover:text-forest cursor-pointer"
           >
             <X size={16} />
           </button>
@@ -715,15 +715,15 @@ export function PromotersDashboardView({ data }: Props) {
       )}
 
       {actionError && (
-        <div className="rounded-2xl border border-rose-300 bg-rose-50 p-4 text-rose-900 shadow-sm flex items-center justify-between">
+        <div className="rounded-2xl border border-wine/20 bg-wine/10 p-4 text-wine shadow-xs flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <AlertTriangle size={18} className="text-rose-700 shrink-0" />
+            <AlertTriangle size={18} className="text-wine shrink-0" />
             <p className="text-sm font-medium">{actionError}</p>
           </div>
           <button
             type="button"
             onClick={() => setActionError(null)}
-            className="text-rose-700 hover:text-rose-900 cursor-pointer"
+            className="text-wine hover:text-wine/80 cursor-pointer"
           >
             <X size={16} />
           </button>
@@ -863,7 +863,7 @@ export function PromotersDashboardView({ data }: Props) {
         >
           <span>Prenotazioni & Overbooking Teatri ({data.totalCommunityBookingsCount})</span>
           {data.overbookingAlertsCount > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-xs animate-pulse">
+            <span className="inline-flex items-center gap-1 rounded-full bg-wine px-2 py-0.5 text-[10px] font-bold text-cream shadow-xs">
               <AlertTriangle size={10} /> {data.overbookingAlertsCount} a rischio
             </span>
           )}
@@ -1014,16 +1014,16 @@ export function PromotersDashboardView({ data }: Props) {
                         </td>
                         <td className="py-3 text-center">
                           {isCancelled ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-semibold text-rose-800">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-wine/10 px-2.5 py-0.5 text-[11px] font-semibold text-wine">
                               <Ban size={12} /> Annullata
                             </span>
                           ) : tx.paymentStatus === "settled" ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800">
-                              <CheckCircle2 size={12} /> Saldato
+                            <span className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-2.5 py-0.5 text-[11px] font-semibold text-forest">
+                              <CheckCircle2 size={12} className="text-forest" /> Saldato
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
-                              <Clock size={12} /> In attesa
+                            <span className="inline-flex items-center gap-1 rounded-full bg-gold/15 px-2.5 py-0.5 text-[11px] font-semibold text-forest">
+                              <Clock size={12} className="text-gold" /> In attesa
                             </span>
                           )}
                         </td>
@@ -1104,7 +1104,7 @@ export function PromotersDashboardView({ data }: Props) {
                         onClick={() => handleDeleteCompany(comp.id, comp.name)}
                         disabled={deletingCompanyId === comp.id}
                         title="Elimina impresa"
-                        className="rounded-lg p-1.5 text-terracotta hover:bg-rose-50 transition cursor-pointer disabled:opacity-50"
+                        className="rounded-lg p-1.5 text-terracotta hover:bg-wine/10 transition cursor-pointer disabled:opacity-50"
                       >
                         {deletingCompanyId === comp.id ? (
                           <Loader2 size={15} className="animate-spin" />
@@ -1132,14 +1132,16 @@ export function PromotersDashboardView({ data }: Props) {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-olive">Già Saldato ai Fornitori:</span>
-                      <span className="font-semibold text-emerald-700">{formatEuro(comp.totalSettledToProvidersCents)}</span>
+                      <span className="font-semibold text-forest">{formatEuro(comp.totalSettledToProvidersCents)}</span>
                     </div>
                   </div>
                 </div>
 
                 {comp.sponsoredVenuesNames && comp.sponsoredVenuesNames.length > 0 && (
                   <div className="mt-3 text-xs bg-gold/15 text-forest rounded-xl p-2.5 border border-gold/30 flex items-center justify-between gap-1.5">
-                    <span className="font-medium text-[11px] truncate">🏆 Sponsor: <strong>{comp.sponsoredVenuesNames.join(", ")}</strong></span>
+                    <span className="font-medium text-[11px] truncate flex items-center gap-1">
+                      <Sparkles size={12} className="text-gold" /> Sponsor: <strong>{comp.sponsoredVenuesNames.join(", ")}</strong>
+                    </span>
                   </div>
                 )}
 
@@ -1219,7 +1221,7 @@ export function PromotersDashboardView({ data }: Props) {
                           <p className="font-bold text-forest">{v.name}</p>
                           <p className="text-[11px] text-olive font-mono">{v.checkinCode}</p>
                           {v.managerEmail && (
-                            <p className="text-[10px] text-emerald-800 font-mono">👤 {v.managerEmail}</p>
+                            <p className="text-[10px] text-olive font-mono">{v.managerEmail}</p>
                           )}
                         </div>
                       </div>
@@ -1291,7 +1293,7 @@ export function PromotersDashboardView({ data }: Props) {
                           onClick={() => handleDeleteVenue(v.id, v.name)}
                           disabled={deletingVenueId === v.id}
                           title="Elimina fornitore dal circuito"
-                          className="rounded-lg p-1.5 text-terracotta hover:bg-rose-50 transition cursor-pointer disabled:opacity-50"
+                          className="rounded-lg p-1.5 text-terracotta hover:bg-wine/10 transition cursor-pointer disabled:opacity-50"
                         >
                           {deletingVenueId === v.id ? (
                             <Loader2 size={15} className="animate-spin" />
@@ -1459,13 +1461,13 @@ export function PromotersDashboardView({ data }: Props) {
             </div>
             <div className="rounded-[24px] border border-forest/10 bg-white p-5 shadow-xs">
               <p className="text-xs font-semibold uppercase tracking-wider text-olive">Presenze Riconfermate</p>
-              <p className="mt-2 font-serif text-3xl text-emerald-700">{data.totalCommunityConfirmedCount}</p>
+              <p className="mt-2 font-serif text-3xl text-forest">{data.totalCommunityConfirmedCount}</p>
               <p className="text-xs text-olive mt-1">Confermate da ospiti o strutture</p>
             </div>
-            <div className="rounded-[24px] border border-rose-200 bg-rose-50/50 p-5 shadow-xs">
-              <p className="text-xs font-semibold uppercase tracking-wider text-rose-800">Spettacoli a Rischio Overbooking</p>
-              <p className="mt-2 font-serif text-3xl text-rose-700">{data.overbookingAlertsCount}</p>
-              <p className="text-xs text-rose-800/80 mt-1">Capienza residua ≤ 15%</p>
+            <div className="rounded-[24px] border border-wine/20 bg-wine/5 p-5 shadow-xs">
+              <p className="text-xs font-semibold uppercase tracking-wider text-wine">Spettacoli a Rischio Overbooking</p>
+              <p className="mt-2 font-serif text-3xl text-wine">{data.overbookingAlertsCount}</p>
+              <p className="text-xs text-wine/80 mt-1">Capienza residua ≤ 15%</p>
             </div>
           </div>
 
@@ -1498,7 +1500,7 @@ export function PromotersDashboardView({ data }: Props) {
                   key={ev.id}
                   className={`rounded-2xl border p-5 transition-all flex flex-col justify-between ${
                     ev.isOverbookingRisk
-                      ? "border-rose-300 bg-rose-50/30 shadow-sm"
+                      ? "border-wine/25 bg-wine/5 shadow-xs"
                       : "border-forest/10 bg-cream/30"
                   }`}
                 >
@@ -1513,11 +1515,11 @@ export function PromotersDashboardView({ data }: Props) {
                       </div>
                       <div className="flex flex-col items-end gap-1.5">
                         {ev.isOverbookingRisk ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-1 text-xs font-bold text-rose-800 animate-pulse">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-wine/10 px-2.5 py-1 text-xs font-semibold text-wine">
                             <AlertTriangle size={12} /> Rischio Overbooking
                           </span>
                         ) : (
-                          <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800">
+                          <span className="rounded-full bg-forest/10 px-2.5 py-1 text-xs font-semibold text-forest">
                             Capienza Regolare
                           </span>
                         )}
@@ -1561,7 +1563,7 @@ export function PromotersDashboardView({ data }: Props) {
                               Math.round((ev.communitySeats / ev.capacity) * 100)
                             )}%`,
                           }}
-                          className="bg-emerald-600 h-full"
+                          className="bg-forest h-full"
                           title={`Community Bookings: ${ev.communitySeats} posti`}
                         />
                       </div>
@@ -1571,7 +1573,7 @@ export function PromotersDashboardView({ data }: Props) {
                             <span className="h-2 w-2 rounded-full bg-gold" /> Welfare Grant ({ev.welfareSeats})
                           </span>
                           <span className="inline-flex items-center gap-1">
-                            <span className="h-2 w-2 rounded-full bg-emerald-600" /> Community ({ev.communitySeats})
+                            <span className="h-2 w-2 rounded-full bg-forest" /> Community ({ev.communitySeats})
                           </span>
                         </div>
                         <span className="font-bold text-forest">
@@ -1637,7 +1639,7 @@ export function PromotersDashboardView({ data }: Props) {
                         </td>
                         <td className="py-3 text-forest">
                           {b.eventTitle ? (
-                            <span className="font-bold text-forest">🎭 {b.eventTitle}</span>
+                            <span className="font-bold text-forest">{b.eventTitle}</span>
                           ) : (
                             <span className="text-olive capitalize">{b.venueType}</span>
                           )}
@@ -1652,23 +1654,23 @@ export function PromotersDashboardView({ data }: Props) {
                         </td>
                         <td className="py-3 text-center">
                           {b.status === "presence_confirmed" ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800">
-                              ✓ Presenza Riconfermata
+                            <span className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-2.5 py-0.5 text-[11px] font-semibold text-forest">
+                              <CheckCircle2 size={11} className="text-forest" /> Presenza Riconfermata
                             </span>
                           ) : b.status === "confirmed" ? (
-                            <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-[11px] font-semibold text-blue-800">
+                            <span className="rounded-full bg-forest/10 px-2.5 py-0.5 text-[11px] font-semibold text-forest">
                               Accettata dal gestore
                             </span>
                           ) : b.status === "pending" ? (
-                            <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
+                            <span className="rounded-full bg-gold/15 px-2.5 py-0.5 text-[11px] font-semibold text-forest">
                               In attesa
                             </span>
                           ) : b.status === "attended" ? (
-                            <span className="rounded-full bg-purple-100 px-2.5 py-0.5 text-[11px] font-semibold text-purple-800">
+                            <span className="rounded-full bg-forest px-2.5 py-0.5 text-[11px] font-semibold text-cream">
                               Completata
                             </span>
                           ) : (
-                            <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-semibold text-slate-700 capitalize">
+                            <span className="rounded-full bg-mist px-2.5 py-0.5 text-[11px] font-semibold text-forest/70 capitalize">
                               {b.status}
                             </span>
                           )}
@@ -1699,8 +1701,8 @@ export function PromotersDashboardView({ data }: Props) {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <span className="rounded-full bg-emerald-100 px-3.5 py-1 text-xs font-bold text-emerald-800">
-                  🌱 {data.totalCo2SavedKg} kg CO₂ risparmiati
+                <span className="rounded-full bg-forest/10 px-3.5 py-1 text-xs font-semibold text-forest">
+                  -{data.totalCo2SavedKg} kg CO₂ risparmiati
                 </span>
               </div>
             </div>
@@ -1715,7 +1717,7 @@ export function PromotersDashboardView({ data }: Props) {
               <div className="rounded-2xl border border-forest/10 bg-cream/40 p-4">
                 <span className="text-[11px] uppercase tracking-wider text-olive font-medium">Incasso Produttori (100%)</span>
                 <p className="font-serif text-2xl text-forest mt-1">{formatEuro(data.totalProducerRevenueCents)}</p>
-                <p className="text-[11px] text-emerald-700 font-semibold mt-0.5">0% fee startup Radici</p>
+                <p className="text-[11px] text-olive font-semibold mt-0.5">0% fee startup Radici</p>
               </div>
               <div className="rounded-2xl border border-forest/10 bg-cream/40 p-4">
                 <span className="text-[11px] uppercase tracking-wider text-olive font-medium">Km Dedicati Azzerati</span>
@@ -1730,10 +1732,10 @@ export function PromotersDashboardView({ data }: Props) {
             </div>
 
             {/* Spotlight Business Rule 10:1 (Omaggio Produttori per Addetti CSR) */}
-            <div className="rounded-2xl border border-emerald-600/20 bg-emerald-50/50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="rounded-2xl border border-forest/15 bg-cream/70 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex items-start gap-3">
-                <div className="p-2 rounded-xl bg-emerald-100 text-emerald-800 shrink-0">
-                  <Gift size={20} />
+                <div className="p-2 rounded-xl bg-forest/10 text-forest shrink-0">
+                  <Gift size={20} className="text-terracotta" />
                 </div>
                 <div>
                   <h4 className="text-sm font-semibold text-forest">Business Rule: 1 Cesto Omaggio ogni 10 Acquisti per gli Addetti CSR</h4>
@@ -1743,14 +1745,14 @@ export function PromotersDashboardView({ data }: Props) {
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3 shrink-0 bg-white px-4 py-2 rounded-xl border border-emerald-100 shadow-sm">
+              <div className="flex items-center gap-3 shrink-0 bg-white px-4 py-2 rounded-xl border border-forest/10 shadow-xs">
                 <div>
                   <span className="text-[10px] uppercase font-bold tracking-wider text-olive block">Avanzamento Prossimo</span>
                   <span className="font-serif text-base text-forest">{data.basketsProgressToNextGift} / 10 acquistati</span>
                 </div>
                 <div className="text-right pl-3 border-l border-mist">
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-700 block">Maturati</span>
-                  <span className="font-serif text-base text-emerald-800">{data.freeBasketsEarnedTotal} omaggi</span>
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-olive block">Maturati</span>
+                  <span className="font-serif text-base text-terracotta font-bold">{data.freeBasketsEarnedTotal} omaggi</span>
                 </div>
               </div>
             </div>
@@ -1815,7 +1817,7 @@ export function PromotersDashboardView({ data }: Props) {
                     <th className="py-3">Produttore & Territorio</th>
                     <th className="py-3">Cesto & Quantità</th>
                     <th className="py-3 text-right">Prezzo Pagato</th>
-                    <th className="py-3 text-right text-emerald-800">Fee Startup (0%)</th>
+                    <th className="py-3 text-right text-forest">Fee Startup (0%)</th>
                     <th className="py-3 text-center">Impatto KM 0</th>
                     <th className="py-3 text-center">Stato Consegna</th>
                   </tr>
@@ -1886,12 +1888,12 @@ export function PromotersDashboardView({ data }: Props) {
                           <td className="py-3">
                             <div className="font-medium text-forest">{order.basketName}</div>
                             <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
-                              <span className="inline-flex items-center gap-1 rounded bg-amber-100/60 px-2 py-0.5 text-[11px] font-bold text-amber-900">
+                              <span className="inline-flex items-center gap-1 rounded bg-cream px-2 py-0.5 text-[11px] font-semibold text-forest border border-forest/10">
                                 {order.quantity} {order.quantity === 1 ? "cesto" : "cesti"}
                               </span>
                               {order.isFreeGift && (
-                                <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
-                                  <Gift size={10} /> Omaggio Addetti CSR (10:1)
+                                <span className="inline-flex items-center gap-1 rounded bg-gold/15 px-2 py-0.5 text-[10px] font-bold text-forest">
+                                  <Gift size={10} className="text-terracotta" /> Omaggio Addetti CSR (10:1)
                                 </span>
                               )}
                             </div>
@@ -1907,18 +1909,18 @@ export function PromotersDashboardView({ data }: Props) {
                             {isCancelled ? (
                               <div>
                                 <span className="line-through text-olive/60 text-xs block">{formatEuro(order.totalListPriceCents)}</span>
-                                <span className="text-xs font-bold text-terracotta">0,00 € (Annullato)</span>
+                                <span className="text-xs font-bold text-wine">0,00 € (Annullato)</span>
                               </div>
                             ) : order.isFreeGift ? (
                               <div>
                                 <span className="line-through text-olive/60 text-xs block">{formatEuro(order.unitPriceCents)}</span>
-                                <span className="text-xs font-bold text-emerald-700">0,00 € (Omaggio)</span>
+                                <span className="text-xs font-bold text-terracotta">0,00 € (Omaggio)</span>
                               </div>
                             ) : (
                               <div>
                                 <span className="font-medium text-forest">{formatEuro(order.finalPriceCents)}</span>
                                 {order.discountPercent > 0 && (
-                                  <span className="block text-[10px] text-emerald-700 font-medium">
+                                  <span className="block text-[10px] text-terracotta font-medium">
                                     -{order.discountPercent}% sconto amico
                                   </span>
                                 )}
@@ -1927,12 +1929,12 @@ export function PromotersDashboardView({ data }: Props) {
                           </td>
 
                           {/* Fee Startup (0%) */}
-                          <td className="py-3 text-right font-medium text-emerald-700 bg-emerald-50/40">
+                          <td className="py-3 text-right font-medium text-forest bg-forest/5">
                             {isCancelled ? (
                               <span className="text-xs text-olive/60">0,00 €</span>
                             ) : (
                               <div>
-                                <span className="text-xs font-semibold text-emerald-800">0,00 €</span>
+                                <span className="text-xs font-semibold text-forest">0,00 €</span>
                                 <span className="block text-[10px] text-olive font-normal">0% fee (100% produttore)</span>
                               </div>
                             )}
@@ -1944,7 +1946,7 @@ export function PromotersDashboardView({ data }: Props) {
                               <span className="text-xs text-olive/60">-</span>
                             ) : (
                               <div className="inline-flex flex-col items-center">
-                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-2.5 py-0.5 text-[11px] font-semibold text-forest">
                                   {order.quantity > 1 ? `~${order.kmAvoided} km dedicati azzerati` : "da 40 a 70 km dedicati azzerati"}
                                 </span>
                                 <span className="text-[10px] text-olive mt-0.5">
@@ -1957,20 +1959,20 @@ export function PromotersDashboardView({ data }: Props) {
                           {/* Stato Consegna */}
                           <td className="py-3 text-center">
                             {isCancelled ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-0.5 text-[11px] font-semibold text-rose-800">
+                              <span className="inline-flex items-center gap-1 rounded-full bg-wine/10 px-2.5 py-0.5 text-[11px] font-semibold text-wine">
                                 <Ban size={12} /> Annullato
                               </span>
                             ) : isAttended ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-0.5 text-[11px] font-semibold text-purple-800">
-                                <CheckCircle2 size={12} /> Ritirato / Consegnato
+                              <span className="inline-flex items-center gap-1 rounded-full bg-forest px-2.5 py-0.5 text-[11px] font-semibold text-cream">
+                                <CheckCircle2 size={12} className="text-gold" /> Ritirato / Consegnato
                               </span>
                             ) : isPresenceConfirmed ? (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-semibold text-emerald-800">
-                                <CheckCircle2 size={12} /> Consegna Riconfermata
+                              <span className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-2.5 py-0.5 text-[11px] font-semibold text-forest">
+                                <CheckCircle2 size={12} className="text-forest" /> Consegna Riconfermata
                               </span>
                             ) : (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[11px] font-semibold text-amber-800">
-                                <Clock size={12} /> In Elaborazione
+                              <span className="inline-flex items-center gap-1 rounded-full bg-gold/15 px-2.5 py-0.5 text-[11px] font-semibold text-forest">
+                                <Clock size={12} className="text-gold" /> In Elaborazione
                               </span>
                             )}
                           </td>
@@ -2374,26 +2376,29 @@ export function PromotersDashboardView({ data }: Props) {
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                   {[
-                    { id: "agriturismo", label: "Agriturismo KM 0", icon: "🌿" },
-                    { id: "hotel", label: "Hotel & Relais", icon: "🏨" },
-                    { id: "restaurant", label: "Ristorante / Osteria", icon: "🍽️" },
-                    { id: "producer", label: "Produttore Filiera", icon: "🧺" },
-                    { id: "theater", label: "Teatro & Spettacolo", icon: "🎭" },
-                  ].map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => setVenueForm((f) => ({ ...f, type: t.id }))}
-                      className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-xs font-medium transition cursor-pointer ${
-                        venueForm.type === t.id
-                          ? "border-forest bg-forest text-cream shadow-xs font-semibold"
-                          : "border-forest/15 bg-white text-forest hover:bg-forest/5"
-                      }`}
-                    >
-                      <span className="text-lg mb-1">{t.icon}</span>
-                      <span className="text-center">{t.label}</span>
-                    </button>
-                  ))}
+                    { id: "agriturismo", label: "Agriturismo KM 0", Icon: Building },
+                    { id: "hotel", label: "Hotel & Relais", Icon: Bed },
+                    { id: "restaurant", label: "Ristorante / Osteria", Icon: Utensils },
+                    { id: "producer", label: "Produttore Filiera", Icon: ShoppingBag },
+                    { id: "theater", label: "Teatro & Spettacolo", Icon: Ticket },
+                  ].map((t) => {
+                    const TypeIcon = t.Icon;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setVenueForm((f) => ({ ...f, type: t.id }))}
+                        className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-xs font-medium transition cursor-pointer ${
+                          venueForm.type === t.id
+                            ? "border-forest bg-forest text-cream shadow-xs font-semibold"
+                            : "border-forest/15 bg-white text-forest hover:bg-forest/5"
+                        }`}
+                      >
+                        <TypeIcon size={18} className={`mb-1 ${venueForm.type === t.id ? "text-gold" : "text-olive"}`} />
+                        <span className="text-center">{t.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -2486,7 +2491,7 @@ export function PromotersDashboardView({ data }: Props) {
                   </div>
                 )}
                 {uploadError && (
-                  <p className="text-xs text-terracotta bg-rose-50 p-2 rounded-xl mb-2 font-medium">
+                  <p className="text-xs text-wine bg-wine/10 p-2 rounded-xl mb-2 font-medium">
                     {uploadError}
                   </p>
                 )}
@@ -3067,26 +3072,29 @@ export function PromotersDashboardView({ data }: Props) {
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
                   {[
-                    { id: "agriturismo", label: "Agriturismo KM 0", icon: "🌿" },
-                    { id: "hotel", label: "Hotel & Relais", icon: "🏨" },
-                    { id: "restaurant", label: "Ristorante / Osteria", icon: "🍽️" },
-                    { id: "producer", label: "Produttore Filiera", icon: "🧺" },
-                    { id: "theater", label: "Teatro & Spettacolo", icon: "🎭" },
-                  ].map((t) => (
-                    <button
-                      key={t.id}
-                      type="button"
-                      onClick={() => setEditVenueForm((f) => ({ ...f, type: t.id }))}
-                      className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-xs font-medium transition cursor-pointer ${
-                        editVenueForm.type === t.id
-                          ? "border-forest bg-forest text-cream shadow-xs font-semibold"
-                          : "border-forest/15 bg-white text-forest hover:bg-forest/5"
-                      }`}
-                    >
-                      <span className="text-lg mb-1">{t.icon}</span>
-                      <span className="text-center">{t.label}</span>
-                    </button>
-                  ))}
+                    { id: "agriturismo", label: "Agriturismo KM 0", Icon: Building },
+                    { id: "hotel", label: "Hotel & Relais", Icon: Bed },
+                    { id: "restaurant", label: "Ristorante / Osteria", Icon: Utensils },
+                    { id: "producer", label: "Produttore Filiera", Icon: ShoppingBag },
+                    { id: "theater", label: "Teatro & Spettacolo", Icon: Ticket },
+                  ].map((t) => {
+                    const TypeIcon = t.Icon;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setEditVenueForm((f) => ({ ...f, type: t.id }))}
+                        className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-xs font-medium transition cursor-pointer ${
+                          editVenueForm.type === t.id
+                            ? "border-forest bg-forest text-cream shadow-xs font-semibold"
+                            : "border-forest/15 bg-white text-forest hover:bg-forest/5"
+                        }`}
+                      >
+                        <TypeIcon size={18} className={`mb-1 ${editVenueForm.type === t.id ? "text-gold" : "text-olive"}`} />
+                        <span className="text-center">{t.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -3174,7 +3182,7 @@ export function PromotersDashboardView({ data }: Props) {
                   </div>
                 )}
                 {uploadError && (
-                  <p className="text-xs text-terracotta bg-rose-50 p-2 rounded-xl mb-2 font-medium">
+                  <p className="text-xs text-wine bg-wine/10 p-2 rounded-xl mb-2 font-medium">
                     {uploadError}
                   </p>
                 )}
@@ -3497,10 +3505,10 @@ export function PromotersDashboardView({ data }: Props) {
                     onChange={(e) => setEventForm({ ...eventForm, category: e.target.value })}
                     className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none bg-white"
                   >
-                    <option value="teatro">🎭 Teatro & Prosa</option>
-                    <option value="musica">🎼 Musica Sinfonica & Opera</option>
-                    <option value="arte_cultura">🏛️ Arte & Visita Rinascimentale</option>
-                    <option value="natura_laboratorio">🌿 Trekking & Laboratorio Tipico</option>
+                    <option value="teatro">Teatro & Prosa</option>
+                    <option value="musica">Musica Sinfonica & Opera</option>
+                    <option value="arte_cultura">Arte & Spazio Storico</option>
+                    <option value="natura_laboratorio">Territorio & Tradizioni</option>
                   </select>
                 </div>
 
@@ -3558,7 +3566,7 @@ export function PromotersDashboardView({ data }: Props) {
               <div className="rounded-2xl bg-cream/50 p-4 border border-forest/10 grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-forest mb-1 flex items-center gap-1">
-                    <ShieldCheck size={14} className="text-emerald-700" />
+                    <ShieldCheck size={14} className="text-forest" />
                     Capienza Totale Posti *
                   </label>
                   <input

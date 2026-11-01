@@ -516,15 +516,15 @@ function HotelDrawer({
                         Matching Grant Promotori ({bookedEvent?.category.toUpperCase()})
                       </span>
                       {grantStatus === "confirmed" ? (
-                        <span className="rounded-full bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 font-bold">
-                          ✓ Presenza Confermata
+                        <span className="inline-flex items-center gap-1 rounded-full bg-forest/10 text-forest text-[10px] px-2.5 py-0.5 font-semibold">
+                          <CheckCircle2 size={11} className="text-forest" /> Presenza Confermata
                         </span>
                       ) : grantStatus === "declined" ? (
-                        <span className="rounded-full bg-rose-100 text-rose-800 text-[10px] px-2 py-0.5 font-bold">
+                        <span className="rounded-full bg-wine/10 text-wine text-[10px] px-2.5 py-0.5 font-semibold">
                           Rinunciato (Capienza Liberata)
                         </span>
                       ) : (
-                        <span className="rounded-full bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 font-bold">
+                        <span className="rounded-full bg-gold/15 text-forest text-[10px] px-2.5 py-0.5 font-semibold">
                           Assegnato ({grantSeatsRequested} {grantSeatsRequested === 1 ? "Posto" : "Posti"})
                         </span>
                       )}
@@ -542,9 +542,9 @@ function HotelDrawer({
                         type="button"
                         disabled={grantActionPending}
                         onClick={() => handleGrantResponse(selectedVoucher.id, "confirmed")}
-                        className="flex-1 rounded-full bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-cream hover:bg-emerald-800 transition disabled:opacity-50"
+                        className="flex-1 rounded-full bg-forest px-3 py-1.5 text-xs font-semibold text-cream hover:bg-forest-deep transition disabled:opacity-50"
                       >
-                        ✓ Conferma Presenza a Teatro
+                        Conferma Presenza a Teatro
                       </button>
                     ) : null}
 
@@ -1242,7 +1242,7 @@ function FriendsTab({ user, invites }: Props) {
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700 transition shadow-sm"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-forest px-4 py-2 text-xs font-semibold text-cream hover:bg-forest-deep transition shadow-xs"
                 >
                   Condividi su WhatsApp
                 </a>
@@ -1457,12 +1457,12 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
 
       {/* Messaggi di Alert */}
       {successMsg && (
-        <div className="rounded-2xl border border-emerald-500/20 bg-emerald-50 p-4 text-emerald-900 shadow-sm flex items-center justify-between">
+        <div className="rounded-2xl border border-forest/15 bg-cream p-4 text-forest shadow-xs flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <CheckCircle2 size={18} className="text-emerald-600" />
+            <CheckCircle2 size={18} className="text-forest" />
             <span className="text-sm font-medium">{successMsg}</span>
           </div>
-          <button onClick={() => setSuccessMsg("")} className="text-xs text-emerald-700 underline">
+          <button onClick={() => setSuccessMsg("")} className="text-xs text-olive hover:text-forest underline">
             Chiudi
           </button>
         </div>
@@ -1794,21 +1794,19 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
                   key={b.id}
                   className={`relative flex flex-col justify-between rounded-[26px] border p-6 transition-all ${
                     isPresenceConfirmed
-                      ? "border-emerald-300 bg-emerald-50/40 shadow-sm"
+                      ? "border-forest/20 bg-forest/5 shadow-xs"
                       : isConfirmed
-                      ? "border-blue-200 bg-blue-50/30 shadow-sm"
+                      ? "border-forest/15 bg-cream/50 shadow-xs"
                       : isCancelled
                       ? "border-forest/10 bg-cream/30 opacity-70"
-                      : "border-forest/10 bg-white shadow-sm"
+                      : "border-forest/10 bg-white shadow-xs"
                   }`}
                 >
                   <div>
                     {/* Header Card */}
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <span className={`inline-block rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                          isBasket ? "bg-amber-100 text-amber-900" : "bg-forest/5 text-forest"
-                        }`}>
+                        <span className="inline-block rounded-full bg-cream px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-forest border border-forest/10">
                           {isBasket
                             ? "Cesto Filiera Corta KM 0"
                             : b.bookingType === "theater_event"
@@ -1826,32 +1824,32 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
                       {/* Badge di Stato */}
                       <div>
                         {isPending && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
-                            <Clock size={12} /> {isBasket ? "Ordine in Elaborazione" : "In Attesa di Accettazione"}
+                          <span className="inline-flex items-center gap-1 rounded-full bg-gold/15 px-3 py-1 text-xs font-semibold text-forest">
+                            <Clock size={12} className="text-gold" /> {isBasket ? "Ordine in Elaborazione" : "In Attesa di Accettazione"}
                           </span>
                         )}
                         {isConfirmed && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-800">
-                            <CheckCircle2 size={12} /> {isBasket ? "Cesto Confermato dal Produttore" : "Confermata dal Gestore"}
+                          <span className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-3 py-1 text-xs font-semibold text-forest">
+                            <CheckCircle2 size={12} className="text-forest" /> {isBasket ? "Cesto Confermato dal Produttore" : "Confermata dal Gestore"}
                           </span>
                         )}
                         {isPresenceConfirmed && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-800">
-                            <CheckCircle2 size={12} /> {isBasket ? "Ritiro / Ricezione Confermata ✓" : "Presenza Riconfermata ✓"}
+                          <span className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-3 py-1 text-xs font-semibold text-forest">
+                            <CheckCircle2 size={12} className="text-forest" /> {isBasket ? "Ritiro / Ricezione Confermata" : "Presenza Riconfermata"}
                           </span>
                         )}
                         {isAttended && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-800">
-                            <Sparkles size={12} /> {isBasket ? "Consegnato ✓" : "Completata (Check-in effettuato)"}
+                          <span className="inline-flex items-center gap-1 rounded-full bg-forest px-3 py-1 text-xs font-semibold text-cream">
+                            <CheckCircle2 size={12} className="text-gold" /> {isBasket ? "Consegnato" : "Completata (Check-in effettuato)"}
                           </span>
                         )}
                         {b.status === "rejected" && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-3 py-1 text-xs font-semibold text-rose-800">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-wine/10 px-3 py-1 text-xs font-semibold text-wine">
                             <XCircle size={12} /> Non Disponibile
                           </span>
                         )}
                         {b.status === "cancelled" && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-mist px-3 py-1 text-xs font-semibold text-forest/70">
                             <XCircle size={12} /> Annullata
                           </span>
                         )}
@@ -1860,9 +1858,9 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
 
                     {/* Dettagli Cesto o Evento */}
                     {isBasket && v.basketName && (
-                      <div className="mt-3 rounded-2xl bg-amber-50/70 p-3 text-xs text-forest border border-amber-200/60">
+                      <div className="mt-3 rounded-2xl bg-cream/70 p-3 text-xs text-forest border border-forest/10">
                         <p className="font-bold text-terracotta">{v.basketName}</p>
-                        <p className="mt-0.5 text-ink/80 text-[11px] leading-relaxed">{v.basketDescription}</p>
+                        <p className="mt-0.5 text-forest/80 text-[11px] leading-relaxed">{v.basketDescription}</p>
                       </div>
                     )}
 
@@ -1925,13 +1923,13 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
                             type="button"
                             disabled={actionPendingId === b.id}
                             onClick={() => updateBookingStatus(b.id, "presence_confirmed")}
-                            className="inline-flex items-center gap-1.5 rounded-full bg-emerald-700 px-4 py-2 text-xs font-semibold text-cream shadow-sm hover:bg-emerald-800 transition disabled:opacity-50"
+                            className="inline-flex items-center gap-1.5 rounded-full bg-forest px-4 py-2 text-xs font-semibold text-cream shadow-xs hover:bg-forest-deep transition disabled:opacity-50"
                           >
-                            <CheckCircle2 size={14} /> {isBasket ? "Conferma Ricezione / Ritiro" : "Conferma la tua Presenza"}
+                            <CheckCircle2 size={14} className="text-gold" /> {isBasket ? "Conferma Ricezione / Ritiro" : "Conferma la tua Presenza"}
                           </button>
                         ) : (
-                          <span className="text-xs text-emerald-800 font-semibold">
-                            ✓ {isBasket ? "Hai confermato il ritiro/ricezione" : "Hai confermato l'arrivo"}
+                          <span className="text-xs text-forest font-semibold flex items-center gap-1">
+                            <CheckCircle2 size={13} className="text-forest" /> {isBasket ? "Hai confermato il ritiro/ricezione" : "Hai confermato l'arrivo"}
                           </span>
                         )}
                       </div>
@@ -1949,7 +1947,7 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
                             updateBookingStatus(b.id, "cancelled");
                           }
                         }}
-                        className="rounded-full border border-forest/20 px-3.5 py-2 text-xs font-medium text-forest hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition disabled:opacity-50"
+                        className="rounded-full border border-forest/20 px-3.5 py-2 text-xs font-medium text-forest hover:bg-wine/10 hover:text-wine hover:border-wine/20 transition disabled:opacity-50"
                       >
                         {isBasket ? "Annulla Ordine" : b.voucherId ? "Annulla e Cambia Fornitore" : "Annulla Prenotazione"}
                       </button>

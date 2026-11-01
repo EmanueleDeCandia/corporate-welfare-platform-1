@@ -127,7 +127,7 @@ export function TheaterDashboardView({ data }: Props) {
 
         <div className="rounded-2xl border border-forest/10 bg-white p-5 shadow-xs">
           <p className="text-xs font-semibold uppercase tracking-wider text-olive">Presenze Riconfermate</p>
-          <p className="mt-2 font-serif text-3xl font-bold text-emerald-700">{data.stats.totalConfirmedSeats}</p>
+          <p className="mt-2 font-serif text-3xl font-bold text-forest">{data.stats.totalConfirmedSeats}</p>
           <p className="mt-1 text-xs text-olive">Rassicurazione anti-overbooking</p>
         </div>
 
@@ -234,14 +234,16 @@ export function TheaterDashboardView({ data }: Props) {
                     <div className="mt-2 h-2.5 w-full rounded-full bg-forest/10 overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all duration-500 ${
-                          fillPct >= 90 ? "bg-wine" : fillPct >= 60 ? "bg-gold" : "bg-emerald-600"
+                          fillPct >= 90 ? "bg-wine" : fillPct >= 60 ? "bg-gold" : "bg-forest"
                         }`}
                         style={{ width: `${fillPct}%` }}
                       />
                     </div>
 
                     <div className="mt-3 flex items-center justify-between text-xs text-olive">
-                      <span>✓ {show.confirmedSeats} confermati dall&apos;ospite</span>
+                      <span className="flex items-center gap-1">
+                        <CheckCircle2 size={13} className="text-forest" /> {show.confirmedSeats} confermati dall&apos;ospite
+                      </span>
                       <span className="font-semibold text-forest">
                         {show.availableSeats} posti ancora liberi
                       </span>
@@ -334,24 +336,24 @@ export function TheaterDashboardView({ data }: Props) {
 
                         <td className="py-3.5 px-4">
                           {s.guestConfirmationStatus === "presence_confirmed" ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800">
-                              <CheckCircle2 size={12} /> Presenza Confermata
+                            <span className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-2.5 py-0.5 text-[11px] font-semibold text-forest">
+                              <CheckCircle2 size={12} className="text-forest" /> Presenza Confermata
                             </span>
                           ) : s.guestConfirmationStatus === "cancelled" ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-wine/10 px-2 py-0.5 text-[11px] font-semibold text-wine">
                               Annullata
                             </span>
                           ) : (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">
-                              <Clock size={12} /> In attesa
+                            <span className="inline-flex items-center gap-1 rounded-full bg-gold/15 px-2 py-0.5 text-[11px] font-medium text-forest">
+                              <Clock size={12} className="text-gold" /> In attesa
                             </span>
                           )}
                         </td>
 
                         <td className="py-3.5 px-4">
                           {s.attendanceStatus === "attended" ? (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 text-white px-2.5 py-0.5 text-[10px] font-bold">
-                              ✓ Entrato
+                            <span className="inline-flex items-center gap-1 rounded-full bg-forest text-cream px-2.5 py-0.5 text-[10px] font-semibold">
+                              <CheckCircle2 size={11} className="text-gold" /> Ingresso Convalidato
                             </span>
                           ) : s.attendanceStatus === "no_show" ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-wine text-white px-2.5 py-0.5 text-[10px] font-bold">

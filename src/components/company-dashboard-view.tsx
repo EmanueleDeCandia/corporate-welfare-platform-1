@@ -441,7 +441,7 @@ export function CompanyDashboardView({ data }: Props) {
                           Massimo raggiunto (2/2)
                         </span>
                       ) : (
-                        <span className="rounded-full bg-emerald-100 text-emerald-800 px-2.5 py-1 text-[11px] font-medium">
+                        <span className="rounded-full bg-forest/10 text-forest px-2.5 py-1 text-[11px] font-semibold">
                           {2 - totalRedeemed} voucher disponibili
                         </span>
                       )}

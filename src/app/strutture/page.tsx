@@ -110,16 +110,16 @@ export default async function VenuesPage({
 
         {/* BANNER SPECIFICO PER PRODUTTORI KM 0 */}
         {currentCat === "producer" && (
-          <div className="mt-6 rounded-2xl bg-emerald-50 border border-emerald-200 p-5 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="mt-6 rounded-2xl bg-forest/5 border border-forest/15 p-5 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-start gap-3">
-              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-700 text-cream">
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-forest text-gold">
                 <Leaf size={20} />
               </div>
               <div>
-                <h3 className="font-serif text-lg text-emerald-900 font-semibold">
+                <h3 className="font-serif text-lg text-forest font-semibold">
                   Filiera Corta KM 0 · Trasparenza & Reciprocità 10:1
                 </h3>
-                <p className="mt-1 text-xs text-emerald-800 leading-relaxed max-w-3xl">
+                <p className="mt-1 text-xs text-forest/80 leading-relaxed max-w-3xl">
                   La startup trattiene <strong>0% di commissioni</strong> sui produttori locali (100% dell&apos;incasso va al produttore).
                   I tragitti dedicati su gomma sono azzerati tramite ritiro in loco o percorsi ordinari preesistenti. Inoltre, <strong>ogni 10 cesti acquistati, 1 cesto viene offerto in omaggio agli addetti delle imprese CSR</strong>.
                 </p>

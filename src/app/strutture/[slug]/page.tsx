@@ -137,7 +137,7 @@ export default async function VenueDetailPage({
               <aside className="space-y-6">
                 <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/5">
                   <div className="flex items-center gap-3">
-                    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-100 text-emerald-800">
+                    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-forest/10 text-forest">
                       <Leaf size={24} />
                     </div>
                     <div>
@@ -148,7 +148,7 @@ export default async function VenueDetailPage({
                   <div className="mt-5 space-y-3 text-xs leading-relaxed text-forest/80 border-t border-mist pt-4">
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-forest">Commissioni Startup RADICI:</span>
-                      <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 font-bold text-emerald-800">0%</span>
+                      <span className="rounded-full bg-forest/10 px-2.5 py-0.5 font-bold text-forest">0%</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="font-medium text-forest">Sconto per Dipendenti CSR:</span>

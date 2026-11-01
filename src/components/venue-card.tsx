@@ -50,7 +50,7 @@ export function VenueCard({ venue, destination, sponsor, featured = false }: Pro
                 <div>
                   <p className="text-[10px] uppercase tracking-[0.14em] text-olive">Cesto Tipico</p>
                   <p className="font-semibold text-forest">{formatEuro(venue.priceBasketCents || 4000)}</p>
-                  <p className="text-[10px] font-medium text-emerald-700">100% al produttore</p>
+                  <p className="text-[10px] font-medium text-olive">100% al produttore</p>
                 </div>
               ) : (
                 <div>

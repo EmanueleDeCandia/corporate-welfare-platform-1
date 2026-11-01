@@ -161,8 +161,8 @@ export function ProducerBasketOrderClient({ venue, stats, currentUser }: Props) 
       <div className="rounded-[32px] bg-white p-6 md:p-8 shadow-sm border border-forest/10">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-mist">
           <div>
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800 mb-2">
-              <ShoppingBag size={14} /> Presidio Agroalimentare a Filiera Corta
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-forest/8 px-3 py-1 text-xs font-semibold text-forest mb-2">
+              <ShoppingBag size={14} className="text-forest" /> Presidio Agroalimentare a Filiera Corta
             </div>
             <h2 className="font-serif text-2xl md:text-3xl text-forest">
               {venue.basketName || "Cesto Tipico Territoriale KM 0"}
@@ -175,7 +175,7 @@ export function ProducerBasketOrderClient({ venue, stats, currentUser }: Props) 
             <span className="text-xs uppercase tracking-wider text-olive font-medium block">Prezzo Unitario</span>
             <span className="font-serif text-3xl font-bold text-forest">{formatEuro(unitPriceCents)}</span>
             {isFriend && (
-              <span className="inline-block mt-1 rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800">
+              <span className="inline-block mt-1 rounded-full bg-forest/10 px-2.5 py-0.5 text-[11px] font-semibold text-forest">
                 -10% Sconto Community
               </span>
             )}
@@ -193,33 +193,33 @@ export function ProducerBasketOrderClient({ venue, stats, currentUser }: Props) 
 
         {/* FEEDBACK SUCCESSO ORDINE */}
         {confirmedOrder ? (
-          <div className="mt-8 rounded-2xl bg-emerald-50 border border-emerald-200 p-6 space-y-4">
-            <div className="flex items-center gap-3 text-emerald-900">
-              <CheckCircle2 size={28} className="text-emerald-700 shrink-0" />
+          <div className="mt-8 rounded-2xl bg-cream border border-forest/15 p-6 space-y-4">
+            <div className="flex items-center gap-3 text-forest">
+              <CheckCircle2 size={28} className="text-forest shrink-0" />
               <div>
                 <h4 className="font-serif text-xl font-bold">Ordine Confermato con Successo!</h4>
-                <p className="text-xs text-emerald-800 mt-0.5">
-                  Codice prenotazione: <strong className="font-mono">{confirmedOrder.confirmationToken}</strong> (ID #{confirmedOrder.id})
+                <p className="text-xs text-olive mt-0.5">
+                  Codice prenotazione: <strong className="font-mono text-forest">{confirmedOrder.confirmationToken}</strong> (ID #{confirmedOrder.id})
                 </p>
               </div>
             </div>
-            <p className="text-sm text-emerald-900 leading-relaxed bg-white/70 p-4 rounded-xl">
+            <p className="text-sm text-forest/90 leading-relaxed bg-white/80 p-4 rounded-xl border border-forest/10">
               {confirmedOrder.message}
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 text-center text-xs">
-              <div className="rounded-xl bg-white p-3 border border-emerald-100">
+              <div className="rounded-xl bg-white p-3 border border-forest/10">
                 <span className="text-olive block text-[10px] uppercase font-bold">Importo Pagato</span>
                 <span className="font-serif text-base font-bold text-forest">{formatEuro(confirmedOrder.finalPriceCents)}</span>
               </div>
-              <div className="rounded-xl bg-white p-3 border border-emerald-100">
+              <div className="rounded-xl bg-white p-3 border border-forest/10">
                 <span className="text-olive block text-[10px] uppercase font-bold">Tratta Dedicata Evitata</span>
                 <span className="font-serif text-base font-bold text-forest">~{kmAvoided} km</span>
               </div>
-              <div className="rounded-xl bg-white p-3 border border-emerald-100">
+              <div className="rounded-xl bg-white p-3 border border-forest/10">
                 <span className="text-olive block text-[10px] uppercase font-bold">CO₂ Risparmiata</span>
-                <span className="font-serif text-base font-bold text-emerald-700">-{co2SavedKg} kg</span>
+                <span className="font-serif text-base font-bold text-forest">-{co2SavedKg} kg</span>
               </div>
-              <div className="rounded-xl bg-white p-3 border border-emerald-100">
+              <div className="rounded-xl bg-white p-3 border border-forest/10">
                 <span className="text-olive block text-[10px] uppercase font-bold">Punti Guadagnati</span>
                 <span className="font-serif text-base font-bold text-gold">+{impactPointsEarned}</span>
               </div>
@@ -228,7 +228,7 @@ export function ProducerBasketOrderClient({ venue, stats, currentUser }: Props) 
               <button
                 type="button"
                 onClick={() => setConfirmedOrder(null)}
-                className="rounded-full bg-emerald-800 px-5 py-2 text-xs font-semibold text-cream hover:bg-emerald-900 transition"
+                className="rounded-full bg-forest px-5 py-2 text-xs font-semibold text-cream hover:bg-forest-deep transition"
               >
                 Ordina un altro cesto
               </button>
@@ -277,7 +277,7 @@ export function ProducerBasketOrderClient({ venue, stats, currentUser }: Props) 
                   <span className="text-[10px] uppercase font-bold text-olive block">Listino Totale</span>
                   <span className="font-serif text-lg text-forest font-semibold">{formatEuro(listPriceCents)}</span>
                   {discountPercent > 0 && (
-                    <span className="text-[10px] text-emerald-700 block font-medium">-{discountPercent}% Sconto Community</span>
+                    <span className="text-[10px] text-terracotta block font-medium">-{discountPercent}% Sconto Community</span>
                   )}
                 </div>
                 <div className="rounded-xl bg-white p-3 border border-forest/5">
@@ -292,7 +292,7 @@ export function ProducerBasketOrderClient({ venue, stats, currentUser }: Props) 
                 </div>
                 <div className="rounded-xl bg-white p-3 border border-forest/5">
                   <span className="text-[10px] uppercase font-bold text-olive block">CO₂ Risparmiata</span>
-                  <span className="font-serif text-lg text-emerald-700 font-bold">-{co2SavedKg} kg</span>
+                  <span className="font-serif text-lg text-forest font-bold">-{co2SavedKg} kg</span>
                   <span className="text-[10px] text-olive block">0,265 kg CO₂/km</span>
                 </div>
               </div>
@@ -430,24 +430,24 @@ export function ProducerBasketOrderClient({ venue, stats, currentUser }: Props) 
             </div>
 
             {/* RECIPROCITA & IMPATTO BUSINESS RULE 10 A 1 */}
-            <div className="rounded-2xl border border-emerald-600/20 bg-emerald-50/60 p-4 flex items-start gap-3">
-              <Gift size={20} className="text-emerald-800 shrink-0 mt-0.5" />
+            <div className="rounded-2xl border border-forest/15 bg-cream/70 p-4 flex items-start gap-3">
+              <Gift size={20} className="text-terracotta shrink-0 mt-0.5" />
               <div className="text-xs text-forest leading-relaxed">
-                <strong className="text-emerald-900 block font-semibold mb-0.5">
+                <strong className="text-forest block font-semibold mb-0.5">
                   Reciprocità Territoriale: Regola 10 ad 1 per gli Addetti CSR
                 </strong>
                 Ordinando questo cesto contribuisci con <strong>+{quantity} cesto</strong> al contatore del produttore. 
                 Ogni 10 acquisti, il produttore dona 1 cesto in omaggio agli addetti delle Imprese CSR che sostengono il welfare locale.
                 {willUnlockGift && (
-                  <span className="block mt-1 font-bold text-emerald-800">
-                    🎉 Con questo ordine viene maturato un nuovo Cesto in Omaggio per gli addetti CSR!
+                  <span className="block mt-1 font-bold text-forest">
+                    <Sparkles size={13} className="text-gold inline mr-1" /> Con questo ordine viene maturato un nuovo Cesto in Omaggio per gli addetti CSR!
                   </span>
                 )}
               </div>
             </div>
 
             {errorMessage && (
-              <div className="rounded-xl bg-rose-50 border border-rose-200 p-3 text-xs text-rose-800 font-medium">
+              <div className="rounded-xl bg-wine/10 border border-wine/20 p-3 text-xs text-wine font-medium">
                 {errorMessage}
               </div>
             )}

@@ -622,7 +622,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
                             {b.partySize} {b.partySize === 1 ? "posto" : "posti"}
                           </span>
                           {b.voucherId ? (
-                            <span className="block mt-1 text-[10px] text-emerald-800 font-semibold">
+                            <span className="block mt-1 text-[10px] text-forest font-semibold">
                               1 Quota Welfare (B2B)
                             </span>
                           ) : (
@@ -635,7 +635,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
                         <td className="py-3.5 align-top text-right font-medium">
                           {b.voucherId ? (
                             <div>
-                              <p className="font-bold text-emerald-800">0€ (Welfare)</p>
+                              <p className="font-bold text-forest">0 € (Welfare)</p>
                               <p className="text-[10px] text-olive">Addebito ad Impresa</p>
                             </div>
                           ) : (
@@ -648,37 +648,37 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
 
                         <td className="py-3.5 align-top text-center">
                           {isPending && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-800">
-                              <Clock size={11} /> In attesa
+                            <span className="inline-flex items-center gap-1 rounded-full bg-gold/15 px-2.5 py-1 text-[11px] font-semibold text-forest">
+                              <Clock size={11} className="text-gold" /> In attesa
                             </span>
                           )}
                           {isConfirmed && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-[11px] font-semibold text-blue-800">
-                              <CheckCircle2 size={11} /> Accettata
+                            <span className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-2.5 py-1 text-[11px] font-semibold text-forest">
+                              <CheckCircle2 size={11} className="text-forest" /> Accettata
                             </span>
                           )}
                           {isPresenceConfirmed && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 shadow-sm border border-emerald-300">
-                              <Sparkles size={11} /> Presenza Riconfermata ✓
+                            <span className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-2.5 py-1 text-[11px] font-semibold text-forest shadow-xs border border-forest/20">
+                              <CheckCircle2 size={11} className="text-forest" /> Presenza Riconfermata
                             </span>
                           )}
                           {isAttended && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2.5 py-1 text-[11px] font-semibold text-purple-800">
-                              ✓ Presente
+                            <span className="inline-flex items-center gap-1 rounded-full bg-forest px-2.5 py-1 text-[11px] font-semibold text-cream">
+                              <CheckCircle2 size={11} className="text-gold" /> Presente
                             </span>
                           )}
                           {isNoShow && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-semibold text-rose-800">
-                              ✗ No-Show
+                            <span className="inline-flex items-center gap-1 rounded-full bg-wine/10 px-2.5 py-1 text-[11px] font-semibold text-wine">
+                              No-Show
                             </span>
                           )}
                           {b.status === "cancelled" && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-semibold text-slate-700">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-mist px-2.5 py-1 text-[11px] font-semibold text-forest/70">
                               Annullata
                             </span>
                           )}
                           {b.status === "rejected" && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-1 text-[11px] font-semibold text-rose-800">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-wine/10 px-2.5 py-1 text-[11px] font-semibold text-wine">
                               Rifiutata
                             </span>
                           )}
@@ -700,7 +700,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
                                   type="button"
                                   disabled={pending === b.id}
                                   onClick={() => updateBookingStatus(b.id, "rejected")}
-                                  className="rounded-full border border-forest/20 px-2.5 py-1 text-[10px] font-medium text-forest hover:bg-rose-50 hover:text-rose-700 hover:border-rose-300 transition"
+                                  className="rounded-full border border-forest/20 px-2.5 py-1 text-[10px] font-medium text-forest hover:bg-wine/10 hover:text-wine hover:border-wine/20 transition"
                                 >
                                   Rifiuta
                                 </button>
@@ -713,7 +713,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
                                   type="button"
                                   disabled={pending === b.id}
                                   onClick={() => updateBookingStatus(b.id, "attended")}
-                                  className="inline-flex items-center gap-1 rounded-full bg-emerald-700 px-3 py-1 text-[10px] font-bold text-cream hover:bg-emerald-800 transition"
+                                  className="inline-flex items-center gap-1 rounded-full bg-forest px-3 py-1 text-[10px] font-bold text-cream hover:bg-forest-deep transition"
                                 >
                                   <UserCheck size={11} /> Segna Presente
                                 </button>
@@ -721,7 +721,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
                                   type="button"
                                   disabled={pending === b.id}
                                   onClick={() => updateBookingStatus(b.id, "no_show")}
-                                  className="inline-flex items-center gap-1 rounded-full border border-rose-200 px-2 py-1 text-[10px] font-medium text-rose-700 hover:bg-rose-50 transition"
+                                  className="inline-flex items-center gap-1 rounded-full border border-wine/20 px-2 py-1 text-[10px] font-medium text-wine hover:bg-wine/10 transition"
                                 >
                                   <UserX size={11} /> No-Show
                                 </button>
