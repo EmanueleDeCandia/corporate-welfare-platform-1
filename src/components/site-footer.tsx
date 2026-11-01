@@ -32,7 +32,7 @@ export async function SiteFooter() {
               Vetrina imprese ESG
             </Link>
             <Link href={href("/come-funziona")} className="hover:text-olive">
-              Modello pay-per-use
+              Come funziona
             </Link>
             <Link href={href("/vantaggi")} className="hover:text-olive">
               I vantaggi della partecipazione
