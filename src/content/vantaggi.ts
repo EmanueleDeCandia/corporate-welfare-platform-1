@@ -172,17 +172,17 @@ export const impactIndicators: ImpactIndicator[] = [
   {
     key: "co2",
     title: "Sostenibilità Ambientale e CO₂ Evitata",
-    text: "Misurazione esatta dei chilometri e delle tonnellate di CO₂ risparmiate grazie alla consegna integrata delle merci.",
+    text: "Misurazione esatta dei chilometri e delle tonnellate di CO₂ evitate. La disponibilità del Gruppo Illiria ad unire consegne dei Prodotti a Km 0 con quelle dei suoi rifornimenti azzera sia i km percorsi che gli ostacoli dei produttori locali per raggiungere nuovi clienti.",
   },
   {
     key: "indotto",
     title: "Indotto Economico Territoriale",
-    text: "Valutazione del valore generato per gli operatori dell'ospitalità, della ristorazione e del settore agroalimentare locale (moltiplicatore 2,5×).",
+    text: "Oltre al valore generato direttamente per gli operatori dell'ospitalità, della ristorazione e del settore agroalimentare locale, l'effetto indotto nel medio termine a livello locale ha un moltiplicatore importante (2,5×) soprattutto per località in Aree interne poco accessibili.",
   },
   {
     key: "cultura",
     title: "Sostegno al Settore Culturale",
-    text: "Tracciamento delle giornate lavorative retribuite per artisti e del numero di spettatori coinvolti negli eventi del territorio.",
+    text: "Aumento delle opportunità per artisti emergenti, maggiori giornate lavorative retribuite per artisti e del numero di spettatori coinvolti negli eventi del territorio grazie all'abbinamento con il turismo di prossimità abilitato dal Welfare aziendale.",
   },
   {
     key: "esposizione",

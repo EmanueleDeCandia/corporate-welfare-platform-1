@@ -40,6 +40,15 @@ export default async function VantaggiPage() {
   const theaterCount = allVenues.filter((row) => row.venue.type === "theater").length;
   const hospitalityCount = allVenues.filter((row) => row.venue.type !== "producer").length;
 
+  const indotto = String(INDOTTO_MULTIPLIER).replace(".", ",");
+
+  const impactMeta: Record<string, string> = {
+    co2: "0,300 kg di CO₂ evitati per ogni km non percorso",
+    indotto: `${indotto}× moltiplicatore dell'indotto locale`,
+    cultura: `Teatri convenzionati nel circuito: ${theaterCount} (demo)`,
+    esposizione: `Imprese aderenti con reporting attivo: ${stats.companies} (demo)`,
+  };
+
   const kpis = [
     { label: "Imprese aderenti", value: String(stats.companies) },
     { label: "Strutture convenzionate", value: String(hospitalityCount) },
@@ -270,25 +279,13 @@ export default async function VantaggiPage() {
             {impactIndicators.map((indicator) => (
               <article
                 key={indicator.key}
-                className="rounded-2xl border border-forest/10 bg-white p-6 md:p-7"
+                className="flex flex-col rounded-2xl border border-forest/10 bg-white p-6 md:p-7"
               >
                 <h3 className="font-serif text-xl text-forest">{indicator.title}</h3>
-                <p className="mt-3 text-sm leading-6 text-olive">{indicator.text}</p>
-                {indicator.key === "indotto" ? (
-                  <p className="mt-5 font-serif text-4xl text-forest">
-                    {String(INDOTTO_MULTIPLIER).replace(".", ",")}×
-                  </p>
-                ) : indicator.key === "co2" ? (
-                  <p className="mt-5 text-xs text-olive">0,300 kg di CO₂ evitati per ogni km non percorso</p>
-                ) : indicator.key === "cultura" ? (
-                  <p className="mt-5 text-xs text-olive">
-                    Teatri convenzionati nel circuito: <span className="text-forest">{theaterCount}</span>
-                  </p>
-                ) : (
-                  <p className="mt-5 text-xs text-olive">
-                    Imprese aderenti con reporting attivo: <span className="text-forest">{stats.companies}</span>
-                  </p>
-                )}
+                <p className="mt-3 flex-1 text-sm leading-6 text-olive">{indicator.text}</p>
+                <p className="mt-5 border-t border-forest/10 pt-4 text-xs text-olive">
+                  {impactMeta[indicator.key]}
+                </p>
               </article>
             ))}
           </div>
