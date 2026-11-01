@@ -38,6 +38,7 @@ import {
   Info,
   Lock,
   Ban,
+  Gift,
 } from "lucide-react";
 import type { PromoterDashboardData } from "@/lib/promoters";
 import { formatDate, formatDateTime, formatEuro } from "@/lib/utils";
@@ -1707,9 +1708,9 @@ export function PromotersDashboardView({ data }: Props) {
                 <p className="text-[11px] text-olive mt-0.5">confezioni a filiera diretta</p>
               </div>
               <div className="rounded-2xl border border-forest/10 bg-cream/40 p-4">
-                <span className="text-[11px] uppercase tracking-wider text-olive font-medium">Valore Economico Diretto</span>
+                <span className="text-[11px] uppercase tracking-wider text-olive font-medium">Incasso Produttori (100%)</span>
                 <p className="font-serif text-2xl text-forest mt-1">{formatEuro(data.totalProducerRevenueCents)}</p>
-                <p className="text-[11px] text-olive mt-0.5">100% reinvestito sul territorio</p>
+                <p className="text-[11px] text-emerald-700 font-semibold mt-0.5">0% fee startup Radici</p>
               </div>
               <div className="rounded-2xl border border-forest/10 bg-cream/40 p-4">
                 <span className="text-[11px] uppercase tracking-wider text-olive font-medium">Km Dedicati Azzerati</span>
@@ -1717,9 +1718,35 @@ export function PromotersDashboardView({ data }: Props) {
                 <p className="text-[11px] text-olive mt-0.5">ritiro in loco / tragitto proprio</p>
               </div>
               <div className="rounded-2xl border border-forest/10 bg-cream/40 p-4">
-                <span className="text-[11px] uppercase tracking-wider text-olive font-medium">Produttori Locali Attivi</span>
-                <p className="font-serif text-2xl text-forest mt-1">{data.producersCount}</p>
-                <p className="text-[11px] text-olive mt-0.5">presidi agricoli e frantoi</p>
+                <span className="text-[11px] uppercase tracking-wider text-olive font-medium">Omaggi Addetti CSR</span>
+                <p className="font-serif text-2xl text-forest mt-1">{data.freeBasketsEarnedTotal} cesti</p>
+                <p className="text-[11px] text-olive mt-0.5">{data.basketsProgressToNextGift}/10 al prossimo omaggio</p>
+              </div>
+            </div>
+
+            {/* Spotlight Business Rule 10:1 (Omaggio Produttori per Addetti CSR) */}
+            <div className="rounded-2xl border border-emerald-600/20 bg-emerald-50/50 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-xl bg-emerald-100 text-emerald-800 shrink-0">
+                  <Gift size={20} />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-forest">Business Rule: 1 Cesto Omaggio ogni 10 Acquisti per gli Addetti CSR</h4>
+                  <p className="text-xs text-olive mt-0.5 max-w-2xl leading-relaxed">
+                    La startup non trattiene commissioni sui produttori (fee 0%). In virtù della partnership di territorio, 
+                    <strong> ogni 10 acquisti di cesti</strong> i produttori offrono <strong>1 Cesto in Omaggio</strong> consegnato direttamente agli addetti delle Imprese CSR aderenti.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3 shrink-0 bg-white px-4 py-2 rounded-xl border border-emerald-100 shadow-sm">
+                <div>
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-olive block">Avanzamento Prossimo</span>
+                  <span className="font-serif text-base text-forest">{data.basketsProgressToNextGift} / 10 acquistati</span>
+                </div>
+                <div className="text-right pl-3 border-l border-mist">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-700 block">Maturati</span>
+                  <span className="font-serif text-base text-emerald-800">{data.freeBasketsEarnedTotal} omaggi</span>
+                </div>
               </div>
             </div>
           </div>
@@ -1783,7 +1810,7 @@ export function PromotersDashboardView({ data }: Props) {
                     <th className="py-3">Produttore & Territorio</th>
                     <th className="py-3">Cesto & Quantità</th>
                     <th className="py-3 text-right">Prezzo Pagato</th>
-                    <th className="py-3 text-right text-gold">Fee Radici</th>
+                    <th className="py-3 text-right text-emerald-800">Fee Startup (0%)</th>
                     <th className="py-3 text-center">Impatto KM 0</th>
                     <th className="py-3 text-center">Stato Consegna</th>
                   </tr>
@@ -1853,9 +1880,16 @@ export function PromotersDashboardView({ data }: Props) {
                           {/* Cesto & Qty */}
                           <td className="py-3">
                             <div className="font-medium text-forest">{order.basketName}</div>
-                            <span className="inline-flex items-center gap-1 rounded bg-amber-100/60 px-2 py-0.5 text-[11px] font-bold text-amber-900 mt-0.5">
-                              {order.quantity} {order.quantity === 1 ? "cesto" : "cesti"}
-                            </span>
+                            <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
+                              <span className="inline-flex items-center gap-1 rounded bg-amber-100/60 px-2 py-0.5 text-[11px] font-bold text-amber-900">
+                                {order.quantity} {order.quantity === 1 ? "cesto" : "cesti"}
+                              </span>
+                              {order.isFreeGift && (
+                                <span className="inline-flex items-center gap-1 rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                                  <Gift size={10} /> Omaggio Addetti CSR (10:1)
+                                </span>
+                              )}
+                            </div>
                             {order.notes && (
                               <p className="text-[10px] text-olive mt-1 italic max-w-[200px] truncate" title={order.notes}>
                                 {order.notes}
@@ -1870,6 +1904,11 @@ export function PromotersDashboardView({ data }: Props) {
                                 <span className="line-through text-olive/60 text-xs block">{formatEuro(order.totalListPriceCents)}</span>
                                 <span className="text-xs font-bold text-terracotta">0,00 € (Annullato)</span>
                               </div>
+                            ) : order.isFreeGift ? (
+                              <div>
+                                <span className="line-through text-olive/60 text-xs block">{formatEuro(order.unitPriceCents)}</span>
+                                <span className="text-xs font-bold text-emerald-700">0,00 € (Omaggio)</span>
+                              </div>
                             ) : (
                               <div>
                                 <span className="font-medium text-forest">{formatEuro(order.finalPriceCents)}</span>
@@ -1882,12 +1921,15 @@ export function PromotersDashboardView({ data }: Props) {
                             )}
                           </td>
 
-                          {/* Fee Radici (10%) */}
-                          <td className="py-3 text-right font-semibold text-gold bg-gold/5">
+                          {/* Fee Startup (0%) */}
+                          <td className="py-3 text-right font-medium text-emerald-700 bg-emerald-50/40">
                             {isCancelled ? (
                               <span className="text-xs text-olive/60">0,00 €</span>
                             ) : (
-                              `+${formatEuro(order.commissionCents)}`
+                              <div>
+                                <span className="text-xs font-semibold text-emerald-800">0,00 €</span>
+                                <span className="block text-[10px] text-olive font-normal">0% fee (100% produttore)</span>
+                              </div>
                             )}
                           </td>
 

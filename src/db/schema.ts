@@ -139,6 +139,9 @@ export const venues = sqliteTable("venues", {
   basketName: text("basket_name"),
   basketDescription: text("basket_description"),
   priceBasketCents: integer("price_basket_cents").notNull().default(0),
+  freeBasketThreshold: integer("free_basket_threshold").notNull().default(10), // Business rule: 1 cesto omaggio ogni 10 acquisti per addetti CSR
+  freeBasketsEarned: integer("free_baskets_earned").notNull().default(0), // Cesti omaggio maturati
+  freeBasketsDelivered: integer("free_baskets_delivered").notNull().default(0), // Cesti omaggio già consegnati
   checkinCode: text("checkin_code").notNull().unique(),
   providerUserId: integer("provider_user_id").references(() => users.id),
   sponsorCompanyId: integer("sponsor_company_id").references(() => companies.id),
@@ -440,6 +443,8 @@ export const bookings = sqliteTable("bookings", {
   totalAmountCents: integer("total_amount_cents").notNull().default(0),
   discountCents: integer("discount_cents").notNull().default(0),
   finalPriceCents: integer("final_price_cents").notNull().default(0),
+  isFreeGift: integer("is_free_gift", { mode: "boolean" }).notNull().default(false), // Business rule: cesto omaggio per addetto CSR (1 ogni 10 acquisti)
+  giftRecipientCompanyId: integer("gift_recipient_company_id").references(() => companies.id),
   status: text("status").$type<BookingStatus>().notNull().default("pending"),
   confirmationToken: text("confirmation_token").notNull().unique(),
   confirmedAt: integer("confirmed_at", { mode: "timestamp" }),

@@ -84,6 +84,8 @@ export type ProducerOrderRow = {
   finalPriceCents: number;
   commissionCents: number;
   producerNetCents: number;
+  isFreeGift: boolean;
+  giftRecipientCompanyName: string | null;
   kmAvoided: number;
   co2SavedKg: number;
   status: string;
@@ -250,6 +252,11 @@ export type PromoterDashboardData = {
   totalKmAvoided: number;
   totalCo2SavedKg: number;
   producersCount: number;
+
+  // Business Rule: 1 Cesto Omaggio ogni 10 acquisti per addetti Imprese CSR
+  freeBasketsEarnedTotal: number;
+  basketsProgressToNextGift: number;
+  freeBasketThreshold: number;
 };
 
 export async function getPromotersDashboardData(promoterUserId: number): Promise<PromoterDashboardData | null> {
@@ -614,13 +621,20 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
 
   const producerOrders: ProducerOrderRow[] = producerOrderRows.map((r) => {
     const userCompany = r.user.companyId ? companyMap.get(r.user.companyId) : null;
+    const giftCompany = r.booking.giftRecipientCompanyId ? companyMap.get(r.booking.giftRecipientCompanyId) : null;
+    const isFreeGift = Boolean(r.booking.isFreeGift);
     const qty = Math.max(1, r.booking.partySize || 1);
     const unitPrice =
       r.venue.priceBasketCents || Math.round(r.booking.totalAmountCents / qty) || 3800;
-    const finalPrice =
-      r.booking.finalPriceCents || (r.booking.totalAmountCents - r.booking.discountCents);
-    const commission = Math.round(finalPrice * 0.1);
-    const net = finalPrice - commission;
+    const finalPrice = isFreeGift
+      ? 0
+      : (r.booking.finalPriceCents || (r.booking.totalAmountCents - r.booking.discountCents));
+    
+    // BUSINESS RULE: Zero commissioni sui Produttori Locali per la Startup RADICI
+    // Il 100% dell'incasso resta al produttore (0€ fee startup)
+    const commission = 0;
+    const net = finalPrice;
+
     // Logistica a impatto marginale zero: ritiro diretto in loco durante il soggiorno
     // o consegna di prossimità sul tragitto ordinario di un'impresa con sinergia di trasporto.
     // Tratta di trasporto espressa dedicata ELIMINATA: 50 km a tratta (range 40-75 km).
@@ -646,12 +660,14 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       basketDescription: r.venue.basketDescription,
       quantity: qty,
       unitPriceCents: unitPrice,
-      totalListPriceCents: r.booking.totalAmountCents,
+      totalListPriceCents: isFreeGift ? 0 : r.booking.totalAmountCents,
       discountPercent: r.booking.discountPercent,
       discountCents: r.booking.discountCents,
       finalPriceCents: finalPrice,
       commissionCents: commission,
       producerNetCents: net,
+      isFreeGift,
+      giftRecipientCompanyName: giftCompany ? giftCompany.name : null,
       kmAvoided,
       co2SavedKg,
       status: r.booking.status,
@@ -667,6 +683,11 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     activeProducerOrders.reduce((sum, o) => sum + o.co2SavedKg, 0).toFixed(1)
   );
   const producersCount = allVenues.filter((v) => v.type === "producer").length;
+
+  // Business Rule: 1 Cesto in Omaggio ogni 10 acquisti per le consegne agli addetti delle Imprese CSR
+  const freeBasketThreshold = 10;
+  const freeBasketsEarnedTotal = Math.floor(totalProducerBasketsSold / freeBasketThreshold);
+  const basketsProgressToNextGift = totalProducerBasketsSold % freeBasketThreshold;
 
   return {
     promoterUser,
@@ -713,5 +734,8 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     totalKmAvoided,
     totalCo2SavedKg,
     producersCount,
+    freeBasketThreshold,
+    freeBasketsEarnedTotal,
+    basketsProgressToNextGift,
   };
 }

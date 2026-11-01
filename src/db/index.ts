@@ -130,6 +130,9 @@ export async function initDb() {
           basket_name TEXT,
           basket_description TEXT,
           price_basket_cents INTEGER NOT NULL DEFAULT 0,
+          free_basket_threshold INTEGER NOT NULL DEFAULT 10,
+          free_baskets_earned INTEGER NOT NULL DEFAULT 0,
+          free_baskets_delivered INTEGER NOT NULL DEFAULT 0,
           checkin_code TEXT NOT NULL UNIQUE,
           provider_user_id INTEGER REFERENCES users(id),
           sponsor_company_id INTEGER REFERENCES companies(id),
@@ -330,6 +333,8 @@ export async function initDb() {
           total_amount_cents INTEGER NOT NULL DEFAULT 0,
           discount_cents INTEGER NOT NULL DEFAULT 0,
           final_price_cents INTEGER NOT NULL DEFAULT 0,
+          is_free_gift INTEGER NOT NULL DEFAULT 0,
+          gift_recipient_company_id INTEGER REFERENCES companies(id),
           status TEXT NOT NULL DEFAULT 'pending',
           confirmation_token TEXT NOT NULL UNIQUE,
           confirmed_at INTEGER,
@@ -388,6 +393,15 @@ export async function initDb() {
         if (!vCols.some((col) => col.name === "price_basket_cents")) {
           sqlite.exec("ALTER TABLE venues ADD COLUMN price_basket_cents INTEGER NOT NULL DEFAULT 0;");
         }
+        if (!vCols.some((col) => col.name === "free_basket_threshold")) {
+          sqlite.exec("ALTER TABLE venues ADD COLUMN free_basket_threshold INTEGER NOT NULL DEFAULT 10;");
+        }
+        if (!vCols.some((col) => col.name === "free_baskets_earned")) {
+          sqlite.exec("ALTER TABLE venues ADD COLUMN free_baskets_earned INTEGER NOT NULL DEFAULT 0;");
+        }
+        if (!vCols.some((col) => col.name === "free_baskets_delivered")) {
+          sqlite.exec("ALTER TABLE venues ADD COLUMN free_baskets_delivered INTEGER NOT NULL DEFAULT 0;");
+        }
       } catch (e) {
         console.warn("Migration venues warning:", e);
       }
@@ -424,6 +438,13 @@ export async function initDb() {
           SET commission_amount_cents = ROUND(amount_cents * 0.10),
               provider_net_cents = amount_cents - ROUND(amount_cents * 0.10)
           WHERE commission_amount_cents = 0 AND amount_cents > 0;
+
+          -- Zero commissioni per la startup sui produttori locali (100% dell'incasso va al produttore)
+          UPDATE transactions 
+          SET commission_bps = 0,
+              commission_amount_cents = 0,
+              provider_net_cents = amount_cents
+          WHERE venue_id IN (SELECT id FROM venues WHERE type = 'producer');
         `);
       } catch (e) {
         console.warn("Migration transactions warning:", e);
@@ -434,6 +455,12 @@ export async function initDb() {
         const bookingCols = sqlite.pragma("table_info(bookings)") as Array<{ name: string }>;
         if (!bookingCols.some((col) => col.name === "voucher_id")) {
           sqlite.exec("ALTER TABLE bookings ADD COLUMN voucher_id INTEGER REFERENCES vouchers(id);");
+        }
+        if (!bookingCols.some((col) => col.name === "is_free_gift")) {
+          sqlite.exec("ALTER TABLE bookings ADD COLUMN is_free_gift INTEGER NOT NULL DEFAULT 0;");
+        }
+        if (!bookingCols.some((col) => col.name === "gift_recipient_company_id")) {
+          sqlite.exec("ALTER TABLE bookings ADD COLUMN gift_recipient_company_id INTEGER REFERENCES companies(id);");
         }
       } catch (e) {
         console.warn("Migration bookings warning:", e);

@@ -82,3 +82,30 @@ I calcoli sulle emissioni di CO₂ evitata devono basarsi rigorosamente sui dati
 2. **Stato Attuale nella Fase di Restart**:
    - **Nel Cruscotto Promotori ([`src/components/promoters-dashboard-view.tsx`](../src/components/promoters-dashboard-view.tsx))**: la sezione è presente, funzionante e sincronizzata, traccia tutti gli ordini, i produttori convenzionati e i KPI globali.
    - **Nella Pagina Singola Struttura ([`src/app/strutture/[slug]/page.tsx`](../src/app/strutture/[slug]/page.tsx))**: la pagina è attualmente unificata sul template generico ricettivo (camere e degustazioni). La sezione speciale dedicata al singolo produttore con il widget del calcolo cesti e dell'impatto ecologico va ripristinata e allineata con la formula scientifica (0,265 kg/km e tratte 40-75 km).
+
+
+---
+
+## 6. Business Rule Fondamentale: Zero Commissioni Startup & Regola 10 ad 1
+
+### A. Zero Commissioni per la Startup sui Produttori Locali
+- La startup RADICI **NON applica alcuna commissione** sui produttori locali della filiera corta (commissione = **0%**, fee trattenuta = **0,00 €**).
+- Il **100% del prezzo pagato** va direttamente e interamente all'operatore agricolo locale (frantoio, caseificio, cantina).
+- La piattaforma non svolge un ruolo di intermediazione a scopo di lucro sui prodotti alimentari territoriali, ma agisce da facilitatore dell'ecosistema locale e del welfare comunitario.
+
+### B. La Regola "10 a 1": 1 Cesto Omaggio ogni 10 Acquisti per gli Addetti CSR
+A fronte dell'assenza di commissioni e della visibilità/vendite garantite dalla rete welfare:
+- **Ogni 10 cesti acquistati** nel circuito, i Produttori Locali offrono **1 Cesto in Omaggio** destinato alla consegna per gli addetti delle **Imprese CSR** aderenti.
+- Questo crea una virtuosa reciprocità territoriale: le imprese CSR finanziano il welfare nei borghi e i produttori restituiscono valore diretto ai dipendenti e lavoratori delle stesse imprese.
+
+### C. Struttura e Memorizzazione nel Database SQLite/Drizzle
+Questa regola è codificata e vincolata a livello di schema dati:
+1. **Tabella `venues` (fornitori e produttori)**:
+   - `free_basket_threshold INTEGER NOT NULL DEFAULT 10`: soglia di acquisti per maturare il cesto omaggio (default 10).
+   - `free_baskets_earned INTEGER NOT NULL DEFAULT 0`: contatore progressivo dei cesti omaggio maturati dal produttore.
+   - `free_baskets_delivered INTEGER NOT NULL DEFAULT 0`: cesti omaggio effettivamente consegnati agli addetti CSR.
+2. **Tabella `bookings` (ordini e prenotazioni cesti)**:
+   - `is_free_gift INTEGER NOT NULL DEFAULT 0`: flag booleano che contraddistingue gli ordini erogati come cesto omaggio (prezzo finale: 0,00 €).
+   - `gift_recipient_company_id INTEGER REFERENCES companies(id)`: chiave esterna all'Impresa CSR i cui lavoratori sono i beneficiari dell'omaggio.
+3. **Tabella `transactions`**:
+   - Per tutte le transazioni di acquisto cesti o correlate a strutture con `type = 'producer'`, le colonne `commission_bps` e `commission_amount_cents` sono rigorosamente impostate a `0`, con `provider_net_cents = amount_cents`.
