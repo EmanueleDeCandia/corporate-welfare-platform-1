@@ -40,12 +40,28 @@ export function VenueCard({ venue, destination, sponsor, featured = false }: Pro
               </p>
             </div>
             <div className="text-right text-sm">
-              <p className="text-[11px] uppercase tracking-[0.14em] text-olive">da</p>
-              <p className="font-medium text-forest">
-                {formatEuro(
-                  venue.priceHotelCents || venue.priceAperitivoCents || venue.priceShowCents || venue.priceBasketCents,
-                )}
-              </p>
+              {venue.type === "theater" ? (
+                <div>
+                  <p className="text-[10px] uppercase font-bold tracking-[0.14em] text-terracotta">Matching Grant</p>
+                  <p className="font-semibold text-forest">2 Ingressi Inclusi</p>
+                  <p className="text-[10px] text-olive">(Valore {formatEuro(venue.priceShowCents || 5000)})</p>
+                </div>
+              ) : venue.type === "producer" ? (
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-olive">Cesto Tipico</p>
+                  <p className="font-semibold text-forest">{formatEuro(venue.priceBasketCents || 4000)}</p>
+                  <p className="text-[10px] font-medium text-emerald-700">100% al produttore</p>
+                </div>
+              ) : (
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.14em] text-olive">da</p>
+                  <p className="font-medium text-forest">
+                    {formatEuro(
+                      venue.priceHotelCents || venue.priceAperitivoCents || venue.priceShowCents || venue.priceBasketCents,
+                    )}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
           <p className="mt-3 text-sm leading-6 text-forest/75">{venue.description}</p>

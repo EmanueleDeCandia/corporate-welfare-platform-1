@@ -332,6 +332,14 @@ export async function getGrantEvents() {
   return db.select().from(grantEvents).where(eq(grantEvents.active, true));
 }
 
+export async function getVenueGrantEvents(venueId: number) {
+  await initDb();
+  return db
+    .select()
+    .from(grantEvents)
+    .where(eq(grantEvents.venueId, venueId));
+}
+
 export type UserBookingRow = {
   booking: typeof bookings.$inferSelect;
   venue: typeof venues.$inferSelect;

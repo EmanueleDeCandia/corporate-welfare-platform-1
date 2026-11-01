@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, MapPin, Sparkles, ShoppingBag, Leaf, Gift } from "lucide-react";
+import { ArrowLeft, MapPin, Sparkles, ShoppingBag, Leaf, Gift, Landmark, Calendar, Ticket } from "lucide-react";
 import { PublicShell } from "@/components/public-shell";
 import { getCurrentUser } from "@/lib/auth";
-import { getCompanyById, getProducerVenueStats, getUserVouchers, getVenueBySlug } from "@/lib/data";
+import {
+  getCompanyById,
+  getProducerVenueStats,
+  getUserVouchers,
+  getVenueBySlug,
+  getVenueGrantEvents,
+} from "@/lib/data";
 import { formatEuro, initials, matchesVoucher, venueTypeLabel } from "@/lib/utils";
 import { VenueRedeem } from "@/components/venue-redeem";
 import { ProducerBasketOrderClient } from "@/components/producer-basket-order-client";
@@ -26,7 +32,9 @@ export default async function VenueDetailPage({
   );
 
   const isProducer = venue.type === "producer";
+  const isTheater = venue.type === "theater";
   const producerStats = isProducer ? await getProducerVenueStats(venue.id) : null;
+  const theaterEvents = isTheater ? await getVenueGrantEvents(venue.id) : [];
   const userCompany = user?.companyId ? await getCompanyById(user.companyId) : null;
 
   const services = venue.services ?? [];
@@ -57,7 +65,11 @@ export default async function VenueDetailPage({
 
           <div className="flex flex-wrap items-center gap-3">
             <span className="rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-gold border border-gold/30">
-              {isProducer ? "Produttore Locale KM 0 · Filiera Corta" : venueTypeLabel(venue.type)}
+              {isProducer
+                ? "Produttore Locale KM 0 · Filiera Corta"
+                : isTheater
+                ? "Teatro Storico · Matching Grant RADICI"
+                : venueTypeLabel(venue.type)}
             </span>
             <span className="flex items-center gap-1 text-xs text-cream/80">
               <MapPin size={14} className="text-gold" /> {venue.city}, {destination.region}
@@ -122,26 +134,30 @@ export default async function VenueDetailPage({
                 )}
               </article>
 
-              {/* Colonna Destra: Ritiro QR, Contatti e Info Check-in */}
               <aside className="space-y-6">
-                <section className="rounded-[28px] bg-forest p-6 text-cream shadow-md">
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-0.5 text-xs text-gold mb-3">
-                    <Sparkles size={13} /> Ritiro Diretto o Consegna
+                <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/5">
+                  <div className="flex items-center gap-3">
+                    <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-100 text-emerald-800">
+                      <Leaf size={24} />
+                    </div>
+                    <div>
+                      <h3 className="font-serif text-xl text-forest">Filiera Corta Garantita</h3>
+                      <p className="text-xs text-olive">Zero intermediari · 100% ricavo al produttore</p>
+                    </div>
                   </div>
-                  <h2 className="font-serif text-2xl">Sei sul posto per il ritiro?</h2>
-                  <p className="mt-2 text-xs leading-relaxed text-cream/80">
-                    Mostra il codice al produttore o inquadra il QR per verificare la prenotazione e il saldo immediato con accredito di +{venue.impactPointsGenerated} Punti Impatto.
-                  </p>
-
-                  <div className="mt-6 flex flex-col items-center justify-center rounded-2xl bg-white/10 p-4 border border-white/15">
-                    <img
-                      src={`/api/qr/${venue.checkinCode}`}
-                      alt={`QR ${venue.name}`}
-                      className="w-36 h-36 rounded-xl bg-white p-2"
-                    />
-                    <p className="mt-2 font-mono text-xs uppercase tracking-wider text-gold">
-                      Codice: {venue.checkinCode}
-                    </p>
+                  <div className="mt-5 space-y-3 text-xs leading-relaxed text-forest/80 border-t border-mist pt-4">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-forest">Commissioni Startup RADICI:</span>
+                      <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 font-bold text-emerald-800">0%</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-forest">Sconto per Dipendenti CSR:</span>
+                      <span className="font-semibold text-terracotta">10% Welfare</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-forest">Regola Reciprocità 10:1:</span>
+                      <span className="font-semibold text-forest">1 Cesto Omaggio ogni 10</span>
+                    </div>
                   </div>
                 </section>
               </aside>
@@ -178,6 +194,135 @@ export default async function VenueDetailPage({
                   : null
               }
             />
+          </div>
+        ) : isTheater ? (
+          /* SEZIONE DEDICATA AI TEATRI STORICI & MATCHING GRANT */
+          <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+            {/* COLONNA SINISTRA: PRESENTAZIONE TEATRO, DOTAZIONI & GALLERIA */}
+            <article className="rounded-[32px] bg-white p-6 shadow-sm border border-forest/5 md:p-8 space-y-6">
+              <div>
+                <h2 className="font-serif text-2xl text-forest">Patrimonio Storico & Sala Teatrale</h2>
+                <p className="mt-4 text-base leading-relaxed text-forest/85">{venue.longDescription}</p>
+              </div>
+
+              {services.length > 0 && (
+                <div className="border-t border-forest/10 pt-6">
+                  <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-olive mb-3">
+                    Dotazioni, Palcoscenico & Servizi di Accoglienza
+                  </h3>
+                  <ul className="grid gap-2 sm:grid-cols-2 text-sm text-forest/90">
+                    {services.map((service) => (
+                      <li key={service} className="flex items-center gap-2">
+                        <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+                        {service}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {gallery.length > 0 && (
+                <div className="border-t border-forest/10 pt-6">
+                  <h3 className="text-xs font-semibold uppercase tracking-[0.16em] text-olive mb-4">
+                    Galleria Fotografica del Teatro
+                  </h3>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {gallery.map((image, idx) => (
+                      <div key={idx} className="overflow-hidden rounded-2xl aspect-[16/10] bg-forest/5">
+                        <img
+                          src={image}
+                          alt={`${venue.name} galleria ${idx + 1}`}
+                          className="h-full w-full object-cover transition-transform duration-500 hover:scale-105"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </article>
+
+            {/* COLONNA DESTRA: MATCHING GRANT DEI PROMOTORI & CARTELLONE SPETTACOLI */}
+            <aside className="space-y-6">
+              {/* CARD MATCHING GRANT */}
+              <section className="rounded-[28px] bg-gradient-to-br from-forest to-forest-deep p-6 text-cream shadow-md border border-gold/20">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-gold">
+                  <Sparkles size={16} />
+                  Omaggio Culturale Promotori RADICI
+                </div>
+                <h3 className="mt-2 font-serif text-2xl text-cream">Matching Grant Teatrale</h3>
+                <p className="mt-2 text-xs leading-relaxed text-cream/80">
+                  Questo teatro partecipa all&apos;omaggio culturale finanziato al 100% dai{" "}
+                  <strong>Promotori della startup RADICI</strong>: garantisce{" "}
+                  <strong>2 ingressi riservati di platea (valore 50 €)</strong> con accesso al ridotto per gli ospiti
+                  che pernottano nei borghi convenzionati.
+                </p>
+                <div className="mt-4 rounded-xl bg-white/10 p-3.5 border border-white/10 flex items-center justify-between text-xs">
+                  <span>Valore Omaggio per Soggiorno:</span>
+                  <span className="font-semibold text-gold text-sm">{formatEuro(venue.priceShowCents || 5000)} (Coppia)</span>
+                </div>
+              </section>
+
+              {/* CARTELLONE & EVENTI IN PROGRAMMA */}
+              <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/5">
+                <div className="flex items-center gap-2">
+                  <Calendar size={18} className="text-terracotta" />
+                  <h3 className="font-serif text-xl text-forest">Cartellone & Stagione in Programma</h3>
+                </div>
+                {theaterEvents.length > 0 ? (
+                  <div className="mt-4 space-y-4">
+                    {theaterEvents.map((evt) => (
+                      <div key={evt.id} className="rounded-2xl bg-cream/70 p-4 border border-forest/10 space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <h4 className="font-serif text-base text-forest font-semibold">{evt.title}</h4>
+                          <span className="shrink-0 rounded-full bg-forest/10 px-2.5 py-0.5 text-[10px] font-semibold text-forest uppercase tracking-wider">
+                            {evt.category}
+                          </span>
+                        </div>
+                        <p className="text-xs text-forest/80 leading-relaxed">{evt.description}</p>
+                        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-olive pt-2 border-t border-forest/10">
+                          <span>
+                            📅{" "}
+                            {evt.startsAt
+                              ? new Date(evt.startsAt).toLocaleDateString("it-IT", {
+                                  day: "numeric",
+                                  month: "long",
+                                  year: "numeric",
+                                })
+                              : "In programmazione"}
+                          </span>
+                          <span>Capienza: {evt.capacity} posti</span>
+                        </div>
+                        {evt.artistMeetupIncluded && (
+                          <p className="text-[11px] font-medium text-terracotta flex items-center gap-1">
+                            <Sparkles size={12} /> Incontro con gli artisti e la compagnia a fine spettacolo
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-3 text-xs text-olive">Nessun evento al momento in cartellone per questo teatro.</p>
+                )}
+              </section>
+
+              {/* BOTTEGHINO & CHECK-IN QR */}
+              <section className="rounded-[28px] bg-forest p-6 text-cream shadow-md">
+                <h3 className="font-serif text-xl">Botteghino & Convalida Posti</h3>
+                <p className="mt-2 text-xs leading-relaxed text-cream/80">
+                  Mostra la conferma della tua prenotazione o inquadra il codice QR al foyer per ritirare i tagliandi d&apos;ingresso.
+                </p>
+                <div className="mt-5 flex flex-col items-center justify-center rounded-2xl bg-white/10 p-4 border border-white/15">
+                  <img
+                    src={`/api/qr/${venue.checkinCode}`}
+                    alt={`QR ${venue.name}`}
+                    className="w-36 h-36 rounded-xl bg-white p-2"
+                  />
+                  <p className="mt-2 font-mono text-xs uppercase tracking-wider text-gold">
+                    Codice Foyer: {venue.checkinCode}
+                  </p>
+                </div>
+              </section>
+            </aside>
           </div>
         ) : (
           /* SEZIONE STANDARD STRUTTURE RICETTIVE (HOTEL, AGRITURISMI, RISTORANTI) */

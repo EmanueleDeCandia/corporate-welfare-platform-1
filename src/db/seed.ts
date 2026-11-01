@@ -642,6 +642,58 @@ export async function seedDatabase() {
         localSupportPercent: 20,
       },
       {
+        name: "Teatro dell'Aquila",
+        slug: "teatro-dellaquila",
+        type: "theater",
+        destinationId: marche.id,
+        city: "Fermo",
+        province: "FM",
+        region: "Marche",
+        description:
+          "Uno dei teatri storici più prestigiosi delle Marche: sala all'italiana con 124 palchi a cinque ordini e soffitto affrescato.",
+        longDescription:
+          "Inaugurato nel 1790, il Teatro dell'Aquila di Fermo è celebre per l'eccezionale acustica e il monumentale sipario storico dipinto dal Cochetti. Attraverso il Matching Grant dei Promotori RADICI, gli ospiti dei soggiorni nei borghi accedono a 2 posti riservati in platea per la stagione di prosa con visita guidata alle sale storiche.",
+        lat: 43.161,
+        lng: 13.718,
+        coverImage: "/images/teatro-aquila.jpg",
+        gallery: ["/images/teatro-aquila.jpg", "/images/teatro.jpg"],
+        services: ["Posto in platea / palchi riservato", "Visita al sipario storico", "Guardaroba incluso", "Incontro con la compagnia"],
+        aperitivoMenu: [],
+        rooms: [],
+        priceHotelCents: 0,
+        priceAperitivoCents: 0,
+        priceShowCents: 5000,
+        checkinCode: "venue-teatro-aquila",
+        impactPointsGenerated: 1,
+        localSupportPercent: 20,
+      },
+      {
+        name: "Teatro delle Muse",
+        slug: "teatro-delle-muse",
+        type: "theater",
+        destinationId: marche.id,
+        city: "Ancona",
+        province: "AN",
+        region: "Marche",
+        description:
+          "Il massimo teatro delle Marche: maestosa facciata neoclassica, sala moderna da oltre mille posti e sipario tagliafuoco di Arnaldo Pomodoro.",
+        longDescription:
+          "Situato a pochi passi dal porto di Ancona, il Teatro delle Muse ospita le principali stagioni liriche, sinfoniche e concertistiche della regione. Con il Matching Grant dei Promotori RADICI, ogni ospite gode di 2 ingressi riservati per le serate concertistiche con brindisi di benvenuto e incontro esclusivo nel Foyer delle Muse.",
+        lat: 43.619,
+        lng: 13.511,
+        coverImage: "/images/teatro-muse.jpg",
+        gallery: ["/images/teatro-muse.jpg", "/images/teatro.jpg"],
+        services: ["2 Biglietti rassegna concertistica/lirica", "Brindisi nel Foyer d'onore", "Programma di sala", "Incontro con gli artisti"],
+        aperitivoMenu: [],
+        rooms: [],
+        priceHotelCents: 0,
+        priceAperitivoCents: 0,
+        priceShowCents: 5000,
+        checkinCode: "venue-teatro-muse",
+        impactPointsGenerated: 1,
+        localSupportPercent: 20,
+      },
+      {
         name: "Osteria del Tiglio",
         slug: "osteria-del-tiglio",
         type: "restaurant",
@@ -685,12 +737,12 @@ export async function seedDatabase() {
         longDescription: "Il Frantoio del Conero produce olio EVO biologico certificato a filiera cortissima. Le olive vengono raccolte a mano negli uliveti di Sirolo e Numana e molite a freddo entro 6 ore per preservare polifenoli e aromi erbacei. Acquistabile liberamente da tutti i membri della community con consegna garantita.",
         lat: 43.52,
         lng: 13.61,
-        coverImage: "/images/produttore-olia-frantoio.jpg",
+        coverImage: "/images/ulivi.jpg",
         gallery: [
-          "/images/produttore-olia-frantoio.jpg",
-          "/images/produttore-frantoio.jpg",
-          "/images/produttore-cesto.jpg",
           "/images/ulivi.jpg",
+          "/images/tavola.jpg",
+          "/images/marche.jpg",
+          "/images/aperitivo.jpg",
         ],
         services: ["Vendita diretta", "Degustazione olio", "Consegna a domicilio"],
         basketName: "Cesto Conero Oro Verde",
@@ -712,12 +764,12 @@ export async function seedDatabase() {
         longDescription: "Filiera circolare e sostenibile: i formaggi sono affinati con erbe spontanee di montagna, fieno e stagionatura in antiche grotte tufacee. Un presidio di biodiversità che sostiene i giovani allevatori locali.",
         lat: 42.98,
         lng: 13.35,
-        coverImage: "/images/produttore-cesto-2.jpg",
+        coverImage: "/images/tavola.jpg",
         gallery: [
-          "/images/produttore-cesto-2.jpg",
-          "/images/produttore-cesta-orto.jpg",
-          "/images/produttore-orto.jpg",
-          "/images/produttore-verdure.jpg",
+          "/images/tavola.jpg",
+          "/images/aperitivo.jpg",
+          "/images/agriturismo-valle.jpg",
+          "/images/marche.jpg",
         ],
         services: ["Formaggi a latte crudo", "Confezionamento sottovuoto", "Prodotti d'alpeggio"],
         basketName: "Cesto Casaro dei Monti Azzurri",
@@ -730,14 +782,16 @@ export async function seedDatabase() {
     ])
     .returning();
 
-  const laValle = insertedVenues[0];
-  const relaisLanghe = insertedVenues[1];
-  const podereFonte = insertedVenues[2];
-  const masseriaGrazie = insertedVenues[3];
-  const teatroLauro = insertedVenues[4];
-  const osteriaTiglio = insertedVenues[5];
-  const frantoioConero = insertedVenues[6];
-  const caseificioSibillini = insertedVenues[7];
+  const laValle = insertedVenues.find((v) => v.slug === "agriturismo-la-valle")!;
+  const relaisLanghe = insertedVenues.find((v) => v.slug === "relais-langhe-oro")!;
+  const podereFonte = insertedVenues.find((v) => v.slug === "podere-fontebella")!;
+  const masseriaGrazie = insertedVenues.find((v) => v.slug === "masseria-le-grazie")!;
+  const teatroLauro = insertedVenues.find((v) => v.slug === "teatro-lauro-rossi")!;
+  const teatroAquila = insertedVenues.find((v) => v.slug === "teatro-dellaquila")!;
+  const teatroMuse = insertedVenues.find((v) => v.slug === "teatro-delle-muse")!;
+  const osteriaTiglio = insertedVenues.find((v) => v.slug === "osteria-del-tiglio")!;
+  const frantoioConero = insertedVenues.find((v) => v.slug === "frantoio-del-conero")!;
+  const caseificioSibillini = insertedVenues.find((v) => v.slug === "caseificio-bio-sibillini")!;
 
   await db.update(users).set({ venueId: laValle.id }).where(eq(users.id, elena.id));
   await db.update(users).set({ venueId: relaisLanghe.id }).where(eq(users.id, marco.id));
@@ -877,7 +931,7 @@ export async function seedDatabase() {
       {
         title: "Concerto Sinfonico e Percorso nel Foyer delle Muse",
         category: "musica",
-        venueId: null,
+        venueId: teatroMuse.id,
         venueName: "Teatro delle Muse",
         city: "Ancona",
         region: "Marche",
@@ -893,7 +947,7 @@ export async function seedDatabase() {
       {
         title: "Rassegna Teatrale Storica e Incontro con la Compagnia",
         category: "teatro",
-        venueId: null,
+        venueId: teatroAquila.id,
         venueName: "Teatro dell'Aquila",
         city: "Fermo",
         region: "Marche",
