@@ -70,6 +70,8 @@ export type ProducerOrderRow = {
   buyerEmail: string;
   buyerRole: string;
   companyName: string | null;
+  connectedViaEmployeeName: string | null;
+  deliveryMode: string;
   producerId: number;
   producerName: string;
   producerCity: string;
@@ -620,9 +622,27 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
   );
 
   const producerOrders: ProducerOrderRow[] = producerOrderRows.map((r) => {
-    const userCompany = r.user.companyId ? companyMap.get(r.user.companyId) : null;
-    const giftCompany = r.booking.giftRecipientCompanyId ? companyMap.get(r.booking.giftRecipientCompanyId) : null;
+    // Risoluzione Impresa CSR per Sinergie Flotta:
+    // 1. Se dipendente: companyId diretto
+    // 2. Se amico invitato: risali all'addetto che lo ha invitato (invitedByUserId -> inviter.companyId)
+    // 3. Se cesto omaggio (10:1): giftRecipientCompanyId
+    let userCompany = r.user.companyId ? companyMap.get(r.user.companyId) : null;
+    let connectedViaEmployeeName: string | null = null;
+
+    if (!userCompany && r.user.invitedByUserId) {
+      const inviter = userMap.get(r.user.invitedByUserId);
+      if (inviter && inviter.companyId) {
+        userCompany = companyMap.get(inviter.companyId) || null;
+        connectedViaEmployeeName = `${inviter.firstName} ${inviter.lastName}`;
+      }
+    }
+
+    const giftCompany = r.booking.giftRecipientCompanyId
+      ? companyMap.get(r.booking.giftRecipientCompanyId)
+      : null;
     const isFreeGift = Boolean(r.booking.isFreeGift);
+    const effectiveCompany = isFreeGift ? (giftCompany || userCompany) : userCompany;
+
     const qty = Math.max(1, r.booking.partySize || 1);
     const unitPrice =
       r.venue.priceBasketCents || Math.round(r.booking.totalAmountCents / qty) || 3800;
@@ -635,9 +655,9 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     const commission = 0;
     const net = finalPrice;
 
-    // Logistica a impatto marginale zero: ritiro diretto in loco durante il soggiorno
-    // o consegna di prossimità sul tragitto ordinario di un'impresa con sinergia di trasporto.
-    // Tratta di trasporto espressa dedicata ELIMINATA: 50 km a tratta (range 40-75 km).
+    // Logistica a impatto marginale zero: SINERGIE FLOTTA AZIENDALE.
+    // L'impresa X che consegna caffè/prodotti alle imprese CSR trasporta anche i cesti a km marginali zero.
+    // Tratta di trasporto espressa dedicata ELIMINATA: 50 km a cesto (range 40-75 km).
     const kmAvoided = qty * 50;
     // Calcolo scientifico CO2 da tabella emissioni (furgone diesel 10 L/100km, 2.65 kg CO2/L => 0.265 kg CO2/km):
     // 50 km × 0.265 kg CO2/km = 13.25 kg CO2 per cesto
@@ -651,7 +671,9 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       buyerName: r.booking.guestName || `${r.user.firstName} ${r.user.lastName}`,
       buyerEmail: r.booking.guestEmail || r.user.email,
       buyerRole: r.user.role,
-      companyName: userCompany ? userCompany.name : null,
+      companyName: effectiveCompany ? effectiveCompany.name : null,
+      connectedViaEmployeeName,
+      deliveryMode: "ritiro in sede aziendale",
       producerId: r.venue.id,
       producerName: r.venue.name,
       producerCity: r.venue.city,
@@ -671,7 +693,7 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       kmAvoided,
       co2SavedKg,
       status: r.booking.status,
-      notes: r.booking.notes,
+      notes: "ritiro in sede aziendale",
     };
   });
 

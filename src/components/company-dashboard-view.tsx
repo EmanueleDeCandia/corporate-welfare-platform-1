@@ -20,9 +20,14 @@ import {
   UserPlus,
   CheckCircle2,
   Save,
+  Truck,
+  Leaf,
+  ShoppingBag,
 } from "lucide-react";
 import type { Company, Venue, User, Transaction } from "@/db/schema";
 import { formatDateTime, formatEuro, initials } from "@/lib/utils";
+import { RoleBadge } from "@/components/design-system/role-badge";
+import { StatusBadge } from "@/components/design-system/status-badge";
 
 type EmployeeRow = {
   user: User;
@@ -39,6 +44,27 @@ type TxItem = {
   venue: Venue;
 };
 
+type ProducerBasketOrder = {
+  id: number;
+  createdAt: Date;
+  orderDate: string;
+  buyerName: string;
+  buyerEmail: string;
+  buyerRole: string;
+  connectedViaEmployeeName: string | null;
+  producerName: string;
+  producerCity: string;
+  basketName: string;
+  quantity: number;
+  finalPriceCents: number;
+  isFreeGift: boolean;
+  status: string;
+  deliveryMode: string;
+  kmAvoided: number;
+  co2SavedKg: number;
+  notes: string | null;
+};
+
 type Props = {
   data: {
     company: Company;
@@ -53,6 +79,14 @@ type Props = {
     employees: EmployeeRow[];
     transactions: TxItem[];
     venues: Venue[];
+    producerBasketsSummary?: {
+      totalOrders: number;
+      totalBasketsSold: number;
+      totalSpentCents: number;
+      kmAvoided: number;
+      co2SavedKg: number;
+      orders: ProducerBasketOrder[];
+    };
   };
 };
 
@@ -71,9 +105,10 @@ export function CompanyDashboardView({ data }: Props) {
     employees,
     transactions,
     venues,
+    producerBasketsSummary,
   } = data;
 
-  const [activeTab, setActiveTab] = useState<"overview" | "employees" | "venues" | "invoices" | "settings">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "employees" | "venues" | "invoices" | "baskets" | "settings">("overview");
 
   // Stato per l'editing dei dati aziendali
   const [companyForm, setCompanyForm] = useState({
@@ -229,6 +264,15 @@ export function CompanyDashboardView({ data }: Props) {
             }`}
           >
             Rendicontazione B2B ({activeTransactions.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("baskets")}
+            className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wider transition inline-flex items-center gap-1.5 ${
+              activeTab === "baskets" ? "bg-cream text-forest font-bold" : "bg-white/10 text-cream hover:bg-white/15"
+            }`}
+          >
+            <Truck size={13} /> Sinergie Flotta & KM 0 ({producerBasketsSummary?.totalOrders || 0})
           </button>
           <button
             type="button"
@@ -716,6 +760,148 @@ export function CompanyDashboardView({ data }: Props) {
               </button>
             </div>
           </form>
+        </section>
+      )}
+
+      {/* TAB: SINERGIE FLOTTA & CESTI KM 0 */}
+      {activeTab === "baskets" && (
+        <section className="space-y-6">
+          <div className="rounded-[32px] bg-forest p-6 text-cream md:p-8">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <span className="rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold text-gold inline-flex items-center gap-1.5">
+                  <Truck size={13} /> Sinergie Flotta Aziendale · Impatto KM 0
+                </span>
+                <h2 className="mt-2 font-serif text-2xl md:text-3xl">Filiera Agroalimentare di Prossimità</h2>
+                <p className="mt-1 text-xs md:text-sm text-cream/80 max-w-2xl leading-relaxed">
+                  Consegne a impatto logistico marginale zero: i prodotti dei piccoli produttori vengono recapitati presso la sede aziendale
+                  sfruttando i percorsi già pianificati dei rifornitori partner. Ritiro in sede sia per gli addetti sia per gli amici della community da loro invitati.
+                </p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-4 text-right border border-white/10 shrink-0">
+                <span className="text-[10px] uppercase font-bold text-cream/70 block">CO₂ Evitata</span>
+                <span className="font-serif text-3xl font-bold text-gold">
+                  {producerBasketsSummary?.co2SavedKg || 0} kg
+                </span>
+                <span className="text-[10px] text-cream/60 block">sinergie flotta (50 km / cesto)</span>
+              </div>
+            </div>
+
+            <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="rounded-2xl bg-white/10 p-3.5 border border-white/10">
+                <span className="text-[10px] uppercase tracking-wider text-cream/70 font-semibold block">Ordini Totali</span>
+                <p className="font-serif text-2xl text-cream mt-1">{producerBasketsSummary?.totalOrders || 0}</p>
+                <p className="text-[11px] text-cream/60 mt-0.5">addetti & amici collegati</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-3.5 border border-white/10">
+                <span className="text-[10px] uppercase tracking-wider text-cream/70 font-semibold block">Cesti Consegnati</span>
+                <p className="font-serif text-2xl text-cream mt-1">{producerBasketsSummary?.totalBasketsSold || 0}</p>
+                <p className="text-[11px] text-cream/60 mt-0.5">ritiro in sede aziendale</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-3.5 border border-white/10">
+                <span className="text-[10px] uppercase tracking-wider text-cream/70 font-semibold block">Km Dedicati Azzerati</span>
+                <p className="font-serif text-2xl text-gold mt-1">~{producerBasketsSummary?.kmAvoided || 0} km</p>
+                <p className="text-[11px] text-cream/60 mt-0.5">tratte a vuoto evitate</p>
+              </div>
+              <div className="rounded-2xl bg-white/10 p-3.5 border border-white/10">
+                <span className="text-[10px] uppercase tracking-wider text-cream/70 font-semibold block">Valore Economico</span>
+                <p className="font-serif text-2xl text-cream mt-1">{formatEuro(producerBasketsSummary?.totalSpentCents || 0)}</p>
+                <p className="text-[11px] text-cream/60 mt-0.5">100% ai produttori locali</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-3xl bg-white p-6 shadow-sm border border-mist">
+            <h3 className="font-serif text-xl text-forest mb-4">Registro Consegne Cesti KM 0 (Sede Aziendale)</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-mist text-[11px] font-bold uppercase tracking-wider text-olive">
+                    <th className="pb-3">Data</th>
+                    <th className="pb-3">Acquirente</th>
+                    <th className="pb-3">Produttore & Cesto</th>
+                    <th className="pb-3">Cesto & Quantità</th>
+                    <th className="pb-3">Impatto KM 0</th>
+                    <th className="pb-3">Importo</th>
+                    <th className="pb-3 text-right">Stato</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-mist text-xs">
+                  {(!producerBasketsSummary?.orders || producerBasketsSummary.orders.length === 0) ? (
+                    <tr>
+                      <td colSpan={7} className="py-8 text-center text-olive">
+                        Nessun ordine di cesto filiera corta registrato al momento.
+                      </td>
+                    </tr>
+                  ) : (
+                    producerBasketsSummary.orders.map((o) => (
+                      <tr key={o.id} className="hover:bg-cream/40 transition">
+                        <td className="py-3.5 font-mono text-olive whitespace-nowrap">
+                          {o.orderDate || formatDateTime(o.createdAt).split(" ")[0]}
+                        </td>
+                        <td className="py-3.5">
+                          <p className="font-semibold text-forest">{o.buyerName}</p>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <RoleBadge role={o.buyerRole as any} />
+                            {o.connectedViaEmployeeName && (
+                              <span className="text-[10px] text-olive font-medium">
+                                (Rete addetto: {o.connectedViaEmployeeName})
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3.5">
+                          <p className="font-medium text-forest">{o.producerName}</p>
+                          <p className="text-[11px] text-olive">{o.producerCity}</p>
+                        </td>
+                        <td className="py-3.5">
+                          <p className="font-semibold text-forest">
+                            {o.quantity}x {o.basketName}
+                          </p>
+                          <p className="text-[10px] text-olive font-mono mt-0.5">
+                            ritiro in sede aziendale
+                          </p>
+                        </td>
+                        <td className="py-3.5">
+                          <span className="inline-flex items-center gap-1 font-semibold text-forest">
+                            <Leaf size={11} className="text-forest" />
+                            sinergie flotta ({o.co2SavedKg} kg CO₂)
+                          </span>
+                          <span className="text-[10px] text-olive block mt-0.5">
+                            {o.kmAvoided} km dedicati azzerati
+                          </span>
+                        </td>
+                        <td className="py-3.5 font-semibold text-forest whitespace-nowrap">
+                          {o.isFreeGift ? (
+                            <span className="rounded-full bg-forest/10 px-2 py-0.5 text-[10px] font-bold text-forest">
+                              Omaggio (10:1)
+                            </span>
+                          ) : (
+                            formatEuro(o.finalPriceCents)
+                          )}
+                        </td>
+                        <td className="py-3.5 text-right whitespace-nowrap">
+                          {(() => {
+                            const isCancelled = o.status === "cancelled";
+                            const isConfirmed = o.status === "attended" || o.status === "presence_confirmed";
+                            const variant = isCancelled ? "cancelled" : isConfirmed ? "confirmed" : "pending";
+                            const label = o.isFreeGift
+                              ? "Omaggio Erogato"
+                              : isCancelled
+                              ? "Annullato"
+                              : isConfirmed
+                              ? "Consegnato"
+                              : "In Consegna";
+                            return <StatusBadge variant={variant} label={label} />;
+                          })()}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </section>
       )}
     </div>

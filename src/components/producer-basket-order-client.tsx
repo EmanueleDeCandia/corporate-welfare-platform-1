@@ -56,7 +56,7 @@ export function ProducerBasketOrderClient({ venue, stats, currentUser }: Props) 
     tomorrow.setDate(tomorrow.getDate() + 1);
     return tomorrow.toISOString().split("T")[0];
   });
-  const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "delivery">("pickup");
+  const [deliveryMethod, setDeliveryMethod] = useState<"fleet">("fleet");
   const [timeSlot, setTimeSlot] = useState<string>("11:00");
   const [guestName, setGuestName] = useState<string>(
     currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : ""
@@ -111,10 +111,7 @@ export function ProducerBasketOrderClient({ venue, stats, currentUser }: Props) 
 
     try {
       setLoading(true);
-      const deliveryNote =
-        deliveryMethod === "pickup"
-          ? "Ritiro diretto in loco durante il soggiorno / visita"
-          : "Consegna sul tragitto ordinario dell'operatore (sinergie di trasporto a km zero)";
+      const deliveryNote = "ritiro in sede aziendale (sinergie flotta)";
       const combinedNotes = notes.trim()
         ? `[${deliveryNote}] ${notes.trim()}`
         : `[${deliveryNote}]`;
@@ -298,47 +295,20 @@ export function ProducerBasketOrderClient({ venue, stats, currentUser }: Props) 
               </div>
             </div>
 
-            {/* MODALITA DI RITIRO / CONSEGNA */}
-            <div className="space-y-4">
+            {/* MODALITA DI CONSEGNA - SINERGIE FLOTTA */}
+            <div className="space-y-3">
               <label className="text-xs uppercase tracking-wider font-bold text-forest block">
-                Modalità di Ritiro o Consegna
+                Modalità di Recapito: Sinergie Flotta Aziendale
               </label>
-              <div className="grid sm:grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setDeliveryMethod("pickup")}
-                  className={`p-4 rounded-2xl border text-left transition cursor-pointer ${
-                    deliveryMethod === "pickup"
-                      ? "border-forest bg-forest/5 shadow-sm ring-1 ring-forest"
-                      : "border-forest/15 bg-white hover:bg-cream/40"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <MapPin size={18} className="text-forest" />
-                    <span className="font-semibold text-sm text-forest">Ritiro Diretto in Loco</span>
-                  </div>
-                  <p className="text-xs text-olive mt-1.5 leading-relaxed">
-                    Ritira il cesto direttamente presso il frantoio/caseificio a {venue.city} durante la tua visita o soggiorno. Tratta aggiuntiva: <strong>0 km</strong>.
-                  </p>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setDeliveryMethod("delivery")}
-                  className={`p-4 rounded-2xl border text-left transition cursor-pointer ${
-                    deliveryMethod === "delivery"
-                      ? "border-forest bg-forest/5 shadow-sm ring-1 ring-forest"
-                      : "border-forest/15 bg-white hover:bg-cream/40"
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <Truck size={18} className="text-forest" />
-                    <span className="font-semibold text-sm text-forest">Consegna di Prossimità</span>
-                  </div>
-                  <p className="text-xs text-olive mt-1.5 leading-relaxed">
-                    Recapito lungo il tragitto ordinario dell&apos;operatore o flotta partner. Sinergia a impatto marginale zero, senza corrieri espressi dedicati a vuoto.
-                  </p>
-                </button>
+              <div className="p-4 rounded-2xl border border-forest bg-forest/5 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <Truck size={18} className="text-forest" />
+                  <span className="font-semibold text-sm text-forest">Consegna con Sinergie Flotta — Ritiro in Sede Aziendale</span>
+                </div>
+                <p className="text-xs text-olive mt-1.5 leading-relaxed">
+                  I cesti vengono recapitati esclusivamente presso la sede aziendale dell&apos;impresa partner sfruttando i tragitti ordinari già programmati della flotta fornitrice (es. consegne periodiche di caffè o materiali).
+                  Tratta aggiuntiva dedicata = <strong>0 km</strong>. Sia i dipendenti sia gli ospiti community invitati ritirano il cesto direttamente in sede aziendale.
+                </p>
               </div>
             </div>
 
@@ -501,7 +471,7 @@ export function ProducerBasketOrderClient({ venue, stats, currentUser }: Props) 
             </div>
             <h3 className="font-serif text-2xl text-cream mt-2">Impatto Ambientale e Sociale di {venue.name}</h3>
             <p className="text-xs text-cream/70 mt-1 max-w-xl">
-              I km logistici dedicati sono azzerati grazie al ritiro diretto in loco durante il soggiorno o alla consegna di prossimità sul tragitto ordinario di una impresa con sinergie di trasporto.
+              I km logistici dedicati sono azzerati grazie alle sinergie di flotta: la consegna avviene esclusivamente presso le sedi aziendali partner lungo i tragitti già pianificati dei rifornitori (km marginali = 0).
             </p>
           </div>
           <div className="rounded-2xl bg-white/10 p-3.5 text-right shrink-0 border border-white/10">
@@ -522,7 +492,7 @@ export function ProducerBasketOrderClient({ venue, stats, currentUser }: Props) 
           <div className="rounded-2xl bg-white/10 p-4 border border-white/10">
             <span className="text-[10px] uppercase tracking-wider text-cream/70 font-semibold block">Km Dedicati Azzerati</span>
             <p className="font-serif text-3xl text-gold mt-1">~{stats.kmAvoidedTotal} km</p>
-            <p className="text-[11px] text-cream/60 mt-0.5">ritiro in loco / tragitto proprio</p>
+            <p className="text-[11px] text-cream/60 mt-0.5">sinergie flotta</p>
           </div>
 
           <div className="rounded-2xl bg-white/10 p-4 border border-white/10">

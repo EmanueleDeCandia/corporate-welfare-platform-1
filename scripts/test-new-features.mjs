@@ -226,7 +226,7 @@ async function run() {
       bookingDate: '2026-11-12',
       timeSlot: 'Ritiro in sede',
       partySize: 1, // 1 cesto
-      notes: 'Ritiro di persona sabato mattina',
+      notes: 'ritiro in sede aziendale',
     }),
   });
   assert(luigiOrderRes.status === 201, 'Ordine cesto registrato da Luigi Bianchi');

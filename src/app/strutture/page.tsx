@@ -121,7 +121,7 @@ export default async function VenuesPage({
                 </h3>
                 <p className="mt-1 text-xs text-forest/80 leading-relaxed max-w-3xl">
                   La startup trattiene <strong>0% di commissioni</strong> sui produttori locali (100% dell&apos;incasso va al produttore).
-                  I tragitti dedicati su gomma sono azzerati tramite ritiro in loco o percorsi ordinari preesistenti. Inoltre, <strong>ogni 10 cesti acquistati, 1 cesto viene offerto in omaggio agli addetti delle imprese CSR</strong>.
+                  I tragitti dedicati su gomma sono azzerati tramite sinergie flotta con recapito e ritiro in sede aziendale. Inoltre, <strong>ogni 10 cesti acquistati, 1 cesto viene offerto in omaggio agli addetti delle imprese CSR</strong>.
                 </p>
               </div>
             </div>

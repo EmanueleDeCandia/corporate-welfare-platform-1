@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray, or } from "drizzle-orm";
 import { db, initDb } from "@/db";
 import {
   companies,
@@ -10,6 +10,7 @@ import {
   welfarePlans,
   planExtraAllocations,
   venueOfferings,
+  bookings,
 } from "@/db/schema";
 
 export async function getCompanyDashboardData(companyId: number) {
@@ -184,6 +185,84 @@ export async function getCompanyDashboardData(companyId: number) {
     };
   });
 
+  // Filiera Corta & Sinergie Flotta per l'Azienda CSR:
+  // Addetti dell'azienda + Amici invitati da tali addetti + cesti in omaggio assegnati all'azienda
+  const employeeIds = employees.map((e) => e.id);
+  const userMap = new Map<number, typeof users.$inferSelect>();
+  allEmployees.forEach((u) => userMap.set(u.id, u));
+
+  let friends: (typeof users.$inferSelect)[] = [];
+  if (employeeIds.length > 0) {
+    friends = await db
+      .select()
+      .from(users)
+      .where(inArray(users.invitedByUserId, employeeIds));
+    friends.forEach((f) => userMap.set(f.id, f));
+  }
+
+  const eligibleUserIds = [...new Set([...employeeIds, ...friends.map((f) => f.id)])];
+  const allVenues = await db.select().from(venues);
+  const allVenuesMap = new Map(allVenues.map((v) => [v.id, v]));
+
+  const basketConditions = [];
+  if (eligibleUserIds.length > 0) {
+    basketConditions.push(inArray(bookings.userId, eligibleUserIds));
+  }
+  basketConditions.push(eq(bookings.giftRecipientCompanyId, companyId));
+
+  const rawBasketBookings = await db
+    .select()
+    .from(bookings)
+    .where(
+      and(
+        eq(bookings.bookingType, "local_basket"),
+        or(...basketConditions)
+      )
+    )
+    .orderBy(desc(bookings.createdAt));
+
+  const basketOrders = rawBasketBookings.map((b) => {
+    const user = userMap.get(b.userId);
+    const v = allVenuesMap.get(b.venueId);
+    let connectedViaEmployeeName: string | null = null;
+    if (user?.invitedByUserId) {
+      const inviter = userMap.get(user.invitedByUserId);
+      if (inviter) {
+        connectedViaEmployeeName = `${inviter.firstName} ${inviter.lastName}`;
+      }
+    }
+    const qty = Math.max(1, b.partySize || 1);
+    const kmAvoided = qty * 50;
+    const co2SavedKg = Number((kmAvoided * 0.265).toFixed(1));
+
+    return {
+      id: b.id,
+      createdAt: b.createdAt,
+      orderDate: b.bookingDate,
+      buyerName: b.guestName || (user ? `${user.firstName} ${user.lastName}` : "Utente"),
+      buyerEmail: b.guestEmail || user?.email || "",
+      buyerRole: user?.role || "community",
+      connectedViaEmployeeName,
+      producerName: v?.name || "Produttore KM 0",
+      producerCity: v?.city || "Territorio",
+      basketName: v?.basketName || "Cesto Tipico KM 0",
+      quantity: qty,
+      finalPriceCents: b.isFreeGift ? 0 : (b.finalPriceCents || 0),
+      isFreeGift: Boolean(b.isFreeGift),
+      status: b.status,
+      deliveryMode: "ritiro in sede aziendale",
+      kmAvoided,
+      co2SavedKg,
+      notes: "ritiro in sede aziendale",
+    };
+  });
+
+  const activeBasketOrders = basketOrders.filter((o) => o.status !== "cancelled");
+  const totalBasketsSold = activeBasketOrders.reduce((sum, o) => sum + o.quantity, 0);
+  const totalSpentCents = activeBasketOrders.reduce((sum, o) => sum + o.finalPriceCents, 0);
+  const totalKmAvoided = activeBasketOrders.reduce((sum, o) => sum + o.kmAvoided, 0);
+  const totalCo2SavedKg = Number(activeBasketOrders.reduce((sum, o) => sum + o.co2SavedKg, 0).toFixed(1));
+
   return {
     company,
     activePlan,
@@ -220,5 +299,13 @@ export async function getCompanyDashboardData(companyId: number) {
     transactions: txRows,
     selections: allSelections,
     venues: hospitalityVenues,
+    producerBasketsSummary: {
+      totalOrders: activeBasketOrders.length,
+      totalBasketsSold,
+      totalSpentCents,
+      kmAvoided: totalKmAvoided,
+      co2SavedKg: totalCo2SavedKg,
+      orders: basketOrders,
+    },
   };
 }

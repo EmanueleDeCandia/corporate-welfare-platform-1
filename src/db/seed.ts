@@ -1500,7 +1500,7 @@ export async function seedDatabase() {
       guestName: "Mario Rossi",
       guestEmail: "mario.rossi@acme.it",
       guestPhone: "+39 333 1122334",
-      notes: "Cesto Conero Oro Verde (2 confezioni). Ritiro in azienda programmato.",
+      notes: "ritiro in sede aziendale",
     },
     {
       userId: sofia.id,
@@ -1518,7 +1518,7 @@ export async function seedDatabase() {
       guestName: "Sofia Neri",
       guestEmail: "sofia.neri@verdeenergia.it",
       guestPhone: "+39 338 2233445",
-      notes: "Cesto Casaro dei Monti Azzurri consegnato e ritirato con successo.",
+      notes: "ritiro in sede aziendale",
     },
     {
       userId: luigi.id,
@@ -1536,7 +1536,7 @@ export async function seedDatabase() {
       guestName: "Luigi Bianchi",
       guestEmail: "luigi.bianchi@email.it",
       guestPhone: "+39 333 4455667",
-      notes: "Convenzione Community Amici RADICI (sconto 10% applicato). Consegna completata.",
+      notes: "ritiro in sede aziendale",
     },
     {
       userId: francesca.id,
@@ -1554,7 +1554,7 @@ export async function seedDatabase() {
       guestName: "Francesca Romani",
       guestEmail: "francesca.romani@email.it",
       guestPhone: "+39 339 9988776",
-      notes: "Ordine annullato dal cliente prima della spedizione. Nessun addebito.",
+      notes: "ritiro in sede aziendale",
     },
     {
       userId: mario.id,
@@ -1574,7 +1574,7 @@ export async function seedDatabase() {
       guestName: "Mario Rossi",
       guestEmail: "mario.rossi@acme.it",
       guestPhone: "+39 333 1122334",
-      notes: "Cesto in Omaggio offerto dal Frantoio del Conero per gli addetti ACME S.p.A. (Business Rule 10:1). Consegnato in azienda.",
+      notes: "ritiro in sede aziendale",
     },
   ]);
 }

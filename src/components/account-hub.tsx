@@ -1689,13 +1689,13 @@ function BookingsTab({ user, venues, grantEvents = [], bookings = [] }: Props) {
 
               <div className="mt-4">
                 <label className="block text-xs font-semibold text-forest">
-                  {targetKind === "producer" ? "Indirizzo di Spedizione o Note per il Produttore" : "Note o Richieste Speciali"}
+                  {targetKind === "producer" ? "Consegna Sinergie Flotta (Ritiro in Sede Aziendale)" : "Note o Richieste Speciali"}
                 </label>
                 <textarea
                   rows={2}
                   placeholder={
                     targetKind === "producer"
-                      ? "Es. Via Roma 10, Sirolo (AN) - citofono Rossi, oppure 'ritiro di persona sabato mattina'..."
+                      ? "ritiro in sede aziendale (es. sede ACME Corporation - piano terra reception)..."
                       : "Es. arrivo in tarda serata, intolleranze alimentari, preferenze camera..."
                   }
                   value={notes}

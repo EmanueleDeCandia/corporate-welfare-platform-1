@@ -123,7 +123,7 @@ export default function HowItWorksPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
-                    <span><strong>Cesti Filiera Corta KM 0</strong>: acquisto con ritiro in loco o consegna senza imballaggi monouso.</span>
+                    <span><strong>Cesti Filiera Corta KM 0</strong>: consegna tramite sinergie flotta con ritiro in sede aziendale senza imballaggi monouso.</span>
                   </li>
                 </ul>
               </div>

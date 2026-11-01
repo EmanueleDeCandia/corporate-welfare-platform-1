@@ -1698,7 +1698,7 @@ export function PromotersDashboardView({ data }: Props) {
                 </div>
                 <h2 className="font-serif text-2xl text-forest">Filiera Produttori KM 0 & Cesti Territoriali</h2>
                 <p className="text-xs text-olive mt-0.5">
-                  I km logistici dedicati sono azzerati grazie al ritiro diretto in loco durante il soggiorno o alla consegna di prossimità sul tragitto ordinario di una impresa che consegna propri prodotti (non quelli dei produttori = sinergie di trasporto) e mette a disposizione la propria rete a km marginali zero per i produttori.
+                  I km logistici dedicati sono azzerati grazie alle sinergie di flotta: un&apos;impresa partner che rifornisce già le sedi aziendali CSR trasporta i cesti a km marginali zero, azzerando le tratte dedicate su gomma e gli imballaggi monouso.
                 </p>
               </div>
               <div className="flex items-center gap-2">
@@ -1723,7 +1723,7 @@ export function PromotersDashboardView({ data }: Props) {
               <div className="rounded-2xl border border-forest/10 bg-cream/40 p-4">
                 <span className="text-[11px] uppercase tracking-wider text-olive font-medium">Km Dedicati Azzerati</span>
                 <p className="font-serif text-2xl text-forest mt-1">~{data.totalKmAvoided.toLocaleString()} km</p>
-                <p className="text-[11px] text-olive mt-0.5">ritiro in loco / tragitto proprio</p>
+                <p className="text-[11px] text-olive mt-0.5">sinergie flotta aziendale</p>
               </div>
               <div className="rounded-2xl border border-forest/10 bg-cream/40 p-4">
                 <span className="text-[11px] uppercase tracking-wider text-olive font-medium">Omaggi Addetti CSR</span>
@@ -1867,7 +1867,13 @@ export function PromotersDashboardView({ data }: Props) {
                             {order.companyName ? (
                               <div>
                                 <span className="font-semibold text-forest">{order.companyName}</span>
-                                <span className="block text-[10px] text-olive">Convenzione Welfare</span>
+                                {order.connectedViaEmployeeName ? (
+                                  <span className="block text-[10px] text-olive font-medium">
+                                    Rete Addetto: {order.connectedViaEmployeeName}
+                                  </span>
+                                ) : (
+                                  <span className="block text-[10px] text-olive font-medium">Addetto Diretto</span>
+                                )}
                               </div>
                             ) : (
                               <div>
@@ -1898,11 +1904,9 @@ export function PromotersDashboardView({ data }: Props) {
                                 </span>
                               )}
                             </div>
-                            {order.notes && (
-                              <p className="text-[10px] text-olive mt-1 italic max-w-[200px] truncate" title={order.notes}>
-                                {order.notes}
-                              </p>
-                            )}
+                            <p className="text-[10px] text-olive mt-1 italic">
+                              ritiro in sede aziendale
+                            </p>
                           </td>
 
                           {/* Prezzo Pagato */}
@@ -1951,7 +1955,7 @@ export function PromotersDashboardView({ data }: Props) {
                                   {order.quantity > 1 ? `~${order.kmAvoided} km dedicati azzerati` : "da 40 a 70 km dedicati azzerati"}
                                 </span>
                                 <span className="text-[10px] text-olive mt-0.5">
-                                  ritiro in loco / tragitto proprio ({order.co2SavedKg} kg CO₂)
+                                  sinergie flotta ({order.co2SavedKg} kg CO₂)
                                 </span>
                               </div>
                             )}

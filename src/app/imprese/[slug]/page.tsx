@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, ne, or } from "drizzle-orm";
 import { PublicShell } from "@/components/public-shell";
 import { VenueCard } from "@/components/venue-card";
 import { db, initDb } from "@/db";
-import { bookings } from "@/db/schema";
+import { bookings, users } from "@/db/schema";
 import { getCompanyBySlug, getCompanyEmployees, getVenuesByCompany } from "@/lib/data";
 import { formatEuro, initials } from "@/lib/utils";
 
@@ -18,6 +18,8 @@ export default async function CompanyDetailPage({
   const company = await getCompanyBySlug(slug);
   if (!company) notFound();
 
+  await initDb();
+
   const [venues, employees] = await Promise.all([
     getVenuesByCompany(company.id),
     getCompanyEmployees(company.id),
@@ -26,31 +28,57 @@ export default async function CompanyDetailPage({
   const employeeIds = employees.map((e) => e.id);
 
   // =========================================================================
-  // PREDISPOSIZIONE SERVER PRODUZIONE:
-  // Calcolo non arbitrario della CO₂ evitata:
-  // Formula: CO₂ evitata = (numero ordini dei dipendenti presso produttori Filiera Corta) * 15 Kg
-  // Ogni acquisto di cesto o prodotto agroalimentare a km 0 evita la catena del freddo industriale
-  // e i trasporti logistici interregionali su gomma (15 kg CO₂ eq. risparmiati per ogni ordine).
-  // In fase iniziale o demo, se non sono ancora registrati ordini dai dipendenti, viene impiegato
-  // il valore registrato a database all'inserimento dell'impresa (o dal seed demo).
+  // REGOLE DI ATTRIBUZIONE IMPATTO KM 0 & SINERGIE FLOTTA AZIENDALE:
+  // Vengono attribuiti all'impresa CSR:
+  // 1. Ordini cesto effettuati direttamente dai propri addetti (userId IN employeeIds)
+  // 2. Ordini cesto effettuati da Amici invitati da un proprio addetto (invitedByUserId IN employeeIds)
+  // 3. Cesti in Omaggio maturati e destinati all'impresa (giftRecipientCompanyId = company.id)
+  // Esclusi gli ordini annullati (status = 'cancelled').
+  // Logistica: 50 km evitati per cesto tramite sinergie flotta aziendale (0 km marginali).
+  // Fattore emissivo furgone diesel: 0.265 kg CO₂/km -> 13.25 kg CO₂ risparmiati per cesto.
   // =========================================================================
+  let friendsIds: number[] = [];
+  if (employeeIds.length > 0) {
+    const friendUsers = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(inArray(users.invitedByUserId, employeeIds));
+    friendsIds = friendUsers.map((f) => f.id);
+  }
+
+  const eligibleUserIds = [...new Set([...employeeIds, ...friendsIds])];
+
   let dynamicCo2Kg = company.co2SavedKg;
   let producerOrdersCount = 0;
-  if (employeeIds.length > 0) {
-    await initDb();
-    const basketBookings = await db
-      .select({ id: bookings.id })
-      .from(bookings)
-      .where(
-        and(
-          inArray(bookings.userId, employeeIds),
-          eq(bookings.bookingType, "local_basket")
-        )
-      );
-    producerOrdersCount = basketBookings.length;
-    if (producerOrdersCount > 0) {
-      dynamicCo2Kg = producerOrdersCount * 15;
-    }
+  let producerBasketsCount = 0;
+
+  const basketConditions = [];
+  if (eligibleUserIds.length > 0) {
+    basketConditions.push(inArray(bookings.userId, eligibleUserIds));
+  }
+  basketConditions.push(eq(bookings.giftRecipientCompanyId, company.id));
+
+  const basketBookings = await db
+    .select({
+      id: bookings.id,
+      partySize: bookings.partySize,
+      status: bookings.status,
+    })
+    .from(bookings)
+    .where(
+      and(
+        eq(bookings.bookingType, "local_basket"),
+        ne(bookings.status, "cancelled"),
+        or(...basketConditions)
+      )
+    );
+
+  producerOrdersCount = basketBookings.length;
+  if (producerOrdersCount > 0) {
+    producerBasketsCount = basketBookings.reduce((sum, b) => sum + (b.partySize || 1), 0);
+    // 50 km evitati per cesto * 0.265 kg CO2/km
+    const cestoCo2Saved = Math.round(producerBasketsCount * 50 * 0.265);
+    dynamicCo2Kg = Math.max(company.co2SavedKg, cestoCo2Saved);
   }
 
   // Calcolo esatto non arbitrario della redistribuzione economica territoriale:
@@ -88,7 +116,11 @@ export default async function CompanyDetailPage({
               <Stat
                 label="CO₂ evitata"
                 value={`${dynamicCo2Kg.toLocaleString("it-IT")} kg`}
-                sub={producerOrdersCount > 0 ? `${producerOrdersCount} ordini filiera × 15 kg` : "15 kg / quota"}
+                sub={
+                  producerOrdersCount > 0
+                    ? `${producerBasketsCount} cesti (sinergie flotta)`
+                    : "sinergie flotta"
+                }
               />
               <Stat label="Account attivi" value={String(employees.length)} />
             </div>
