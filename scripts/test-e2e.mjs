@@ -288,6 +288,29 @@ async function testNewRegistrations() {
     const provDash = await request('/fornitore', { headers: { Cookie: `radici_session=${newProvToken}` } });
     assert(provDash.status === 200, 'Accesso pannello /fornitore del nuovo fornitore');
   }
+
+  // Pulizia immediata dati temporanei del test per non inquinare il catalogo delle strutture
+  try {
+    const db = new Database('radici.db');
+    if (provRes.json?.user?.venueId) {
+      const vId = provRes.json.user.venueId;
+      db.prepare("DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE venue_id = ?)").run(vId);
+      db.prepare("UPDATE venues SET provider_user_id = NULL WHERE id = ?").run(vId);
+      db.prepare("DELETE FROM venue_offerings WHERE venue_id = ?").run(vId);
+      db.prepare("DELETE FROM users WHERE venue_id = ?").run(vId);
+      db.prepare("DELETE FROM venues WHERE id = ?").run(vId);
+    }
+    if (compRes.json?.user?.companyId) {
+      const cId = compRes.json.user.companyId;
+      db.prepare("DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE company_id = ?)").run(cId);
+      db.prepare("DELETE FROM vouchers WHERE company_id = ?").run(cId);
+      db.prepare("DELETE FROM welfare_plans WHERE company_id = ?").run(cId);
+      db.prepare("DELETE FROM users WHERE company_id = ?").run(cId);
+      db.prepare("DELETE FROM companies WHERE id = ?").run(cId);
+    }
+  } catch (e) {
+    console.error("Cleanup error in testNewRegistrations:", e);
+  }
 }
 
 async function testEmployeeVoucherRedeem() {
