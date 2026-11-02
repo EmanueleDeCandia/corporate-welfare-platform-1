@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { sqlite } from "@/db";
+import { and, eq } from "drizzle-orm";
+import { db, sqlite } from "@/db";
+import { notifications } from "@/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -35,14 +37,35 @@ export async function POST() {
       DELETE FROM transactions WHERE type = 'welfare_redeem';
     `);
 
-    // 4. Ripristina lo stato di lettura delle notifiche ai fornitori
-    sqlite.exec(`
-      UPDATE notifications SET read = 0;
-    `);
+    // 4. Annulla e revoca esplicitamente tutte le notifiche di fatturazione welfare per i fornitori
+    const welfareNotifs = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.type, "welfare"));
+
+    for (const notif of welfareNotifs) {
+      const payload = (notif.payload as Record<string, any>) || {};
+      if (!payload.cancelled || !notif.title.includes("[ANNULLATO]")) {
+        await db
+          .update(notifications)
+          .set({
+            title: `[ANNULLATO] Selezione voucher revocata - Non fatturare`,
+            body: `La selezione demo del voucher welfare è stata azzerata. Nessun addebito B2B dovuto e nessuna prestazione richiesta per la struttura.`,
+            read: true,
+            payload: {
+              ...payload,
+              cancelled: true,
+              invoiceHint: "SELEZIONE ANNULLATA - NESSUNA FATTURA DA EMETTERE",
+              status: "cancelled",
+            },
+          })
+          .where(eq(notifications.id, notif.id));
+      }
+    }
 
     return NextResponse.json({
       success: true,
-      message: "Database globale ripristinato con successo: tutti i voucher sono ora disponibili.",
+      message: "Database globale ripristinato con successo: tutti i voucher sono ora disponibili e le notifiche di fatturazione sono state revocate.",
     });
   } catch (error) {
     console.error("Global reset error:", error);

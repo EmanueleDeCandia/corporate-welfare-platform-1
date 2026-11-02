@@ -155,6 +155,38 @@ function WalletTab(props: Props & { grantEvents?: GrantEventLite[] }) {
   }
 
   const [resetting, setResetting] = useState(false);
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
+
+  async function cancelVoucherSelection(voucherId: number) {
+    if (
+      !confirm(
+        "Vuoi davvero annullare la selezione di questa struttura/locale? Il voucher tornerà disponibile e potrai sceglierne un'altra. La notifica di fatturazione per la struttura verrà revocata immediatamente."
+      )
+    ) {
+      return;
+    }
+    setCancellingId(voucherId);
+    setMessage("");
+    try {
+      const res = await fetch("/api/vouchers/cancel-selection", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voucherId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage(data.error || "Errore durante l'annullamento.");
+      } else {
+        setMessage(data.message || "Selezione annullata con successo. Il voucher è di nuovo disponibile.");
+        router.refresh();
+      }
+    } catch {
+      setMessage("Errore di connessione.");
+    } finally {
+      setCancellingId(null);
+    }
+  }
+
   async function resetDemo() {
     if (!confirm("Vuoi ripristinare i voucher per provare la selezione del Teatro e della Struttura da zero?")) {
       return;
@@ -329,11 +361,25 @@ function WalletTab(props: Props & { grantEvents?: GrantEventLite[] }) {
                       </p>
                     </div>
 
-                    <div className="text-right sm:shrink-0">
-                      <p className="text-base font-bold text-forest">{formatEuro(voucher.amountCents)}</p>
-                      <span className="text-[10px] text-olive font-medium block">
-                        Quota Welfare 100%
-                      </span>
+                    <div className="text-right sm:shrink-0 flex flex-col items-end gap-2">
+                      <div>
+                        <p className="text-base font-bold text-forest">{formatEuro(voucher.amountCents)}</p>
+                        <span className="text-[10px] text-olive font-medium block">
+                          Quota Welfare 100%
+                        </span>
+                      </div>
+
+                      {isSelected ? (
+                        <button
+                          type="button"
+                          disabled={cancellingId === voucher.id}
+                          onClick={() => cancelVoucherSelection(voucher.id)}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-terracotta/40 bg-white px-3.5 py-1.5 text-xs font-semibold text-terracotta hover:bg-terracotta hover:text-cream transition shadow-xs disabled:opacity-50"
+                        >
+                          <RotateCcw size={12} />
+                          {cancellingId === voucher.id ? "Annullamento in corso..." : "Annulla Selezione"}
+                        </button>
+                      ) : null}
                     </div>
                   </div>
                 </div>
