@@ -775,7 +775,7 @@ export function PromotersDashboardView({ data }: Props) {
           </div>
 
           <div className="rounded-2xl bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-wider text-cream/70">Pagamenti Fornitori</p>
+            <p className="text-xs uppercase tracking-wider text-cream/70">Pagamenti Intermediati a Fornitori</p>
             <p className="mt-2 font-serif text-2xl text-cream md:text-3xl">
               {formatEuro(data.totalSettledCents)}
             </p>
@@ -889,8 +889,8 @@ export function PromotersDashboardView({ data }: Props) {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-mist">
             <div>
               <h2 className="font-serif text-2xl text-forest">Registro Transazioni & Commissioni</h2>
-              <p className="text-xs text-olive">
-                Supervisione delle transazioni intermediate, calcolo automatico della commissione Radici (10%) e stato dei saldi aziende-fornitori.
+              <p className="text-xs text-olive max-w-3xl leading-relaxed mt-1">
+                Supervisione delle transazioni intermediate: non fanno parte dei Voucher di Welfare Aziendale, il calcolo automatico della commissione Radici (esemplificativo del 10% su ristorazione e pernottamento) considera soltanto gli Inviati dagli Addetti. I Produttori locali vengono inseriti anche se non hanno alcuna commissione da parte della Startup: il loro contributo è stato considerato In Kind (1 cestino omaggio su 10 venduti) a beneficio degli acquirenti (Addetti o Invitati) dell&apos;impresa CSR.
               </p>
             </div>
             <div className="inline-flex rounded-full bg-forest/5 p-1 shrink-0">

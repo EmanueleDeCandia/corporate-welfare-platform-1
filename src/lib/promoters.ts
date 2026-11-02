@@ -292,13 +292,154 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
   const venueMap = new Map(allVenues.map((v) => [v.id, v]));
   const userMap = new Map(allUsers.map((u) => [u.id, u]));
 
-  // 2. Transazioni di piattaforma con dettagli arricchiti
+  // 2. Caricamento Prenotazioni di Circuito (Bookings: Filiera Corta, Teatri e Soggiorni Community)
+  const allBookingsRows = await db
+    .select({
+      booking: bookings,
+      user: users,
+      venue: venues,
+      grantEvent: grantEvents,
+    })
+    .from(bookings)
+    .innerJoin(users, eq(bookings.userId, users.id))
+    .innerJoin(venues, eq(bookings.venueId, venues.id))
+    .leftJoin(grantEvents, eq(bookings.grantEventId, grantEvents.id))
+    .orderBy(desc(bookings.createdAt));
+
+  // 2a. Filiera Corta & Produttori KM 0
+  const producerOrderRows = allBookingsRows.filter(
+    (r) => r.booking.bookingType === "local_basket" || r.venue.type === "producer"
+  );
+
+  const producerOrders: ProducerOrderRow[] = producerOrderRows.map((r) => {
+    let userCompany = r.user.companyId ? companyMap.get(r.user.companyId) : null;
+    let connectedViaEmployeeName: string | null = null;
+
+    if (!userCompany && r.user.invitedByUserId) {
+      const inviter = userMap.get(r.user.invitedByUserId);
+      if (inviter && inviter.companyId) {
+        userCompany = companyMap.get(inviter.companyId) || null;
+        connectedViaEmployeeName = `${inviter.firstName} ${inviter.lastName}`;
+      }
+    }
+
+    const giftCompany = r.booking.giftRecipientCompanyId
+      ? companyMap.get(r.booking.giftRecipientCompanyId)
+      : null;
+    const isFreeGift = Boolean(r.booking.isFreeGift);
+    const effectiveCompany = isFreeGift ? (giftCompany || userCompany) : userCompany;
+
+    const qty = Math.max(1, r.booking.partySize || 1);
+    const unitPrice =
+      r.venue.priceBasketCents || Math.round(r.booking.totalAmountCents / qty) || 3800;
+    const finalPrice = isFreeGift
+      ? 0
+      : (r.booking.finalPriceCents || (r.booking.totalAmountCents - r.booking.discountCents));
+    
+    // BUSINESS RULE: Zero commissioni sui Produttori Locali per la Startup RADICI (100% al produttore)
+    const commission = 0;
+    const net = finalPrice;
+
+    // Sinergie Flotta Aziendale: tratta espressa dedicata eliminata = 50 km a cesto
+    const kmAvoided = qty * 50;
+    const co2SavedKg = Number((kmAvoided * 0.265).toFixed(1));
+
+    return {
+      id: r.booking.id,
+      createdAt: r.booking.createdAt,
+      orderDate: r.booking.bookingDate,
+      timeSlot: r.booking.timeSlot,
+      buyerName: r.booking.guestName || `${r.user.firstName} ${r.user.lastName}`,
+      buyerEmail: r.booking.guestEmail || r.user.email,
+      buyerRole: r.user.role,
+      companyName: effectiveCompany ? effectiveCompany.name : null,
+      connectedViaEmployeeName,
+      deliveryMode: "ritiro in sede aziendale",
+      producerId: r.venue.id,
+      producerName: r.venue.name,
+      producerCity: r.venue.city,
+      producerRegion: r.venue.region,
+      basketName: r.venue.basketName || "Cesto Tipico KM 0",
+      basketDescription: r.venue.basketDescription,
+      quantity: qty,
+      unitPriceCents: unitPrice,
+      totalListPriceCents: isFreeGift ? 0 : r.booking.totalAmountCents,
+      discountPercent: r.booking.discountPercent,
+      discountCents: r.booking.discountCents,
+      finalPriceCents: finalPrice,
+      commissionCents: commission,
+      producerNetCents: net,
+      isFreeGift,
+      giftRecipientCompanyName: giftCompany ? giftCompany.name : null,
+      kmAvoided,
+      co2SavedKg,
+      status: r.booking.status,
+      notes: "ritiro in sede aziendale",
+    };
+  });
+
+  const activeProducerOrders = producerOrders.filter((o) => o.status !== "cancelled");
+  const totalProducerBasketsSold = activeProducerOrders.reduce((sum, o) => sum + o.quantity, 0);
+  const totalProducerRevenueCents = activeProducerOrders.reduce((sum, o) => sum + o.finalPriceCents, 0);
+  const totalKmAvoided = activeProducerOrders.reduce((sum, o) => sum + o.kmAvoided, 0);
+  const totalCo2SavedKg = Number(
+    activeProducerOrders.reduce((sum, o) => sum + o.co2SavedKg, 0).toFixed(1)
+  );
+  const producersCount = allVenues.filter((v) => v.type === "producer").length;
+
+  const freeBasketThreshold = 10;
+  const freeBasketsEarnedTotal = Math.floor(totalProducerBasketsSold / freeBasketThreshold);
+  const basketsProgressToNextGift = totalProducerBasketsSold % freeBasketThreshold;
+
+  // 2b. Prenotazioni Community Turistico-Culturali (Soggiorni, Cene e Spettacoli Teatrali)
+  const communityBookingsRows = allBookingsRows.filter(
+    (r) => r.booking.bookingType !== "local_basket" && r.venue.type !== "producer"
+  );
+
+  const communityBookings = communityBookingsRows.map((r) => {
+    const bType = r.booking.bookingType as string;
+    let serviceLabel = "Soggiorno / Ospitalità";
+    if (r.booking.grantEventId || r.venue.type === "theater" || bType === "theater_event") {
+      serviceLabel = r.grantEvent?.title ? `Teatro: ${r.grantEvent.title}` : "Spettacolo Teatrale";
+    } else if (bType === "dinner" || bType === "aperitivo" || r.venue.type === "restaurant") {
+      serviceLabel = "Ristorazione / Cena";
+    }
+
+    return {
+      id: r.booking.id,
+      createdAt: r.booking.createdAt,
+      bookingDate: r.booking.bookingDate,
+      timeSlot: r.booking.timeSlot,
+      partySize: r.booking.partySize,
+      status: r.booking.status,
+      guestName: r.booking.guestName,
+      guestEmail: r.booking.guestEmail,
+      guestPhone: r.booking.guestPhone,
+      venueName: r.venue.name,
+      venueCity: r.venue.city,
+      venueType: r.venue.type,
+      bookingType: bType,
+      serviceLabel,
+      eventTitle: r.grantEvent?.title ?? null,
+      finalPriceCents: r.booking.finalPriceCents,
+      notes: r.booking.notes,
+    };
+  });
+
+  const totalCommunityBookingsCount = communityBookings.length;
+  const totalCommunityBookingsSeats = communityBookings.reduce((sum, b) => sum + b.partySize, 0);
+  const totalCommunityConfirmedCount = communityBookings.filter(
+    (b) => b.status === "confirmed" || b.status === "presence_confirmed" || b.status === "attended"
+  ).length;
+  const totalCommunityPendingCount = communityBookings.filter((b) => b.status === "pending").length;
+
+  // 3. Transazioni di Piattaforma Complete (Voucher Welfare B2B + Pagamenti Consumer + Teatri + Vendite Cesti KM 0)
   const rawTx = await db
     .select()
     .from(transactions)
     .orderBy(desc(transactions.createdAt));
 
-  const platformTransactions: PlatformTransactionRow[] = rawTx.map((tx) => {
+  const basePlatformTransactions: PlatformTransactionRow[] = rawTx.map((tx) => {
     const user = userMap.get(tx.userId);
     const company = tx.companyId ? companyMap.get(tx.companyId) : null;
     const venue = venueMap.get(tx.venueId);
@@ -331,7 +472,79 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     };
   });
 
-  // KPI Economici (escludendo transazioni annullate / revocate)
+  // Integrazione Transazioni Vendite Produttori a KM 0 (0% commissione Radici, 100% all'operatore)
+  const producerTxRows: PlatformTransactionRow[] = producerOrders.map((po) => {
+    const isCancelled = po.status === "cancelled";
+    const isSettled = po.status === "attended" || po.status === "presence_confirmed";
+    return {
+      id: 200000 + po.id,
+      createdAt: po.createdAt,
+      serviceLabel: po.isFreeGift
+        ? `Cesto KM 0 (Omaggio 10:1 Addetti CSR) · ${po.basketName}`
+        : `Cesto KM 0 · ${po.basketName} (${po.quantity} ${po.quantity === 1 ? "cesto" : "cesti"})`,
+      type: "producer_basket",
+      status: isCancelled ? "cancelled" : "completed",
+      amountCents: po.finalPriceCents,
+      commissionCents: 0, // Zero fee startup
+      providerNetCents: po.finalPriceCents, // 100% al produttore
+      paymentStatus: isCancelled ? "cancelled" : isSettled ? "settled" : "pending",
+      paymentNotes: po.isFreeGift
+        ? "Omaggio 10:1 maturato · Sinergie flotta (ritiro in sede aziendale)"
+        : "Vendita Filiera Corta KM 0 · Sinergie flotta (ritiro in sede aziendale)",
+      settledAt: isSettled ? po.createdAt : null,
+      invoiceNumber: null,
+      invoiceDate: null,
+      userName: po.buyerName,
+      userEmail: po.buyerEmail,
+      companyName: po.companyName,
+      companyVat: null,
+      venueName: po.producerName,
+      venueType: "producer",
+      venueCity: po.producerCity,
+      voucherId: null,
+    };
+  });
+
+  // Integrazione Biglietti Teatrali della Community a Pagamento
+  const theaterTxRows: PlatformTransactionRow[] = communityBookings
+    .filter((b) => (b.bookingType === "theater_event" || b.venueType === "theater") && b.finalPriceCents > 0)
+    .map((b) => {
+      const isCancelled = b.status === "cancelled";
+      const isSettled = b.status === "attended" || b.status === "presence_confirmed" || b.status === "confirmed";
+      const comm = Math.round(b.finalPriceCents * 0.1);
+      return {
+        id: 300000 + b.id,
+        createdAt: b.createdAt,
+        serviceLabel: b.eventTitle ? `Teatro: ${b.eventTitle}` : `Biglietto Spettacolo Teatrale (${b.partySize} posti)`,
+        type: "theater_ticket",
+        status: isCancelled ? "cancelled" : "completed",
+        amountCents: b.finalPriceCents,
+        commissionCents: comm,
+        providerNetCents: b.finalPriceCents - comm,
+        paymentStatus: isCancelled ? "cancelled" : isSettled ? "settled" : "pending",
+        paymentNotes: "Vendita Biglietto Botteghino Culturale (Community)",
+        settledAt: isSettled ? b.createdAt : null,
+        invoiceNumber: null,
+        invoiceDate: null,
+        userName: b.guestName,
+        userEmail: b.guestEmail,
+        companyName: null,
+        companyVat: null,
+        venueName: b.venueName,
+        venueType: "theater",
+        venueCity: b.venueCity,
+        voucherId: null,
+      };
+    });
+
+  // Unione e ordinamento cronologico decrescente di tutte le transazioni
+  const platformTransactions: PlatformTransactionRow[] = [
+    ...basePlatformTransactions,
+    ...producerTxRows,
+    ...theaterTxRows,
+  ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  // KPI Economici Globali (somma di tutto il transato attivo: voucher welfare, teatri, cesti KM 0 e pagamenti consumer)
   const activePlatformTransactions = platformTransactions.filter(
     (tx) => tx.paymentStatus !== "cancelled" && tx.status !== "cancelled"
   );
@@ -351,11 +564,15 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
   const totalVouchersAttended = allVouchers.filter((v) => v.status === "attended").length;
   const totalVouchersNoShow = allVouchers.filter((v) => v.status === "no_show").length;
 
-  // 3. Panoramica Imprese CSR
+  // 4. Panoramica Imprese CSR
   const companiesList: CompanyOverview[] = allCompanies.map((c) => {
     const compVouchers = allVouchers.filter((v) => v.companyId === c.id);
     const compTx = platformTransactions.filter(
-      (tx) => tx.companyName === c.name && tx.status !== "cancelled" && tx.paymentStatus !== "cancelled"
+      (tx) =>
+        tx.companyName === c.name &&
+        tx.type === "welfare_redeem" &&
+        tx.status !== "cancelled" &&
+        tx.paymentStatus !== "cancelled"
     );
 
     const totalDebt = compTx.reduce((sum, tx) => sum + tx.amountCents, 0);
@@ -500,63 +717,6 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
   const grantFundCapacityCents = 2500000; // 25.000 € stanziati per il fondo matching grant iniziale
   const grantFundSpentCents = grants.reduce((sum, g) => sum + g.grantValueCents, 0);
 
-  // 4. Caricamento Prenotazioni Community Turistico-Culturali (Soggiorni, Cene e Spettacoli a Teatro)
-  // I cesti alimentari KM 0 appartengono ESCLUSIVAMENTE al tab "Filiera Corta & Produttori KM 0" e non a capienza/overbooking teatri
-  const allBookingsRows = await db
-    .select({
-      booking: bookings,
-      user: users,
-      venue: venues,
-      grantEvent: grantEvents,
-    })
-    .from(bookings)
-    .innerJoin(users, eq(bookings.userId, users.id))
-    .innerJoin(venues, eq(bookings.venueId, venues.id))
-    .leftJoin(grantEvents, eq(bookings.grantEventId, grantEvents.id))
-    .orderBy(desc(bookings.createdAt));
-
-  // Filtra SOLO prenotazioni di ospitalità, ristorazione e spettacoli teatrali (esclusi tassativamente i cesti dei produttori)
-  const communityBookingsRows = allBookingsRows.filter(
-    (r) => r.booking.bookingType !== "local_basket" && r.venue.type !== "producer"
-  );
-
-  const communityBookings = communityBookingsRows.map((r) => {
-    const bType = r.booking.bookingType as string;
-    let serviceLabel = "Soggiorno / Ospitalità";
-    if (r.booking.grantEventId || r.venue.type === "theater" || bType === "theater_event") {
-      serviceLabel = r.grantEvent?.title ? `Teatro: ${r.grantEvent.title}` : "Spettacolo Teatrale";
-    } else if (bType === "dinner" || bType === "aperitivo" || r.venue.type === "restaurant") {
-      serviceLabel = "Ristorazione / Cena";
-    }
-
-    return {
-      id: r.booking.id,
-      createdAt: r.booking.createdAt,
-      bookingDate: r.booking.bookingDate,
-      timeSlot: r.booking.timeSlot,
-      partySize: r.booking.partySize,
-      status: r.booking.status,
-      guestName: r.booking.guestName,
-      guestEmail: r.booking.guestEmail,
-      guestPhone: r.booking.guestPhone,
-      venueName: r.venue.name,
-      venueCity: r.venue.city,
-      venueType: r.venue.type,
-      bookingType: bType,
-      serviceLabel,
-      eventTitle: r.grantEvent?.title ?? null,
-      finalPriceCents: r.booking.finalPriceCents,
-      notes: r.booking.notes,
-    };
-  });
-
-  const totalCommunityBookingsCount = communityBookings.length;
-  const totalCommunityBookingsSeats = communityBookings.reduce((sum, b) => sum + b.partySize, 0);
-  const totalCommunityConfirmedCount = communityBookings.filter(
-    (b) => b.status === "confirmed" || b.status === "presence_confirmed" || b.status === "attended"
-  ).length;
-  const totalCommunityPendingCount = communityBookings.filter((b) => b.status === "pending").length;
-
   let overbookingAlertsCount = 0;
 
   const events = allGrantEvents.map((ge) => {
@@ -639,101 +799,6 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     city: th.city,
     region: th.region,
   }));
-
-  // 5. Filiera Corta & Produttori KM 0
-  const producerOrderRows = allBookingsRows.filter(
-    (r) => r.booking.bookingType === "local_basket" || r.venue.type === "producer"
-  );
-
-  const producerOrders: ProducerOrderRow[] = producerOrderRows.map((r) => {
-    // Risoluzione Impresa CSR per Sinergie Flotta:
-    // 1. Se dipendente: companyId diretto
-    // 2. Se amico invitato: risali all'addetto che lo ha invitato (invitedByUserId -> inviter.companyId)
-    // 3. Se cesto omaggio (10:1): giftRecipientCompanyId
-    let userCompany = r.user.companyId ? companyMap.get(r.user.companyId) : null;
-    let connectedViaEmployeeName: string | null = null;
-
-    if (!userCompany && r.user.invitedByUserId) {
-      const inviter = userMap.get(r.user.invitedByUserId);
-      if (inviter && inviter.companyId) {
-        userCompany = companyMap.get(inviter.companyId) || null;
-        connectedViaEmployeeName = `${inviter.firstName} ${inviter.lastName}`;
-      }
-    }
-
-    const giftCompany = r.booking.giftRecipientCompanyId
-      ? companyMap.get(r.booking.giftRecipientCompanyId)
-      : null;
-    const isFreeGift = Boolean(r.booking.isFreeGift);
-    const effectiveCompany = isFreeGift ? (giftCompany || userCompany) : userCompany;
-
-    const qty = Math.max(1, r.booking.partySize || 1);
-    const unitPrice =
-      r.venue.priceBasketCents || Math.round(r.booking.totalAmountCents / qty) || 3800;
-    const finalPrice = isFreeGift
-      ? 0
-      : (r.booking.finalPriceCents || (r.booking.totalAmountCents - r.booking.discountCents));
-    
-    // BUSINESS RULE: Zero commissioni sui Produttori Locali per la Startup RADICI
-    // Il 100% dell'incasso resta al produttore (0€ fee startup)
-    const commission = 0;
-    const net = finalPrice;
-
-    // Logistica a impatto marginale zero: SINERGIE FLOTTA AZIENDALE.
-    // L'impresa X che consegna caffè/prodotti alle imprese CSR trasporta anche i cesti a km marginali zero.
-    // Tratta di trasporto espressa dedicata ELIMINATA: 50 km a cesto (range 40-75 km).
-    const kmAvoided = qty * 50;
-    // Calcolo scientifico CO2 da tabella emissioni (furgone diesel 10 L/100km, 2.65 kg CO2/L => 0.265 kg CO2/km):
-    // 50 km × 0.265 kg CO2/km = 13.25 kg CO2 per cesto
-    const co2SavedKg = Number((kmAvoided * 0.265).toFixed(1));
-
-    return {
-      id: r.booking.id,
-      createdAt: r.booking.createdAt,
-      orderDate: r.booking.bookingDate,
-      timeSlot: r.booking.timeSlot,
-      buyerName: r.booking.guestName || `${r.user.firstName} ${r.user.lastName}`,
-      buyerEmail: r.booking.guestEmail || r.user.email,
-      buyerRole: r.user.role,
-      companyName: effectiveCompany ? effectiveCompany.name : null,
-      connectedViaEmployeeName,
-      deliveryMode: "ritiro in sede aziendale",
-      producerId: r.venue.id,
-      producerName: r.venue.name,
-      producerCity: r.venue.city,
-      producerRegion: r.venue.region,
-      basketName: r.venue.basketName || "Cesto Tipico KM 0",
-      basketDescription: r.venue.basketDescription,
-      quantity: qty,
-      unitPriceCents: unitPrice,
-      totalListPriceCents: isFreeGift ? 0 : r.booking.totalAmountCents,
-      discountPercent: r.booking.discountPercent,
-      discountCents: r.booking.discountCents,
-      finalPriceCents: finalPrice,
-      commissionCents: commission,
-      producerNetCents: net,
-      isFreeGift,
-      giftRecipientCompanyName: giftCompany ? giftCompany.name : null,
-      kmAvoided,
-      co2SavedKg,
-      status: r.booking.status,
-      notes: "ritiro in sede aziendale",
-    };
-  });
-
-  const activeProducerOrders = producerOrders.filter((o) => o.status !== "cancelled");
-  const totalProducerBasketsSold = activeProducerOrders.reduce((sum, o) => sum + o.quantity, 0);
-  const totalProducerRevenueCents = activeProducerOrders.reduce((sum, o) => sum + o.finalPriceCents, 0);
-  const totalKmAvoided = activeProducerOrders.reduce((sum, o) => sum + o.kmAvoided, 0);
-  const totalCo2SavedKg = Number(
-    activeProducerOrders.reduce((sum, o) => sum + o.co2SavedKg, 0).toFixed(1)
-  );
-  const producersCount = allVenues.filter((v) => v.type === "producer").length;
-
-  // Business Rule: 1 Cesto in Omaggio ogni 10 acquisti per le consegne agli addetti delle Imprese CSR
-  const freeBasketThreshold = 10;
-  const freeBasketsEarnedTotal = Math.floor(totalProducerBasketsSold / freeBasketThreshold);
-  const basketsProgressToNextGift = totalProducerBasketsSold % freeBasketThreshold;
 
   return {
     promoterUser,
