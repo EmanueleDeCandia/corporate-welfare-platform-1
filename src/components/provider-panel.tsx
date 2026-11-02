@@ -3,15 +3,19 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
+  Bed,
   Bell,
   CalendarCheck,
   CheckCircle2,
   Clock,
   FileText,
   Info,
+  Plus,
   Receipt,
+  Save,
   Sparkles,
   Stamp,
+  Trash2,
   UserCheck,
   Users,
   UserX,
@@ -36,9 +40,113 @@ type Props = {
 
 export function ProviderPanel({ venue, notifications: items, transactions: rows, bookings = [] }: Props) {
   const router = useRouter();
-  const [panelTab, setPanelTab] = useState<"welfare" | "community">("welfare");
+  const isHospitality =
+    venue.type === "hotel" ||
+    venue.type === "agriturismo" ||
+    (venue.rooms && venue.rooms.length > 0);
+
+  const [panelTab, setPanelTab] = useState<"welfare" | "community" | "rooms">("welfare");
   const [welfareFilter, setWelfareFilter] = useState<"active" | "cancelled" | "all">("active");
   const [pending, setPending] = useState<number | null>(null);
+
+  // Stato per la gestione delle offerte camere convenzionate
+  const [roomsList, setRoomsList] = useState<
+    Array<{ name: string; description: string; capacity: number; priceCents: number }>
+  >(
+    venue.rooms && venue.rooms.length > 0
+      ? venue.rooms
+      : [
+          {
+            name: "Camera Singola (Convenzione Welfare Aziendale · 1 Persona)",
+            description:
+              "1 Posto letto. Prezzo convenzionato 50,00 € coperto al 100% da 1 Voucher Welfare aziendale nominativo (Art. 51 TUIR). Se l'addetto prenota per 2 persone/posti letto, il prezzo per l'altra persona è identico (50,00 €).",
+            capacity: 1,
+            priceCents: 5000,
+          },
+          {
+            name: "Camera Doppia (1 Quota Welfare + 1 Quota Accompagnatore)",
+            description:
+              "2 Posti letto. Prezzo convenzionato 100,00 €: la quota del lavoratore (50,00 €) è coperta dal Voucher Welfare Aziendale. La quota per la seconda persona / accompagnatore non beneficiario di welfare (50,00 €) può essere pagata con carta personale dall'addetto (distinguendola dal voucher) o direttamente dall'ospite invitato (su piattaforma o al check-in).",
+            capacity: 2,
+            priceCents: 10000,
+          },
+        ]
+  );
+  const [savingRooms, setSavingRooms] = useState(false);
+  const [roomSaveMsg, setRoomSaveMsg] = useState("");
+
+  async function handleSaveRooms(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingRooms(true);
+    setRoomSaveMsg("");
+    try {
+      const res = await fetch("/api/provider/rooms", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ venueId: venue.id, rooms: roomsList }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setRoomSaveMsg(data.error || "Errore durante il salvataggio del listino camere.");
+      } else {
+        setRoomSaveMsg(
+          "Offerte camere aggiornate con successo! Le modifiche e le spiegazioni sono ora visibili nella pagina pubblica della tua struttura."
+        );
+        router.refresh();
+      }
+    } catch {
+      setRoomSaveMsg("Errore di connessione.");
+    } finally {
+      setSavingRooms(false);
+    }
+  }
+
+  function handleRoomChange(index: number, field: string, value: any) {
+    setRoomsList((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
+    });
+  }
+
+  function addRoom() {
+    setRoomsList((prev) => [
+      ...prev,
+      {
+        name: `Nuova Camera ${prev.length + 1}`,
+        description: "Descrizione e dettagli della camera convenzionata...",
+        capacity: 2,
+        priceCents: 5000,
+      },
+    ]);
+  }
+
+  function removeRoom(index: number) {
+    if (roomsList.length <= 1) {
+      alert("È richiesta almeno una camera nel listino convenzionato.");
+      return;
+    }
+    setRoomsList((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function resetDefaultRooms() {
+    setRoomsList([
+      {
+        name: "Camera Singola (Convenzione Welfare Aziendale · 1 Persona)",
+        description:
+          "1 Posto letto. Prezzo convenzionato 50,00 € coperto al 100% da 1 Voucher Welfare aziendale nominativo (Art. 51 TUIR). Se l'addetto prenota per 2 persone/posti letto, il prezzo per l'altra persona è identico (50,00 €).",
+        capacity: 1,
+        priceCents: 5000,
+      },
+      {
+        name: "Camera Doppia (1 Quota Welfare + 1 Quota Accompagnatore)",
+        description:
+          "2 Posti letto. Prezzo convenzionato 100,00 €: la quota del lavoratore (50,00 €) è coperta dal Voucher Welfare Aziendale. La quota per la seconda persona / accompagnatore non beneficiario di welfare (50,00 €) può essere pagata con carta personale dall'addetto (distinguendola dal voucher) o direttamente dall'ospite invitato (su piattaforma o al check-in).",
+        capacity: 2,
+        priceCents: 10000,
+      },
+    ]);
+  }
 
   // Filtra transazioni welfare attive vs revocate
   const activeRows = rows.filter(
@@ -174,7 +282,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
       </section>
 
       {/* Navigazione Tab del Pannello Fornitore */}
-      <div className="flex gap-2 border-b border-forest/10 pb-3">
+      <div className="flex gap-2 border-b border-forest/10 pb-3 overflow-x-auto">
         <button
           type="button"
           onClick={() => setPanelTab("welfare")}
@@ -199,6 +307,20 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
           <CalendarCheck size={16} />
           Prenotazioni Community & Spettacoli ({bookings.length})
         </button>
+        {isHospitality ? (
+          <button
+            type="button"
+            onClick={() => setPanelTab("rooms")}
+            className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+              panelTab === "rooms"
+                ? "bg-forest text-cream shadow-sm"
+                : "bg-white text-forest hover:bg-cream border border-forest/10"
+            }`}
+          >
+            <Bed size={16} />
+            Offerte Camere & Convenzioni ({roomsList.length})
+          </button>
+        ) : null}
       </div>
 
       {panelTab === "welfare" ? (
@@ -543,7 +665,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
         </div>
       </section>
         </>
-      ) : (
+      ) : panelTab === "community" ? (
         /* Sezione Prenotazioni Community & Spettacoli Teatrali */
         <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/5">
           <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between border-b border-forest/10 pb-4">
@@ -742,6 +864,171 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
               </table>
             </div>
           )}
+        </section>
+      ) : (
+        /* Sezione Gestione Offerte Camere & Convenzioni Welfare */
+        <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-forest/10 pb-4">
+            <div>
+              <h2 className="font-serif text-2xl text-forest">Gestione Listino Camere & Convenzioni</h2>
+              <p className="text-xs text-olive mt-0.5">
+                Definisci le offerte sulle camere (singola, doppia) e spiega le condizioni welfare aziendale e community visibili sulla pagina pubblica.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={resetDefaultRooms}
+                className="rounded-full border border-forest/20 bg-cream/50 px-3.5 py-1.5 text-xs font-medium text-forest hover:bg-cream transition"
+                title="Ripristina l'offerta standard: Camera Singola 50€ e Camera Doppia 100€"
+              >
+                ↺ Ripristina Offerte Standard
+              </button>
+              <button
+                type="button"
+                onClick={addRoom}
+                className="inline-flex items-center gap-1.5 rounded-full bg-forest px-4 py-1.5 text-xs font-semibold text-cream hover:bg-forest/90 transition shadow-xs"
+              >
+                <Plus size={14} /> Nuova Offerta Camera
+              </button>
+            </div>
+          </div>
+
+          {/* GUIDA RIGOROSA ALLE CONVENZIONI WELFARE & SPESE PRIVATE */}
+          <div className="mt-4 rounded-2xl border border-gold/30 bg-sand/20 p-4 text-xs text-olive leading-relaxed space-y-2">
+            <strong className="block text-sm font-serif text-forest">Linee Guida Nazionali Welfare (Art. 51 TUIR):</strong>
+            <ul className="list-disc pl-4 space-y-1">
+              <li>
+                <strong>Camera Singola (50,00 €):</strong> 1 Posto letto. Riservata alla singola persona beneficiaria del Voucher Welfare Aziendale (coperta al 100%). Se l&apos;addetto prenota 2 posti letto, il prezzo per l&apos;altra persona è identico (50,00 €).
+              </li>
+              <li>
+                <strong>Camera Doppia (100,00 €):</strong> 2 Posti letto. La convenzione welfare copre esclusivamente la quota di 1 persona (50,00 € tramite voucher). La quota per la seconda persona / accompagnatore non beneficiario (50,00 €) può essere saldata con carta personale dall&apos;addetto (distinguendola dal welfare B2B) o direttamente dall&apos;ospite invitato (su piattaforma o al check-in).
+              </li>
+              <li>
+                <strong>Amici & Invitati Community (senza welfare):</strong> I prezzi base sono identici (50 € singola / 100 € doppia), con applicazione automatica dello sconto convenzione del 10% (45 € singola / 90 € doppia) saldabile per intero con la propria carta personale.
+              </li>
+            </ul>
+          </div>
+
+          {/* Form Editing Camere */}
+          <form onSubmit={handleSaveRooms} className="mt-6 space-y-5">
+            {roomsList.map((room, idx) => (
+              <div
+                key={idx}
+                className="rounded-2xl border border-forest/15 bg-cream/40 p-5 space-y-4 relative"
+              >
+                <div className="flex flex-wrap items-center justify-between gap-3 border-b border-forest/10 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-forest text-cream text-[11px] font-bold w-6 h-6 flex items-center justify-center">
+                      {idx + 1}
+                    </span>
+                    <span className="font-semibold text-forest text-sm">
+                      {room.capacity === 1 ? "Camera Singola (1 Posto Letto)" : "Camera Doppia / Multipla"}
+                    </span>
+                  </div>
+                  {roomsList.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removeRoom(idx)}
+                      className="text-xs text-terracotta hover:underline inline-flex items-center gap-1 font-medium"
+                    >
+                      <Trash2 size={13} /> Elimina Offerta
+                    </button>
+                  )}
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="sm:col-span-2">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-forest">
+                      Titolo Offerta / Nome Camera
+                    </label>
+                    <input
+                      type="text"
+                      value={room.name}
+                      onChange={(e) => handleRoomChange(idx, "name", e.target.value)}
+                      required
+                      placeholder="Es. Camera Singola (Convenzione Welfare Aziendale)"
+                      className="mt-1 w-full rounded-xl border border-forest/20 bg-white px-3.5 py-2 text-sm text-forest"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-forest">
+                      Prezzo Convenzione (€)
+                    </label>
+                    <div className="mt-1 flex items-center gap-2">
+                      <input
+                        type="number"
+                        step="1"
+                        min="0"
+                        value={Math.round(room.priceCents / 100)}
+                        onChange={(e) =>
+                          handleRoomChange(idx, "priceCents", Math.round(Number(e.target.value) * 100))
+                        }
+                        required
+                        className="w-full rounded-xl border border-forest/20 bg-white px-3.5 py-2 text-sm text-forest font-semibold"
+                      />
+                      <span className="text-sm font-bold text-forest">€</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-4">
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-forest">
+                      Capienza (Posti Letto)
+                    </label>
+                    <select
+                      value={room.capacity}
+                      onChange={(e) => handleRoomChange(idx, "capacity", Number(e.target.value))}
+                      className="mt-1 w-full rounded-xl border border-forest/20 bg-white px-3.5 py-2 text-sm text-forest"
+                    >
+                      <option value={1}>1 Posto Letto (Singola)</option>
+                      <option value={2}>2 Posti Letto (Doppia/Matrimoniale)</option>
+                      <option value={3}>3 Posti Letto (Tripla)</option>
+                      <option value={4}>4 Posti Letto (Quadrupla)</option>
+                    </select>
+                  </div>
+
+                  <div className="sm:col-span-3">
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-forest">
+                      Descrizione Dettagliata & Condizioni per gli Ospiti
+                    </label>
+                    <textarea
+                      rows={2}
+                      value={room.description}
+                      onChange={(e) => handleRoomChange(idx, "description", e.target.value)}
+                      placeholder="Spiega i servizi inclusi, la tipologia di letto e le condizioni per la seconda persona..."
+                      className="mt-1 w-full rounded-xl border border-forest/20 bg-white px-3.5 py-2 text-sm text-forest"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {roomSaveMsg && (
+              <div
+                className={`rounded-2xl p-4 text-xs font-medium ${
+                  roomSaveMsg.includes("successo")
+                    ? "bg-forest/10 text-forest border border-forest/20"
+                    : "bg-terracotta/10 text-terracotta border border-terracotta/20"
+                }`}
+              >
+                {roomSaveMsg}
+              </div>
+            )}
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                disabled={savingRooms}
+                className="inline-flex items-center gap-2 rounded-full bg-forest px-6 py-3 font-semibold text-cream shadow-md transition hover:bg-forest/90 disabled:opacity-50"
+              >
+                <Save size={16} />
+                {savingRooms ? "Salvataggio in corso..." : "Salva Modifiche Listino Camere"}
+              </button>
+            </div>
+          </form>
         </section>
       )}
 

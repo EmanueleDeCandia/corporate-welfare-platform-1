@@ -395,17 +395,69 @@ export default async function VenueDetailPage({
             <aside className="space-y-6">
               {rooms.length > 0 ? (
                 <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/5">
-                  <h2 className="font-serif text-2xl text-forest">Camere & Alloggi</h2>
-                  <div className="mt-4 space-y-3">
-                    {rooms.map((room) => (
-                      <div key={room.name} className="rounded-2xl bg-cream p-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <p className="font-medium text-forest">{room.name}</p>
-                          <p className="font-semibold text-terracotta">{formatEuro(room.priceCents)}</p>
+                  <div className="flex items-center justify-between border-b border-forest/10 pb-3">
+                    <div>
+                      <h2 className="font-serif text-2xl text-forest">Camere & Convenzioni</h2>
+                      <p className="text-xs text-olive mt-0.5">
+                        Offerte per dipendenti welfare aziendale e ospiti community.
+                      </p>
+                    </div>
+                    <span className="rounded-full bg-forest/5 px-2.5 py-1 text-[11px] font-semibold text-forest">
+                      {rooms.length} Offerte
+                    </span>
+                  </div>
+
+                  <div className="mt-4 space-y-4">
+                    {rooms.map((room) => {
+                      const isSingle = room.capacity === 1 || room.name.toLowerCase().includes("singol");
+                      return (
+                        <div key={room.name} className="rounded-2xl bg-cream/70 p-4 border border-forest/10">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="font-semibold text-forest text-sm md:text-base">{room.name}</p>
+                              <div className="mt-1 flex items-center gap-1.5 flex-wrap">
+                                <span className="inline-flex items-center rounded-full bg-forest/10 px-2 py-0.5 text-[10px] font-bold text-forest uppercase">
+                                  {room.capacity} {room.capacity === 1 ? "Posto Letto" : "Posti Letto"}
+                                </span>
+                                {isSingle ? (
+                                  <span className="inline-flex items-center rounded-full bg-gold/20 text-terracotta px-2 py-0.5 text-[10px] font-bold uppercase">
+                                    Welfare: 100% da Voucher (50 €)
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center rounded-full bg-sand text-forest px-2 py-0.5 text-[10px] font-bold uppercase">
+                                    50 € Voucher + 50 € Carta Personale
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <p className="font-bold text-terracotta text-lg shrink-0">{formatEuro(room.priceCents)}</p>
+                          </div>
+
+                          <p className="mt-2 text-xs text-olive leading-relaxed">{room.description}</p>
+
+                          {/* Spiegazione dettagliata trasparente */}
+                          <div className="mt-3 rounded-xl bg-white/80 p-2.5 text-[11px] text-forest/90 border border-forest/10 space-y-1">
+                            {isSingle ? (
+                              <p>
+                                <strong>Convenzione Welfare:</strong> Riservato a 1 singola persona. Il voucher welfare è personale e copre interamente la quota (50 €). Se prenoti 2 posti letto, la quota convenzionata per l&apos;altra persona è identica (50 €).
+                              </p>
+                            ) : (
+                              <p>
+                                <strong>Convenzione Welfare & Accompagnatore:</strong> Copre la quota di 1 lavoratore (50 € con voucher). La seconda persona/accompagnatore non beneficiaria (50 €) può essere saldata con carta personale dall&apos;addetto o direttamente dall&apos;invitato (su piattaforma o al check-in).
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        <p className="mt-1 text-xs text-olive leading-relaxed">{room.description}</p>
-                      </div>
-                    ))}
+                      );
+                    })}
+                  </div>
+
+                  {/* BOX CONDIZIONI AMICI E INVITATI SENZA WELFARE */}
+                  <div className="mt-4 rounded-2xl border border-dashed border-forest/20 bg-sand/20 p-3.5 text-xs text-olive leading-relaxed">
+                    <strong className="text-forest font-semibold block mb-1">
+                      Per Amici e Ospiti Community (Senza Welfare):
+                    </strong>
+                    I prezzi base delle camere sono identici ({rooms.map((r) => `${r.name.includes("Singol") ? "50 € singola" : "100 € doppia"}`).slice(0, 2).join(" · ")}). Gli invitati della Community RADICI beneficiano dello <strong>sconto convenzione del 10%</strong> (45 € singola / 90 € doppia) pagabile per intero con la propria carta personale, sostenendo la filiera locale e facendo maturare Punti Impatto a chi li ha invitati.
                   </div>
                 </section>
               ) : null}

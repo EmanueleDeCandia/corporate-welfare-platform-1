@@ -253,71 +253,179 @@ function WalletTab(props: Props & { grantEvents?: GrantEventLite[] }) {
         <p className="rounded-2xl bg-sage/15 px-4 py-3 text-sm text-forest">{message}</p>
       ) : null}
 
-      <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/5">
-        <div className="flex items-center justify-between">
+      {/* SEZIONE: STATO DEI VOUCHER WELFARE AZIENDALI (DISPONIBILI O SELEZIONATI) */}
+      <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/10">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-forest/10 pb-4">
           <div>
-            <h3 className="font-serif text-2xl text-forest">Movimenti e Utilizzi Welfare</h3>
+            <h3 className="font-serif text-2xl text-forest">Stato dei Voucher Welfare Assegnati</h3>
             <p className="text-xs text-olive mt-0.5">
-              Storico delle selezioni, riscatti e riaccrediti dei voucher welfare aziendali.
+              Riepilogo nominale dei voucher welfare aziendali ({company?.name ?? "Welfare Aziendale"}) a te intestati (Art. 51 TUIR).
             </p>
           </div>
-          {transactions.length > 5 ? (
-            <span className="text-xs text-olive font-medium">
-              Ultimi 5 movimenti (di {transactions.length})
-            </span>
-          ) : null}
+          <span className="rounded-full bg-forest/10 px-3 py-1 text-xs font-semibold text-forest">
+            {vouchers.filter((v) => v.status === "available").length} Disponibili · {vouchers.filter((v) => v.status === "selected").length} Selezionati
+          </span>
         </div>
+
         <div className="mt-4 space-y-3">
-          {transactions.length === 0 ? (
-            <p className="text-sm text-olive">Nessun movimento. I voucher utilizzati appariranno qui.</p>
+          {vouchers.length === 0 ? (
+            <p className="text-sm text-olive">Nessun voucher welfare presente nel tuo cassetto fiscale.</p>
           ) : (
-            transactions.slice(0, 5).map(({ transaction, venue }) => {
-              const isCancelled =
-                transaction.status === "cancelled" || transaction.paymentStatus === "cancelled";
+            vouchers.map((voucher) => {
+              const assignedVenue = venues.find((v) => v.id === voucher.venueId);
+              const isAvailable = voucher.status === "available";
+              const isSelected = voucher.status === "selected";
+              const isRedeemed = voucher.status === "redeemed";
+
+              const typeLabel =
+                voucher.type === "hotel"
+                  ? "Voucher Pernottamento Convenzionato (1 Persona)"
+                  : voucher.type === "aperitivo"
+                  ? "Voucher Degustazione & Cena KM 0"
+                  : "Voucher Evento Teatrale";
 
               return (
                 <div
-                  key={transaction.id}
-                  className={`flex items-center justify-between gap-4 border-b border-mist pb-3 ${
-                    isCancelled ? "opacity-75" : ""
-                  }`}
+                  key={voucher.id}
+                  className="rounded-2xl border border-forest/10 bg-cream/30 p-4 transition hover:border-forest/20"
                 >
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-forest">{venue.name}</p>
-                      {isCancelled ? (
-                        <span className="inline-flex items-center rounded-full bg-terracotta/15 px-2 py-0.5 text-[10px] font-bold text-terracotta uppercase">
-                          Selezione Annullata
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-full bg-forest/15 px-2 py-0.5 text-[10px] font-bold text-forest uppercase">
-                          Welfare Attivo
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-olive mt-0.5">
-                      {transaction.serviceLabel} · {formatDateTime(transaction.createdAt)}
-                      {isCancelled && " · Voucher restituito e riutilizzabile"}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    {isCancelled ? (
-                      <div>
-                        <span className="line-through text-olive/50 text-xs block">
-                          {formatEuro(transaction.amountCents)}
-                        </span>
-                        <span className="text-sm font-semibold text-terracotta">0,00 € (Riaccreditato)</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-semibold text-forest text-base">{typeLabel}</p>
+                        {isAvailable ? (
+                          <span className="inline-flex items-center rounded-full bg-sage/20 border border-sage/40 px-2.5 py-0.5 text-[11px] font-bold text-forest uppercase">
+                            ● Disponibile per la selezione
+                          </span>
+                        ) : isSelected ? (
+                          <span className="inline-flex items-center rounded-full bg-forest text-cream px-2.5 py-0.5 text-[11px] font-bold uppercase shadow-xs">
+                            ✓ Selezionato: {assignedVenue?.name ?? "Struttura Convenzionata"}
+                          </span>
+                        ) : isRedeemed ? (
+                          <span className="inline-flex items-center rounded-full bg-olive/15 px-2.5 py-0.5 text-[11px] font-bold text-olive uppercase">
+                            Usufruito / Riscattato
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-terracotta/15 px-2.5 py-0.5 text-[11px] font-bold text-terracotta uppercase">
+                            {voucher.status}
+                          </span>
+                        )}
                       </div>
-                    ) : (
-                      <p className="text-sm font-semibold text-forest">{formatEuro(transaction.amountCents)}</p>
-                    )}
+
+                      <p className="text-xs text-olive leading-relaxed">
+                        {isAvailable &&
+                          "Voucher attivo e pronto. Puoi selezionare la struttura ricettiva o la cena KM 0 desiderata tramite i riquadri sopra."}
+                        {isSelected && (
+                          <>
+                            Bloccato per il soggiorno presso <strong>{assignedVenue?.name}</strong> ({assignedVenue?.city ?? ""}).
+                            {" "}Posto letto / tavolo riservato. Presenta il tuo QR o conferma il check-in sul posto.
+                          </>
+                        )}
+                        {isRedeemed && (
+                          <>
+                            Utilizzato presso <strong>{assignedVenue?.name}</strong>. Fatturato all&apos;impresa {company?.name ?? "CSR"} e compensato al gestore.
+                          </>
+                        )}
+                      </p>
+                    </div>
+
+                    <div className="text-right sm:shrink-0">
+                      <p className="text-base font-bold text-forest">{formatEuro(voucher.amountCents)}</p>
+                      <span className="text-[10px] text-olive font-medium block">
+                        Quota Welfare 100%
+                      </span>
+                    </div>
                   </div>
                 </div>
               );
             })
           )}
         </div>
+
+        {/* NOTA DI RIGOROSA SEPARAZIONE TRA WELFARE E SPESE CONSUMER (CESTINI / ACCOMPAGNATORI) */}
+        <div className="mt-4 rounded-2xl border border-forest/15 bg-sand/20 p-3.5 text-xs text-olive leading-relaxed">
+          <strong className="text-forest font-semibold">Nota di Conformità Portafoglio Welfare:</strong> Questo cassetto accoglie unicamente i <strong>Voucher Welfare Aziendali</strong> erogati dalla tua impresa committente (Art. 51 TUIR).
+          Gli ordini di <em>Cesti Filiera Corta KM 0</em> e le <em>quote per accompagnatori / invitati senza voucher</em> costituiscono pagamenti personali privati e sono consultabili esclusivamente nella scheda <strong>&quot;Prenotazioni & Sconti&quot;</strong>.
+        </div>
       </section>
+
+      {/* SEZIONE: STORICO MOVIMENTI ESCLUSIVI WELFARE (SE PRESENTI RISCATTI) */}
+      {(() => {
+        // FILTRO RIGOROSO: Solo ed unicamente transazioni welfare legate a voucher aziendali (mai consumer_payment, mai cesti)
+        const welfareTransactions = transactions.filter(
+          ({ transaction }) =>
+            (transaction.type === "welfare_charge" || transaction.voucherId !== null) &&
+            transaction.type !== "consumer_payment" &&
+            !transaction.serviceLabel.toLowerCase().includes("cesto") &&
+            !transaction.serviceLabel.toLowerCase().includes("prodott")
+        );
+
+        if (welfareTransactions.length === 0) return null;
+
+        return (
+          <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-serif text-2xl text-forest">Storico Riscatto Voucher Welfare</h3>
+                <p className="text-xs text-olive mt-0.5">
+                  Certificazioni di riscatto e riaccredito dei soli voucher welfare aziendali.
+                </p>
+              </div>
+              {welfareTransactions.length > 5 ? (
+                <span className="text-xs text-olive font-medium">
+                  Ultimi 5 movimenti (di {welfareTransactions.length})
+                </span>
+              ) : null}
+            </div>
+            <div className="mt-4 space-y-3">
+              {welfareTransactions.slice(0, 5).map(({ transaction, venue }) => {
+                const isCancelled =
+                  transaction.status === "cancelled" || transaction.paymentStatus === "cancelled";
+
+                return (
+                  <div
+                    key={transaction.id}
+                    className={`flex items-center justify-between gap-4 border-b border-mist pb-3 ${
+                      isCancelled ? "opacity-75" : ""
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-forest">{venue.name}</p>
+                        {isCancelled ? (
+                          <span className="inline-flex items-center rounded-full bg-terracotta/15 px-2 py-0.5 text-[10px] font-bold text-terracotta uppercase">
+                            Selezione Annullata
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-forest/15 px-2 py-0.5 text-[10px] font-bold text-forest uppercase">
+                            Welfare Certificato
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-olive mt-0.5">
+                        {transaction.serviceLabel} · {formatDateTime(transaction.createdAt)}
+                        {isCancelled && " · Voucher restituito e riutilizzabile"}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      {isCancelled ? (
+                        <div>
+                          <span className="line-through text-olive/50 text-xs block">
+                            {formatEuro(transaction.amountCents)}
+                          </span>
+                          <span className="text-sm font-semibold text-terracotta">0,00 € (Riaccreditato)</span>
+                        </div>
+                      ) : (
+                        <p className="text-sm font-semibold text-forest">{formatEuro(transaction.amountCents)}</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })()}
     </div>
   );
 }

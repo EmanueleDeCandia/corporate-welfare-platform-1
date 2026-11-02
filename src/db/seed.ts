@@ -450,16 +450,18 @@ export async function seedDatabase() {
         ],
         rooms: [
           {
-            name: "Camera Matrimoniale dei Cipressi",
-            description: "Letto in ferro battuto, travi a vista e finestra sulla valle.",
-            capacity: 2,
+            name: "Camera Singola (Convenzione Welfare Aziendale · 1 Persona)",
+            description:
+              "1 Posto letto. Prezzo convenzionato 50,00 € coperto al 100% da 1 Voucher Welfare aziendale nominativo (Art. 51 TUIR). Se l'addetto prenota per 2 persone/posti letto, il prezzo per l'altra persona è identico (50,00 €).",
+            capacity: 1,
             priceCents: 5000,
           },
           {
-            name: "Suite dell'Olivo",
-            description: "Soggiorno indipendente, vasca in pietra e terrazzo privato.",
+            name: "Camera Doppia (1 Quota Welfare + 1 Quota Accompagnatore)",
+            description:
+              "2 Posti letto. Prezzo convenzionato 100,00 €: la quota del lavoratore (50,00 €) è coperta dal Voucher Welfare Aziendale. La quota per la seconda persona / accompagnatore non beneficiario di welfare (50,00 €) può essere pagata con carta personale dall'addetto (distinguendola dal voucher) o direttamente dall'ospite invitato (su piattaforma o al check-in).",
             capacity: 2,
-            priceCents: 7800,
+            priceCents: 10000,
           },
         ],
         priceHotelCents: 5000,
@@ -507,13 +509,21 @@ export async function seedDatabase() {
         ],
         rooms: [
           {
-            name: "Superior Vigneto",
-            description: "Vista filari, lino locale e vasca profonda.",
+            name: "Camera Singola Vigneto (Convenzione Welfare Aziendale · 1 Persona)",
+            description:
+              "1 Posto letto tra i filari di Barolo. Prezzo convenzionato 50,00 € coperto al 100% da 1 Voucher Welfare nominativo (Art. 51 TUIR). Prezzo identico per eventuale seconda persona (50,00 €).",
+            capacity: 1,
+            priceCents: 5000,
+          },
+          {
+            name: "Camera Doppia Superior Vigneto (1 Quota Welfare + 1 Quota Accompagnatore)",
+            description:
+              "2 Posti letto tra i filari con vista panoramica. Prezzo convenzionato 100,00 €: 50,00 € coperti da Voucher Welfare + 50,00 € per l'accompagnatore saldabili con carta personale o al check-in.",
             capacity: 2,
-            priceCents: 9000,
+            priceCents: 10000,
           },
         ],
-        priceHotelCents: 9000,
+        priceHotelCents: 5000,
         priceAperitivoCents: 2800,
         priceShowCents: 0,
         checkinCode: "venue-langhe-oro",
@@ -563,13 +573,21 @@ export async function seedDatabase() {
         ],
         rooms: [
           {
-            name: "Camera delle Crete",
-            description: "Vista Val d'Orcia, caminetto e lino lavato.",
+            name: "Camera Singola delle Crete (Convenzione Welfare Aziendale · 1 Persona)",
+            description:
+              "1 Posto letto nel casale storico della Val d'Orcia. Prezzo convenzionato 50,00 € coperto al 100% da Voucher Welfare (Art. 51 TUIR). Prezzo per eventuale seconda persona identico (50,00 €).",
+            capacity: 1,
+            priceCents: 5000,
+          },
+          {
+            name: "Camera Doppia delle Crete (1 Quota Welfare + 1 Quota Accompagnatore)",
+            description:
+              "2 Posti letto con caminetto e lino lavato. Prezzo complessivo 100,00 €: 50,00 € coperti dal Voucher Welfare dell'addetto + 50,00 € a carico della seconda persona con carta personale (su piattaforma o al check-in).",
             capacity: 2,
-            priceCents: 8500,
+            priceCents: 10000,
           },
         ],
-        priceHotelCents: 8500,
+        priceHotelCents: 5000,
         priceAperitivoCents: 2400,
         priceShowCents: 0,
         checkinCode: "venue-fontebella",
@@ -617,13 +635,21 @@ export async function seedDatabase() {
         ],
         rooms: [
           {
-            name: "Suite della Corte",
-            description: "Volte a stella, letto a baldacchino e patio privato.",
+            name: "Camera Singola della Corte (Convenzione Welfare Aziendale · 1 Persona)",
+            description:
+              "1 Posto letto tra gli ulivi secolari di Ostuni con volte in pietra. Prezzo convenzionato 50,00 € coperto al 100% da Voucher Welfare nominativo (Art. 51 TUIR). Prezzo identico per l'altra persona (50,00 €).",
+            capacity: 1,
+            priceCents: 5000,
+          },
+          {
+            name: "Camera Doppia Suite della Corte (1 Quota Welfare + 1 Quota Accompagnatore)",
+            description:
+              "2 Posti letto con patio privato. Prezzo convenzionato 100,00 €: 50,00 € coperti dal Voucher Welfare dell'addetto + 50,00 € per l'accompagnatore non beneficiario con carta personale (su piattaforma o al check-in).",
             capacity: 2,
-            priceCents: 11000,
+            priceCents: 10000,
           },
         ],
-        priceHotelCents: 11000,
+        priceHotelCents: 5000,
         priceAperitivoCents: 2200,
         priceShowCents: 0,
         checkinCode: "venue-le-grazie",
@@ -857,16 +883,18 @@ export async function seedDatabase() {
         ],
         rooms: [
           {
-            name: "Camera Il Colle Panoramica",
-            description: "Arredi in legno massello, travi in quercia a vista e ampia finestra sui colli di Caldarola.",
-            capacity: 2,
+            name: "Camera Singola Panoramica (Convenzione Welfare Aziendale · 1 Persona)",
+            description:
+              "1 Posto letto con vista sui colli di Caldarola. Prezzo convenzionato 50,00 € coperto al 100% da 1 Voucher Welfare nominativo (Art. 51 TUIR). Se l'addetto prenota per 2 persone, il prezzo per l'altra persona è identico (50,00 €).",
+            capacity: 1,
             priceCents: 5000,
           },
           {
-            name: "Suite La Torre dei Monti Azzurri",
-            description: "Spaziosa suite con camino rustico, letto matrimoniale in ferro battuto e terrazzino affacciato sui Sibillini.",
-            capacity: 3,
-            priceCents: 7500,
+            name: "Camera Doppia Panoramica (1 Quota Welfare + 1 Quota Accompagnatore)",
+            description:
+              "2 Posti letto con prima colazione artigianale dell'orto. Prezzo complessivo 100,00 €: 50,00 € coperti dal Voucher Welfare dell'addetto + 50,00 € a carico della seconda persona con carta personale (sulla piattaforma o al check-in).",
+            capacity: 2,
+            priceCents: 10000,
           },
         ],
         priceHotelCents: 5000,
@@ -916,17 +944,26 @@ export async function seedDatabase() {
   await db.update(venues).set({ providerUserId: saraCaseificio.id }).where(eq(venues.id, caseificioSibillini.id));
   await db.update(venues).set({ providerUserId: sandroColle.id }).where(eq(venues.id, agriturismoColle.id));
 
-  // POPOLAMENTO OFFERTE SERVIZI STRUTTURE (PERNOTTAMENTO, CENA O ENTRAMBI)
+  // POPOLAMENTO OFFERTE SERVIZI STRUTTURE (PERNOTTAMENTO SINGOLA 50€, DOPPIA 100€, CENA KM 0)
   const insertedOfferings = await db
     .insert(venueOfferings)
     .values([
-      // La Valle: entrambi
+      // Agriturismo La Valle
       {
         venueId: laValle.id,
         benefitType: "overnight",
-        name: "Camera Matrimoniale dei Cipressi",
-        description: "Letto in ferro battuto, travi a vista e finestra sulla vallata dei Sibillini.",
+        name: "Camera Singola (Convenzione Welfare Aziendale)",
+        description: "1 Posto letto. Prezzo 50,00 € coperto al 100% da 1 voucher welfare (Art. 51 TUIR). Se si prenota per 2 posti letto, il prezzo per l'altra persona è identico (50,00 €).",
         listPriceCents: 5000,
+        acceptsWelfare: true,
+        dailyCapacity: 4,
+      },
+      {
+        venueId: laValle.id,
+        benefitType: "overnight",
+        name: "Camera Doppia (1 Persona Welfare + 1 Accompagnatore)",
+        description: "2 Posti letto. Prezzo 100,00 €: la quota lavoratore (50,00 €) è coperta da voucher welfare; la quota accompagnatore (50,00 €) è pagabile con carta personale.",
+        listPriceCents: 10000,
         acceptsWelfare: true,
         dailyCapacity: 4,
       },
@@ -939,13 +976,23 @@ export async function seedDatabase() {
         acceptsWelfare: true,
         dailyCapacity: 20,
       },
-      // Relais Langhe Oro: entrambi
+
+      // Relais Langhe Oro
       {
         venueId: relaisLanghe.id,
         benefitType: "overnight",
-        name: "Camera Superior Vigneto",
-        description: "Vista panoramica sui filari di Barolo, colazione con nocciole d'alpeggio.",
-        listPriceCents: 9000,
+        name: "Camera Singola Vigneto (Convenzione Welfare)",
+        description: "1 Posto letto tra i filari di Barolo. Prezzo convenzionato 50,00 € coperto al 100% da voucher welfare nominativo.",
+        listPriceCents: 5000,
+        acceptsWelfare: true,
+        dailyCapacity: 5,
+      },
+      {
+        venueId: relaisLanghe.id,
+        benefitType: "overnight",
+        name: "Camera Doppia Superior Vigneto (Welfare + Accompagnatore)",
+        description: "2 Posti letto tra i filari. Prezzo 100,00 €: 50,00 € coperti da voucher welfare + 50,00 € a carico della seconda persona con carta personale.",
+        listPriceCents: 10000,
         acceptsWelfare: true,
         dailyCapacity: 5,
       },
@@ -958,13 +1005,23 @@ export async function seedDatabase() {
         acceptsWelfare: true,
         dailyCapacity: 15,
       },
-      // Podere Fontebella: entrambi
+
+      // Podere Fontebella
       {
         venueId: podereFonte.id,
         benefitType: "overnight",
-        name: "Camera delle Crete Senesi",
-        description: "Soggiorno nel casale del Settecento tra cipressi e crete toscane.",
-        listPriceCents: 8500,
+        name: "Camera Singola delle Crete (Convenzione Welfare)",
+        description: "1 Posto letto nel casale storico toscano. Prezzo convenzionato 50,00 € coperto al 100% da voucher welfare.",
+        listPriceCents: 5000,
+        acceptsWelfare: true,
+        dailyCapacity: 3,
+      },
+      {
+        venueId: podereFonte.id,
+        benefitType: "overnight",
+        name: "Camera Doppia delle Crete (Welfare + Accompagnatore)",
+        description: "2 Posti letto con caminetto e vista Val d'Orcia. Prezzo 100,00 €: 50,00 € welfare + 50,00 € accompagnatore con carta personale.",
+        listPriceCents: 10000,
         acceptsWelfare: true,
         dailyCapacity: 3,
       },
@@ -977,13 +1034,23 @@ export async function seedDatabase() {
         acceptsWelfare: true,
         dailyCapacity: 12,
       },
-      // Masseria Le Grazie: entrambi
+
+      // Masseria Le Grazie
       {
         venueId: masseriaGrazie.id,
         benefitType: "overnight",
-        name: "Suite della Corte in Pietra",
-        description: "Volte a stella in masseria fortificata tra gli ulivi secolari di Ostuni.",
-        listPriceCents: 11000,
+        name: "Camera Singola della Corte (Convenzione Welfare)",
+        description: "1 Posto letto con volte in pietra a Ostuni. Prezzo convenzionato 50,00 € coperto da voucher welfare nominativo.",
+        listPriceCents: 5000,
+        acceptsWelfare: true,
+        dailyCapacity: 4,
+      },
+      {
+        venueId: masseriaGrazie.id,
+        benefitType: "overnight",
+        name: "Camera Doppia Suite della Corte (Welfare + Accompagnatore)",
+        description: "2 Posti letto con patio privato tra gli ulivi. Prezzo 100,00 €: 50,00 € welfare + 50,00 € accompagnatore con carta personale.",
+        listPriceCents: 10000,
         acceptsWelfare: true,
         dailyCapacity: 4,
       },
@@ -996,6 +1063,7 @@ export async function seedDatabase() {
         acceptsWelfare: true,
         dailyCapacity: 18,
       },
+
       // Osteria del Tiglio: SOLO CENA
       {
         venueId: osteriaTiglio.id,
@@ -1006,13 +1074,23 @@ export async function seedDatabase() {
         acceptsWelfare: true,
         dailyCapacity: 25,
       },
-      // Agriturismo Colle: entrambi
+
+      // Agriturismo Colle
       {
         venueId: agriturismoColle.id,
         benefitType: "overnight",
-        name: "Camera Il Colle Panoramica",
-        description: "Pernottamento per il lavoratore con prima colazione artigianale con crostate fatte in casa e prodotti dell'orto.",
+        name: "Camera Singola Panoramica (Convenzione Welfare)",
+        description: "1 Posto letto sui colli di Caldarola con prima colazione. Prezzo 50,00 € coperto da voucher welfare.",
         listPriceCents: 5000,
+        acceptsWelfare: true,
+        dailyCapacity: 4,
+      },
+      {
+        venueId: agriturismoColle.id,
+        benefitType: "overnight",
+        name: "Camera Doppia Panoramica (Welfare + Accompagnatore)",
+        description: "2 Posti letto con vista Sibillini. Prezzo 100,00 €: 50,00 € voucher welfare + 50,00 € accompagnatore con carta personale.",
+        listPriceCents: 10000,
         acceptsWelfare: true,
         dailyCapacity: 4,
       },
@@ -1028,8 +1106,12 @@ export async function seedDatabase() {
     ])
     .returning();
 
-  const defaultOvernightOffering = insertedOfferings[0]; // La Valle overnight
-  const defaultDinnerOffering = insertedOfferings[1];    // La Valle dinner
+  const defaultOvernightOffering = insertedOfferings.find(
+    (o) => o.venueId === laValle.id && o.benefitType === "overnight"
+  )!;
+  const defaultDinnerOffering = insertedOfferings.find(
+    (o) => o.venueId === laValle.id && o.benefitType === "dinner"
+  )!;
 
 
   // POPOLAMENTO EVENTI E SPETTACOLI DEL MATCHING GRANT PROMOTORI (CON DATE E CAPIENZA POSTI)
