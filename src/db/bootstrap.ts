@@ -501,6 +501,8 @@ DROP TABLE IF EXISTS grant_events;
 DROP TABLE IF EXISTS venue_offerings;
 DROP TABLE IF EXISTS plan_extra_allocations;
 DROP TABLE IF EXISTS welfare_plans;
+DROP TABLE IF EXISTS local_products;
+DROP TABLE IF EXISTS local_producers;
 DROP TABLE IF EXISTS venues;
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS destinations;

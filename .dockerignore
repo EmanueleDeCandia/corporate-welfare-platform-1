@@ -2,6 +2,8 @@ node_modules
 .next
 .git
 .pgdata
+# Mai spedire nel container un database locale: si rigenera dal seed al primo avvio
+radici.db
 radici.db-wal
 radici.db-shm
 npm-debug.log*

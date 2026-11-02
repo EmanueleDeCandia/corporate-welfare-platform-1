@@ -52,21 +52,64 @@ function applySchema() {
     .run(JSON.stringify(SCHEMA_VERSION));
 }
 
+function countRows(table: string): number {
+  if (!tableExists(table)) return 0;
+  try {
+    const row = sqlite.prepare(`SELECT COUNT(*) AS c FROM ${table}`).get() as { c: number } | undefined;
+    return Number(row?.c ?? 0);
+  } catch {
+    return 0;
+  }
+}
+
+/** Ricostruisce schema e dati da zero (usato dal reset demo e dalle migrazioni). */
+function rebuildFromScratch() {
+  sqlite.exec(DROP_ALL_SQL);
+  sqlite.pragma("foreign_keys = ON");
+  applySchema();
+}
+
+/**
+ * Un seed interrotto (es. reset demo fallito a metà) lascia il DB popolato solo in parte:
+ * imprese e strutture presenti, ma nessun piano welfare e nessun voucher. In quello stato
+ * `seedIfEmpty` non riseminerebbe mai perché trova le imprese, e l'app resterebbe senza
+ * dati (niente budget, niente voucher, nessun addebito). Qui lo rileviamo e ripariamo.
+ */
+function isPartiallySeeded(): boolean {
+  const companiesCount = countRows("companies");
+  const plansCount = countRows("welfare_plans");
+  const vouchersCount = countRows("vouchers");
+  return companiesCount > 0 && plansCount === 0 && vouchersCount === 0;
+}
+
 export async function initDb() {
   if (!globalForDb.__dbInitPromise) {
     globalForDb.__dbInitPromise = (async () => {
       const version = currentSchemaVersion();
       const hasLegacyVouchers = tableExists("vouchers") && !tableExists("welfare_plans");
       if (version !== SCHEMA_VERSION || hasLegacyVouchers) {
-        sqlite.exec(DROP_ALL_SQL);
-        sqlite.pragma("foreign_keys = ON");
-        applySchema();
+        rebuildFromScratch();
       } else if (!tableExists("welfare_plans")) {
         applySchema();
       }
 
-      const { ensureSeeded } = await import("@/db/seed");
+      const { ensureSeeded, resetSeedCache } = await import("@/db/seed");
       await ensureSeeded();
+
+      if (isPartiallySeeded()) {
+        console.warn("Database parzialmente popolato: ricostruzione completa del seed demo.");
+        resetSeedCache();
+        rebuildFromScratch();
+        await ensureSeeded();
+      }
+
+      // Compatta il WAL nel file principale: in un container il DB resta autoconsistente
+      // anche se il file -wal non viene conservato.
+      try {
+        sqlite.pragma("wal_checkpoint(TRUNCATE)");
+      } catch {
+        /* checkpoint non critico */
+      }
     })().catch((err) => {
       globalForDb.__dbInitPromise = undefined;
       console.error("Database initialization failed:", err);
