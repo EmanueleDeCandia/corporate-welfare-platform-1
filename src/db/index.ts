@@ -384,6 +384,21 @@ export async function initDb() {
 
       try {
         const vCols = sqlite.prepare("PRAGMA table_info(venues)").all() as Array<{ name: string }>;
+        if (!vCols.some((col) => col.name === "aperitivo_menu")) {
+          sqlite.exec("ALTER TABLE venues ADD COLUMN aperitivo_menu TEXT DEFAULT '[]';");
+        }
+        if (!vCols.some((col) => col.name === "rooms")) {
+          sqlite.exec("ALTER TABLE venues ADD COLUMN rooms TEXT DEFAULT '[]';");
+        }
+        if (!vCols.some((col) => col.name === "price_hotel_cents")) {
+          sqlite.exec("ALTER TABLE venues ADD COLUMN price_hotel_cents INTEGER NOT NULL DEFAULT 0;");
+        }
+        if (!vCols.some((col) => col.name === "price_aperitivo_cents")) {
+          sqlite.exec("ALTER TABLE venues ADD COLUMN price_aperitivo_cents INTEGER NOT NULL DEFAULT 0;");
+        }
+        if (!vCols.some((col) => col.name === "price_show_cents")) {
+          sqlite.exec("ALTER TABLE venues ADD COLUMN price_show_cents INTEGER NOT NULL DEFAULT 0;");
+        }
         if (!vCols.some((col) => col.name === "basket_name")) {
           sqlite.exec("ALTER TABLE venues ADD COLUMN basket_name TEXT;");
         }
