@@ -1610,14 +1610,17 @@ export function PromotersDashboardView({ data }: Props) {
               </div>
             ) : (
               <div className="mt-4 overflow-x-auto">
-                <table className="w-full min-w-[900px] text-left text-xs">
+                <table className="w-full min-w-[1150px] text-left text-xs">
                   <thead>
                     <tr className="border-b border-mist text-olive uppercase tracking-wider text-[10px]">
                       <th className="pb-3 px-3 whitespace-nowrap">Data & Orario</th>
                       <th className="pb-3 px-3 whitespace-nowrap">Ospite</th>
+                      <th className="pb-3 px-3 text-center whitespace-nowrap">Tipo Spesa</th>
                       <th className="pb-3 px-3 whitespace-nowrap">Struttura / Teatro</th>
                       <th className="pb-3 px-3 whitespace-nowrap">Evento / Servizio</th>
                       <th className="pb-3 px-3 text-center whitespace-nowrap">Posti</th>
+                      <th className="pb-3 px-3 text-right whitespace-nowrap">Importo Lordo</th>
+                      <th className="pb-3 px-3 text-right whitespace-nowrap">Prezzo Spettacolo</th>
                       <th className="pb-3 px-3 text-right whitespace-nowrap">Importo Netto</th>
                       <th className="pb-3 px-3 text-center whitespace-nowrap">Stato</th>
                     </tr>
@@ -1634,6 +1637,33 @@ export function PromotersDashboardView({ data }: Props) {
                           <p className="text-[11px] text-olive">{b.guestEmail}</p>
                           {b.guestPhone && <p className="text-[10px] text-ink/70">Tel: {b.guestPhone}</p>}
                         </td>
+
+                        {/* COLONNA 1: Tipologia Spesa (Voucher, Grant, Consumer) */}
+                        <td className="py-3.5 px-3 text-center whitespace-nowrap">
+                          {b.expenseCategory === "Voucher" ? (
+                            <span
+                              className="inline-flex items-center rounded-full bg-forest text-cream px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-xs"
+                              title="Coperta da Voucher Welfare Aziendale (Art. 51 TUIR)"
+                            >
+                              Voucher
+                            </span>
+                          ) : b.expenseCategory === "Grant" ? (
+                            <span
+                              className="inline-flex items-center rounded-full bg-terracotta text-cream px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider shadow-xs"
+                              title="Spettacolo culturale coperto da Matching Grant Promotori RADICI"
+                            >
+                              Grant
+                            </span>
+                          ) : (
+                            <span
+                              className="inline-flex items-center rounded-full bg-sand text-forest border border-forest/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                              title="Pagamento privato con carta personale Community RADICI"
+                            >
+                              Consumer
+                            </span>
+                          )}
+                        </td>
+
                         <td className="py-3.5 px-3 text-forest">
                           <p className="font-medium">{b.venueName}</p>
                           <p className="text-[11px] text-olive">{b.venueCity} ({b.venueType})</p>
@@ -1651,9 +1681,41 @@ export function PromotersDashboardView({ data }: Props) {
                             {b.partySize} {b.partySize === 1 ? "posto" : "posti"}
                           </span>
                         </td>
+
+                        {/* COLONNA 2: Importo Lordo dei Voucher / Listino */}
+                        <td className="py-3.5 px-3 text-right whitespace-nowrap">
+                          <span className="font-semibold text-forest">{formatEuro(b.grossAmountCents)}</span>
+                          <span className="block text-[10px] text-olive font-normal">
+                            {b.expenseCategory === "Voucher"
+                              ? "Valore Voucher"
+                              : b.expenseCategory === "Grant"
+                              ? "Fondo Promotori"
+                              : "Listino Base"}
+                          </span>
+                        </td>
+
+                        {/* COLONNA 3: Prezzo Teatri o altri Spettacoli */}
+                        <td className="py-3.5 px-3 text-right whitespace-nowrap">
+                          {b.theaterPriceCents !== null ? (
+                            <div>
+                              <span className="font-semibold text-terracotta">{formatEuro(b.theaterPriceCents)}</span>
+                              <span className="block text-[10px] text-olive font-normal">Scheda Teatro</span>
+                            </div>
+                          ) : (
+                            <span className="text-olive/40 text-xs">—</span>
+                          )}
+                        </td>
+
+                        {/* COLONNA 4: Importo Netto Pagato dall'Utente */}
                         <td className="py-3.5 px-3 text-right font-serif text-sm font-bold text-forest whitespace-nowrap">
                           {formatEuro(b.finalPriceCents)}
+                          {b.finalPriceCents === 0 ? (
+                            <span className="block text-[10px] text-forest font-sans font-medium">100% Coperto</span>
+                          ) : (
+                            <span className="block text-[10px] text-terracotta font-sans font-medium">Pagato Ospite</span>
+                          )}
                         </td>
+
                         <td className="py-3.5 px-3 text-center whitespace-nowrap">
                           {b.status === "presence_confirmed" ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-2.5 py-0.5 text-[11px] font-semibold text-forest">

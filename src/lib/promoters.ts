@@ -241,6 +241,9 @@ export type PromoterDashboardData = {
     bookingType: string;
     serviceLabel: string;
     eventTitle: string | null;
+    expenseCategory: "Voucher" | "Grant" | "Consumer";
+    grossAmountCents: number;
+    theaterPriceCents: number | null;
     finalPriceCents: number;
     notes: string | null;
   }>;
@@ -406,6 +409,39 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       serviceLabel = "Ristorazione / Cena";
     }
 
+    // 1. Tipologia Spesa / Circuito: Voucher, Grant, Consumer
+    let expenseCategory: "Voucher" | "Grant" | "Consumer" = "Consumer";
+    if (r.booking.grantEventId || r.venue.type === "theater" || bType === "theater_event") {
+      expenseCategory = "Grant";
+    } else if (r.booking.voucherId) {
+      expenseCategory = "Voucher";
+    } else {
+      expenseCategory = "Consumer";
+    }
+
+    // 2. Importo Lordo dei Voucher / Listino (valore nominale senza commissioni startup)
+    let grossAmountCents = r.booking.totalAmountCents;
+    if (!grossAmountCents || grossAmountCents === 0) {
+      if (expenseCategory === "Grant") {
+        grossAmountCents =
+          r.grantEvent?.grantAmountCents ??
+          (r.venue.priceShowCents > 0 ? r.venue.priceShowCents : 5000);
+      } else if (expenseCategory === "Voucher") {
+        grossAmountCents = bType === "dinner" || bType === "aperitivo" ? 2500 : 5000;
+      } else {
+        grossAmountCents = r.booking.finalPriceCents + (r.booking.discountCents || 0);
+      }
+    }
+
+    // 3. Prezzo Spettacolo / Biglietto Teatro (dalla scheda del teatro o evento)
+    let theaterPriceCents: number | null = null;
+    if (r.venue.type === "theater" || r.booking.grantEventId || bType === "theater_event") {
+      theaterPriceCents =
+        r.venue.priceShowCents > 0
+          ? r.venue.priceShowCents
+          : (r.grantEvent?.grantAmountCents ?? 5000);
+    }
+
     return {
       id: r.booking.id,
       createdAt: r.booking.createdAt,
@@ -422,6 +458,9 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       bookingType: bType,
       serviceLabel,
       eventTitle: r.grantEvent?.title ?? null,
+      expenseCategory,
+      grossAmountCents,
+      theaterPriceCents,
       finalPriceCents: r.booking.finalPriceCents,
       notes: r.booking.notes,
     };

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   Ticket,
@@ -10,6 +11,7 @@ import {
   Calendar,
   AlertTriangle,
   QrCode,
+  Save,
   ShieldCheck,
   Search,
   UserCheck,
@@ -18,17 +20,51 @@ import {
   Info,
 } from "lucide-react";
 import type { TheaterDashboardData, TheaterSpectator } from "@/lib/theater";
-import { formatDate, formatDateTime } from "@/lib/utils";
+import { formatDate, formatDateTime, formatEuro } from "@/lib/utils";
 
 type Props = {
   data: TheaterDashboardData;
 };
 
 export function TheaterDashboardView({ data }: Props) {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"shows" | "spectators" | "venue">("shows");
   const [spectators, setSpectators] = useState<TheaterSpectator[]>(data.spectators);
   const [searchQuery, setSearchQuery] = useState("");
   const [updatingId, setUpdatingId] = useState<number | null>(null);
+
+  const [priceShowEuros, setPriceShowEuros] = useState(
+    String(Math.round((data.theaterVenue.priceShowCents || 5000) / 100))
+  );
+  const [savingPrice, setSavingPrice] = useState(false);
+  const [priceMsg, setPriceMsg] = useState("");
+
+  async function handleSavePrice(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingPrice(true);
+    setPriceMsg("");
+    try {
+      const res = await fetch("/api/theater/price", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          venueId: data.theaterVenue.id,
+          priceShowCents: Math.round(parseFloat(priceShowEuros || "0") * 100),
+        }),
+      });
+      const resData = await res.json();
+      if (!res.ok) {
+        setPriceMsg(resData.error || "Errore nel salvataggio.");
+      } else {
+        setPriceMsg("Prezzo spettacolo aggiornato con successo!");
+        router.refresh();
+      }
+    } catch {
+      setPriceMsg("Errore di connessione.");
+    } finally {
+      setSavingPrice(false);
+    }
+  }
 
   const filteredSpectators = spectators.filter(
     (s) =>
@@ -401,6 +437,56 @@ export function TheaterDashboardView({ data }: Props) {
 
       {activeTab === "venue" && (
         <div className="grid gap-6 md:grid-cols-2">
+          {/* Card Configurazione Prezzo Biglietto Spettacolo */}
+          <div className="rounded-3xl border border-forest/10 bg-white p-6 shadow-xs md:col-span-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-forest/10 pb-4">
+              <div>
+                <h2 className="font-serif text-2xl text-forest">Tariffa Spettacolo & Listino Biglietto</h2>
+                <p className="mt-1 text-xs text-olive">
+                  Imposta il prezzo ufficiale dello spettacolo a teatro. Questo valore viene registrato nelle prenotazioni della rete e comunicato alla Startup Promotrice RADICI.
+                </p>
+              </div>
+              <span className="rounded-full bg-forest/10 px-3 py-1 text-xs font-semibold text-forest shrink-0">
+                Prezzo Attuale: {formatEuro(data.theaterVenue.priceShowCents || 5000)}
+              </span>
+            </div>
+
+            <form onSubmit={handleSavePrice} className="mt-5 flex flex-col sm:flex-row items-end gap-4 max-w-lg">
+              <div className="flex-1 w-full">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-forest mb-1.5">
+                  Prezzo Spettacolo / Biglietto (€)
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="0.50"
+                    min="0"
+                    value={priceShowEuros}
+                    onChange={(e) => setPriceShowEuros(e.target.value)}
+                    required
+                    className="w-full rounded-2xl border border-forest/20 bg-cream/30 px-4 py-2.5 text-sm text-forest font-semibold focus:border-forest focus:outline-none"
+                  />
+                  <span className="absolute right-4 top-2.5 text-sm font-bold text-forest">€</span>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={savingPrice}
+                className="inline-flex items-center gap-2 rounded-full bg-forest px-6 py-3 text-xs font-semibold text-cream transition hover:bg-forest/90 disabled:opacity-50 shadow-xs shrink-0"
+              >
+                <Save size={14} />
+                {savingPrice ? "Salvataggio..." : "Salva Prezzo Spettacolo"}
+              </button>
+            </form>
+
+            {priceMsg && (
+              <p className={`mt-3 text-xs font-medium ${priceMsg.includes("successo") ? "text-forest" : "text-terracotta"}`}>
+                {priceMsg}
+              </p>
+            )}
+          </div>
+
           <div className="rounded-3xl border border-forest/10 bg-white p-6 shadow-xs">
             <h2 className="font-serif text-2xl text-forest">Scheda Teatro Convenzionato</h2>
             <p className="mt-2 text-xs leading-5 text-olive">
