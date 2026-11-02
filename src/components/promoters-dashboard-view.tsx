@@ -925,18 +925,18 @@ export function PromotersDashboardView({ data }: Props) {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left text-sm">
+            <table className="w-full min-w-[1100px] text-left text-sm">
               <thead className="text-[11px] uppercase tracking-wider text-olive border-b border-mist">
                 <tr>
-                  <th className="py-3">Data & ID</th>
-                  <th className="py-3">Beneficiario / Dipendente</th>
-                  <th className="py-3">Impresa Finanziatrice</th>
-                  <th className="py-3">Fornitore / Struttura</th>
-                  <th className="py-3">Servizio</th>
-                  <th className="py-3 text-right">Lordo</th>
-                  <th className="py-3 text-right text-gold">Fee Radici (10%)</th>
-                  <th className="py-3 text-right">Netto Fornitore</th>
-                  <th className="py-3 text-center">Stato Saldo</th>
+                  <th className="py-3 px-3 whitespace-nowrap">Data & ID</th>
+                  <th className="py-3 px-3 whitespace-nowrap">Beneficiario / Dipendente</th>
+                  <th className="py-3 px-3 whitespace-nowrap">Impresa Finanziatrice</th>
+                  <th className="py-3 px-3 whitespace-nowrap">Fornitore / Struttura</th>
+                  <th className="py-3 px-3 whitespace-nowrap">Servizio</th>
+                  <th className="py-3 px-3 text-right whitespace-nowrap">Lordo</th>
+                  <th className="py-3 px-3 text-right text-gold whitespace-nowrap">Fee Radici (10%)</th>
+                  <th className="py-3 px-3 text-right whitespace-nowrap">Netto Fornitore</th>
+                  <th className="py-3 px-3 text-center whitespace-nowrap">Stato Saldo</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-mist">
@@ -959,31 +959,31 @@ export function PromotersDashboardView({ data }: Props) {
                         key={tx.id}
                         className={`transition ${isCancelled ? "bg-mist/20 opacity-70" : "hover:bg-cream/40"}`}
                       >
-                        <td className="py-3 font-mono text-xs text-olive">
+                        <td className="py-3.5 px-3 font-mono text-xs text-olive whitespace-nowrap">
                           {formatDate(tx.createdAt)}
                           <span className="block text-[10px] text-ink/40">#{tx.id}</span>
                           {isCancelled && (
                             <span className="block text-[10px] text-terracotta font-medium mt-0.5">Revocata</span>
                           )}
                         </td>
-                        <td className="py-3 font-medium text-forest">
+                        <td className="py-3.5 px-3 font-medium text-forest">
                           {tx.userName}
                           <span className="block text-[11px] text-olive">{tx.userEmail}</span>
                         </td>
-                        <td className="py-3 text-forest">
+                        <td className="py-3.5 px-3 text-forest">
                           {tx.companyName || "Acquisto Diretto"}
                           {tx.companyVat ? (
                             <span className="block text-[10px] text-olive font-mono">P.IVA {tx.companyVat}</span>
                           ) : null}
                         </td>
-                        <td className="py-3 text-forest">
+                        <td className="py-3.5 px-3 text-forest">
                           {tx.venueName}
                           <span className="block text-[11px] text-olive">{tx.venueCity} ({tx.venueType})</span>
                         </td>
-                        <td className="py-3 text-xs capitalize text-forest">
+                        <td className="py-3.5 px-3 text-xs capitalize text-forest">
                           {tx.serviceLabel}
                         </td>
-                        <td className="py-3 text-right font-medium text-forest">
+                        <td className="py-3.5 px-3 text-right font-medium text-forest whitespace-nowrap">
                           {isCancelled ? (
                             <div>
                               <span className="line-through text-olive/60 text-xs block">{formatEuro(tx.amountCents)}</span>
@@ -993,7 +993,7 @@ export function PromotersDashboardView({ data }: Props) {
                             formatEuro(tx.amountCents)
                           )}
                         </td>
-                        <td className="py-3 text-right font-semibold text-gold bg-gold/5">
+                        <td className="py-3.5 px-3 text-right font-semibold text-gold bg-gold/5 whitespace-nowrap">
                           {isCancelled ? (
                             <div>
                               <span className="line-through text-olive/60 text-xs block">+{formatEuro(tx.commissionCents)}</span>
@@ -1003,7 +1003,7 @@ export function PromotersDashboardView({ data }: Props) {
                             `+${formatEuro(tx.commissionCents)}`
                           )}
                         </td>
-                        <td className="py-3 text-right font-medium text-forest">
+                        <td className="py-3.5 px-3 text-right font-medium text-forest whitespace-nowrap">
                           {isCancelled ? (
                             <div>
                               <span className="line-through text-olive/60 text-xs block">{formatEuro(tx.providerNetCents)}</span>
@@ -1013,7 +1013,7 @@ export function PromotersDashboardView({ data }: Props) {
                             formatEuro(tx.providerNetCents)
                           )}
                         </td>
-                        <td className="py-3 text-center">
+                        <td className="py-3.5 px-3 text-center whitespace-nowrap">
                           {isCancelled ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-wine/10 px-2.5 py-0.5 text-[11px] font-semibold text-wine">
                               <Ban size={12} /> Annullata
@@ -1193,25 +1193,25 @@ export function PromotersDashboardView({ data }: Props) {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[950px] text-left text-sm">
+            <table className="w-full min-w-[1100px] text-left text-sm">
               <thead className="text-[11px] uppercase tracking-wider text-olive border-b border-mist">
                 <tr>
-                  <th className="py-3">Fornitore / Struttura</th>
-                  <th className="py-3">Tipologia</th>
-                  <th className="py-3">Destinazione & Sede</th>
-                  <th className="py-3">Offerta & Prezzi</th>
-                  <th className="py-3">Sponsor CSR</th>
-                  <th className="py-3">Riscatti</th>
-                  <th className="py-3">Volume Lordo</th>
-                  <th className="py-3 text-gold">Fee Radici</th>
-                  <th className="py-3 text-right">Netto</th>
-                  <th className="py-3 text-center">Azioni</th>
+                  <th className="py-3 px-3 whitespace-nowrap">Fornitore / Struttura</th>
+                  <th className="py-3 px-3 whitespace-nowrap">Tipologia</th>
+                  <th className="py-3 px-3 whitespace-nowrap">Destinazione & Sede</th>
+                  <th className="py-3 px-3 whitespace-nowrap">Offerta & Prezzi</th>
+                  <th className="py-3 px-3 whitespace-nowrap">Sponsor CSR</th>
+                  <th className="py-3 px-3 whitespace-nowrap">Riscatti</th>
+                  <th className="py-3 px-3 whitespace-nowrap">Volume Lordo</th>
+                  <th className="py-3 px-3 text-gold whitespace-nowrap">Fee Radici</th>
+                  <th className="py-3 px-3 text-right whitespace-nowrap">Netto</th>
+                  <th className="py-3 px-3 text-center whitespace-nowrap">Azioni</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-mist">
                 {data.venuesList.map((v) => (
                   <tr key={v.id} className="hover:bg-cream/40 transition">
-                    <td className="py-3 font-semibold text-forest">
+                    <td className="py-3.5 px-3 font-semibold text-forest">
                       <div className="flex items-center gap-3">
                         <img
                           src={v.coverImage}
@@ -1227,16 +1227,16 @@ export function PromotersDashboardView({ data }: Props) {
                         </div>
                       </div>
                     </td>
-                    <td className="py-3">
+                    <td className="py-3.5 px-3">
                       <span className="rounded-full bg-forest/5 px-2.5 py-0.5 text-xs font-semibold text-forest capitalize border border-forest/10">
                         {v.type}
                       </span>
                     </td>
-                    <td className="py-3 text-xs text-olive">
+                    <td className="py-3.5 px-3 text-xs text-olive">
                       <p className="font-medium text-forest">{v.city} ({v.province})</p>
                       <p className="text-[10px] text-olive">{v.destinationName}</p>
                     </td>
-                    <td className="py-3 text-xs text-forest">
+                    <td className="py-3.5 px-3 text-xs text-forest">
                       {v.type === "hotel" || v.type === "agriturismo" ? (
                         <div>
                           <p>Notte: <strong>{formatEuro(v.priceHotelCents)}</strong></p>
@@ -1255,7 +1255,7 @@ export function PromotersDashboardView({ data }: Props) {
                         <p>Spettacolo: <strong>{formatEuro(v.priceShowCents)}</strong></p>
                       )}
                     </td>
-                    <td className="py-3 text-xs">
+                    <td className="py-3.5 px-3 text-xs">
                       {v.sponsorCompanyName ? (
                         <span className="inline-flex items-center gap-1 rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-bold text-gold border border-gold/30">
                           {v.sponsorCompanyName}
@@ -1264,14 +1264,14 @@ export function PromotersDashboardView({ data }: Props) {
                         <span className="text-olive text-[11px]">Nessuno</span>
                       )}
                     </td>
-                    <td className="py-3 font-medium text-forest">
+                    <td className="py-3.5 px-3 font-medium text-forest whitespace-nowrap">
                       {v.redeemedCount}
                       <span className="block text-[10px] text-olive">{v.attendedCount} presenti</span>
                     </td>
-                    <td className="py-3 font-semibold text-forest">{formatEuro(v.grossVolumeCents)}</td>
-                    <td className="py-3 font-semibold text-forest bg-gold/5">+{formatEuro(v.commissionsPaidCents)}</td>
-                    <td className="py-3 text-right font-medium text-forest">{formatEuro(v.netRevenueCents)}</td>
-                    <td className="py-3 text-center">
+                    <td className="py-3.5 px-3 font-semibold text-forest whitespace-nowrap">{formatEuro(v.grossVolumeCents)}</td>
+                    <td className="py-3.5 px-3 font-semibold text-forest bg-gold/5 whitespace-nowrap">+{formatEuro(v.commissionsPaidCents)}</td>
+                    <td className="py-3.5 px-3 text-right font-medium text-forest whitespace-nowrap">{formatEuro(v.netRevenueCents)}</td>
+                    <td className="py-3.5 px-3 text-center whitespace-nowrap">
                       <div className="flex items-center justify-center gap-2">
                         <Link
                           href={`/strutture/${v.slug}`}
@@ -1404,36 +1404,36 @@ export function PromotersDashboardView({ data }: Props) {
               </button>
             </div>
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full text-left text-sm">
+              <table className="w-full min-w-[800px] text-left text-sm">
                 <thead className="text-[11px] uppercase tracking-wider text-olive border-b border-mist">
                   <tr>
-                    <th className="py-3">Dipendente</th>
-                    <th className="py-3">Azienda CSR</th>
-                    <th className="py-3">Struttura Soggiorno</th>
-                    <th className="py-3">Teatro Convenzionato</th>
-                    <th className="py-3">Stato Grant</th>
-                    <th className="py-3 text-right">Valore Promotori</th>
+                    <th className="py-3 px-3 whitespace-nowrap">Dipendente</th>
+                    <th className="py-3 px-3 whitespace-nowrap">Azienda CSR</th>
+                    <th className="py-3 px-3 whitespace-nowrap">Struttura Soggiorno</th>
+                    <th className="py-3 px-3 whitespace-nowrap">Teatro Convenzionato</th>
+                    <th className="py-3 px-3 whitespace-nowrap">Stato Grant</th>
+                    <th className="py-3 px-3 text-right whitespace-nowrap">Valore Promotori</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-mist">
                   {data.grants.map((grant) => (
                     <tr key={grant.voucherId} className="hover:bg-cream/40 transition">
-                      <td className="py-3 font-medium text-forest">
+                      <td className="py-3.5 px-3 font-medium text-forest">
                         {grant.employeeName}
                         <span className="block text-[11px] text-olive">{grant.employeeEmail}</span>
                       </td>
-                      <td className="py-3 text-forest">{grant.companyName}</td>
-                      <td className="py-3 text-forest">
+                      <td className="py-3.5 px-3 text-forest">{grant.companyName}</td>
+                      <td className="py-3.5 px-3 text-forest">
                         {grant.venueName}
                         <span className="block text-[11px] text-olive">{grant.venueCity}</span>
                       </td>
-                      <td className="py-3 text-xs text-forest">{grant.theaterName}</td>
-                      <td className="py-3 text-xs">
+                      <td className="py-3.5 px-3 text-xs text-forest">{grant.theaterName}</td>
+                      <td className="py-3.5 px-3 text-xs whitespace-nowrap">
                         <span className="rounded-full bg-forest/10 px-2 py-0.5 text-xs font-semibold text-forest capitalize">
                           {grant.status}
                         </span>
                       </td>
-                      <td className="py-3 text-right font-serif text-base text-forest">
+                      <td className="py-3.5 px-3 text-right font-serif text-base text-forest whitespace-nowrap">
                         {formatEuro(grant.grantValueCents)}
                       </td>
                     </tr>
@@ -1610,35 +1610,35 @@ export function PromotersDashboardView({ data }: Props) {
               </div>
             ) : (
               <div className="mt-4 overflow-x-auto">
-                <table className="w-full min-w-[750px] text-left text-xs">
+                <table className="w-full min-w-[900px] text-left text-xs">
                   <thead>
                     <tr className="border-b border-mist text-olive uppercase tracking-wider text-[10px]">
-                      <th className="pb-3">Data & Orario</th>
-                      <th className="pb-3">Ospite</th>
-                      <th className="pb-3">Struttura / Teatro</th>
-                      <th className="pb-3">Evento / Servizio</th>
-                      <th className="pb-3 text-center">Posti</th>
-                      <th className="pb-3 text-right">Importo Netto</th>
-                      <th className="pb-3 text-center">Stato</th>
+                      <th className="pb-3 px-3 whitespace-nowrap">Data & Orario</th>
+                      <th className="pb-3 px-3 whitespace-nowrap">Ospite</th>
+                      <th className="pb-3 px-3 whitespace-nowrap">Struttura / Teatro</th>
+                      <th className="pb-3 px-3 whitespace-nowrap">Evento / Servizio</th>
+                      <th className="pb-3 px-3 text-center whitespace-nowrap">Posti</th>
+                      <th className="pb-3 px-3 text-right whitespace-nowrap">Importo Netto</th>
+                      <th className="pb-3 px-3 text-center whitespace-nowrap">Stato</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-mist">
                     {data.communityBookings.map((b) => (
                       <tr key={b.id} className="hover:bg-cream/40 transition">
-                        <td className="py-3 font-medium text-forest">
+                        <td className="py-3.5 px-3 font-medium text-forest whitespace-nowrap">
                           {formatDate(b.bookingDate)}
                           <span className="block text-[11px] text-olive">{b.timeSlot || "Standard"}</span>
                         </td>
-                        <td className="py-3 text-forest">
+                        <td className="py-3.5 px-3 text-forest">
                           <p className="font-semibold">{b.guestName}</p>
                           <p className="text-[11px] text-olive">{b.guestEmail}</p>
                           {b.guestPhone && <p className="text-[10px] text-ink/70">Tel: {b.guestPhone}</p>}
                         </td>
-                        <td className="py-3 text-forest">
+                        <td className="py-3.5 px-3 text-forest">
                           <p className="font-medium">{b.venueName}</p>
                           <p className="text-[11px] text-olive">{b.venueCity} ({b.venueType})</p>
                         </td>
-                        <td className="py-3 text-forest">
+                        <td className="py-3.5 px-3 text-forest">
                           <span className="font-semibold text-forest block">
                             {b.eventTitle || b.serviceLabel || b.venueType}
                           </span>
@@ -1646,15 +1646,15 @@ export function PromotersDashboardView({ data }: Props) {
                             <span className="text-[11px] text-olive block">{b.serviceLabel}</span>
                           )}
                         </td>
-                        <td className="py-3 text-center">
+                        <td className="py-3.5 px-3 text-center whitespace-nowrap">
                           <span className="rounded-full bg-cream px-2.5 py-0.5 font-bold text-forest border border-forest/10">
                             {b.partySize} {b.partySize === 1 ? "posto" : "posti"}
                           </span>
                         </td>
-                        <td className="py-3 text-right font-serif text-sm font-bold text-forest">
+                        <td className="py-3.5 px-3 text-right font-serif text-sm font-bold text-forest whitespace-nowrap">
                           {formatEuro(b.finalPriceCents)}
                         </td>
-                        <td className="py-3 text-center">
+                        <td className="py-3.5 px-3 text-center whitespace-nowrap">
                           {b.status === "presence_confirmed" ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-forest/10 px-2.5 py-0.5 text-[11px] font-semibold text-forest">
                               <CheckCircle2 size={11} className="text-forest" /> Presenza Riconfermata
@@ -1810,24 +1810,24 @@ export function PromotersDashboardView({ data }: Props) {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1050px] text-left text-sm">
+              <table className="w-full min-w-[1150px] text-left text-sm">
                 <thead className="text-[11px] uppercase tracking-wider text-olive border-b border-mist">
                   <tr>
-                    <th className="py-3">Data & ID</th>
-                    <th className="py-3">Acquirente</th>
-                    <th className="py-3">Impresa / Provenienza</th>
-                    <th className="py-3">Produttore & Territorio</th>
-                    <th className="py-3">Cesto & Quantità</th>
-                    <th className="py-3 text-right">Prezzo Pagato</th>
-                    <th className="py-3 text-right text-forest">Fee Startup (0%)</th>
-                    <th className="py-3 text-center">Impatto KM 0</th>
-                    <th className="py-3 text-center">Stato Consegna</th>
+                    <th className="py-3 px-3 whitespace-nowrap">Data & ID</th>
+                    <th className="py-3 px-3 whitespace-nowrap">Acquirente</th>
+                    <th className="py-3 px-3 whitespace-nowrap">Impresa / Provenienza</th>
+                    <th className="py-3 px-3 whitespace-nowrap">Produttore & Territorio</th>
+                    <th className="py-3 px-3 whitespace-nowrap">Cesto & Quantità</th>
+                    <th className="py-3 px-3 text-right whitespace-nowrap">Prezzo Pagato</th>
+                    <th className="py-3 px-3 text-right text-forest whitespace-nowrap">Fee Startup (0%)</th>
+                    <th className="py-3 px-3 text-center whitespace-nowrap">Impatto KM 0</th>
+                    <th className="py-3 px-3 text-center whitespace-nowrap">Stato Consegna</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-mist">
                   {displayedProducerOrders.length === 0 ? (
                     <tr>
-                      <td colSpan={9} className="py-8 text-center text-xs text-olive">
+                      <td colSpan={9} className="py-8 px-3 text-center text-xs text-olive">
                         {producerFilter === "active"
                           ? "Nessun ordine di cesti in consegna."
                           : producerFilter === "attended"
@@ -1849,13 +1849,13 @@ export function PromotersDashboardView({ data }: Props) {
                           className={`transition ${isCancelled ? "bg-mist/20 opacity-70" : "hover:bg-cream/40"}`}
                         >
                           {/* Data & ID */}
-                          <td className="py-3 font-mono text-xs text-olive">
+                          <td className="py-3.5 px-3 font-mono text-xs text-olive whitespace-nowrap">
                             {formatDate(order.createdAt)}
                             <span className="block text-[10px] text-ink/40">#{order.id}</span>
                           </td>
 
                           {/* Acquirente */}
-                          <td className="py-3 font-medium text-forest">
+                          <td className="py-3.5 px-3 font-medium text-forest">
                             {order.buyerName}
                             <span className="block text-[11px] text-olive">{order.buyerEmail}</span>
                             <span className="inline-block mt-0.5 rounded bg-forest/5 px-2 py-0.5 text-[10px] font-semibold text-forest">
@@ -1864,7 +1864,7 @@ export function PromotersDashboardView({ data }: Props) {
                           </td>
 
                           {/* Impresa */}
-                          <td className="py-3 text-forest">
+                          <td className="py-3.5 px-3 text-forest">
                             {order.companyName ? (
                               <div>
                                 <span className="font-semibold text-forest">{order.companyName}</span>
@@ -1885,7 +1885,7 @@ export function PromotersDashboardView({ data }: Props) {
                           </td>
 
                           {/* Produttore */}
-                          <td className="py-3 text-forest">
+                          <td className="py-3.5 px-3 text-forest">
                             <span className="font-semibold text-forest">{order.producerName}</span>
                             <span className="block text-[11px] text-olive">
                               {order.producerCity} ({order.producerRegion})
@@ -1893,7 +1893,7 @@ export function PromotersDashboardView({ data }: Props) {
                           </td>
 
                           {/* Cesto & Qty */}
-                          <td className="py-3">
+                          <td className="py-3.5 px-3">
                             <div className="font-medium text-forest">{order.basketName}</div>
                             <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                               <span className="inline-flex items-center gap-1 rounded bg-cream px-2 py-0.5 text-[11px] font-semibold text-forest border border-forest/10">
@@ -1911,7 +1911,7 @@ export function PromotersDashboardView({ data }: Props) {
                           </td>
 
                           {/* Prezzo Pagato */}
-                          <td className="py-3 text-right">
+                          <td className="py-3.5 px-3 text-right whitespace-nowrap">
                             {isCancelled ? (
                               <div>
                                 <span className="line-through text-olive/60 text-xs block">{formatEuro(order.totalListPriceCents)}</span>
@@ -1935,7 +1935,7 @@ export function PromotersDashboardView({ data }: Props) {
                           </td>
 
                           {/* Fee Startup (0%) */}
-                          <td className="py-3 text-right font-medium text-forest bg-forest/5">
+                          <td className="py-3.5 px-3 text-right font-medium text-forest bg-forest/5 whitespace-nowrap">
                             {isCancelled ? (
                               <span className="text-xs text-olive/60">0,00 €</span>
                             ) : (
@@ -1947,7 +1947,7 @@ export function PromotersDashboardView({ data }: Props) {
                           </td>
 
                           {/* Impatto KM 0 */}
-                          <td className="py-3 text-center">
+                          <td className="py-3.5 px-3 text-center whitespace-nowrap">
                             {isCancelled ? (
                               <span className="text-xs text-olive/60">-</span>
                             ) : (
@@ -1963,7 +1963,7 @@ export function PromotersDashboardView({ data }: Props) {
                           </td>
 
                           {/* Stato Consegna */}
-                          <td className="py-3 text-center">
+                          <td className="py-3.5 px-3 text-center whitespace-nowrap">
                             {isCancelled ? (
                               <span className="inline-flex items-center gap-1 rounded-full bg-wine/10 px-2.5 py-0.5 text-[11px] font-semibold text-wine">
                                 <Ban size={12} /> Annullato
