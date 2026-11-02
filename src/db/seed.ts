@@ -452,14 +452,14 @@ export async function seedDatabase() {
           {
             name: "Camera Singola (Convenzione Welfare Aziendale · 1 Persona)",
             description:
-              "1 Posto letto. Prezzo convenzionato 50,00 € coperto al 100% da 1 Voucher Welfare aziendale nominativo (Art. 51 TUIR). Se l'addetto prenota per 2 persone/posti letto, il prezzo per l'altra persona è identico (50,00 €).",
+              "1 Posto letto. Prezzo convenzionato 50,00 € coperto al 100% da 1 Voucher Welfare aziendale nominativo (Art. 51 TUIR). Se l'addetto prenota per 2 persone/posti letto, il prezzo per l'altra persona è la differenza tra il prezzo esposto e 50 € del voucher.",
             capacity: 1,
             priceCents: 5000,
           },
           {
             name: "Camera Doppia (1 Quota Welfare + 1 Quota Accompagnatore)",
             description:
-              "2 Posti letto. Prezzo convenzionato 100,00 €: la quota del lavoratore (50,00 €) è coperta dal Voucher Welfare Aziendale. La quota per la seconda persona / accompagnatore non beneficiario di welfare (50,00 €) può essere pagata con carta personale dall'addetto (distinguendola dal voucher) o direttamente dall'ospite invitato (su piattaforma o al check-in).",
+              "Convenzione Welfare Aziendale & Accompagnatore: Copre la quota di 1 lavoratore (50 € con voucher) per un posto letto. Nella camera per 2 posti letto, la seconda persona/accompagnatore non beneficiaria può essere saldata con carta personale dall'addetto o direttamente dall'invitato (su piattaforma o al check-in). Il prezzo per la seconda persona è la differenza tra il prezzo esposto e 50€ del voucher. In fase di prenotazione va indicata la seconda persona per la separazione contabile.",
             capacity: 2,
             priceCents: 10000,
           },
@@ -511,14 +511,14 @@ export async function seedDatabase() {
           {
             name: "Camera Singola Vigneto (Convenzione Welfare Aziendale · 1 Persona)",
             description:
-              "1 Posto letto tra i filari di Barolo. Prezzo convenzionato 50,00 € coperto al 100% da 1 Voucher Welfare nominativo (Art. 51 TUIR). Prezzo identico per eventuale seconda persona (50,00 €).",
+              "1 Posto letto tra i filari di Barolo. Prezzo convenzionato 50,00 € coperto al 100% da 1 Voucher Welfare nominativo (Art. 51 TUIR). Se l'addetto prenota per 2 persone/posti letto, il prezzo per l'altra persona è la differenza tra il prezzo esposto e 50 € del voucher.",
             capacity: 1,
             priceCents: 5000,
           },
           {
             name: "Camera Doppia Superior Vigneto (1 Quota Welfare + 1 Quota Accompagnatore)",
             description:
-              "2 Posti letto tra i filari con vista panoramica. Prezzo convenzionato 100,00 €: 50,00 € coperti da Voucher Welfare + 50,00 € per l'accompagnatore saldabili con carta personale o al check-in.",
+              "Convenzione Welfare Aziendale & Accompagnatore: Copre la quota di 1 lavoratore (50 € con voucher) per un posto letto. Nella camera per 2 posti letto, la seconda persona/accompagnatore non beneficiaria può essere saldata con carta personale dall'addetto o direttamente dall'invitato (su piattaforma o al check-in). Il prezzo per la seconda persona è la differenza tra il prezzo esposto e 50€ del voucher. In fase di prenotazione va indicata la seconda persona per la separazione contabile.",
             capacity: 2,
             priceCents: 10000,
           },
@@ -575,14 +575,14 @@ export async function seedDatabase() {
           {
             name: "Camera Singola delle Crete (Convenzione Welfare Aziendale · 1 Persona)",
             description:
-              "1 Posto letto nel casale storico della Val d'Orcia. Prezzo convenzionato 50,00 € coperto al 100% da Voucher Welfare (Art. 51 TUIR). Prezzo per eventuale seconda persona identico (50,00 €).",
+              "1 Posto letto nel casale storico della Val d'Orcia. Prezzo convenzionato 50,00 € coperto al 100% da Voucher Welfare (Art. 51 TUIR). Se l'addetto prenota per 2 persone/posti letto, il prezzo per l'altra persona è la differenza tra il prezzo esposto e 50 € del voucher.",
             capacity: 1,
             priceCents: 5000,
           },
           {
             name: "Camera Doppia delle Crete (1 Quota Welfare + 1 Quota Accompagnatore)",
             description:
-              "2 Posti letto con caminetto e lino lavato. Prezzo complessivo 100,00 €: 50,00 € coperti dal Voucher Welfare dell'addetto + 50,00 € a carico della seconda persona con carta personale (su piattaforma o al check-in).",
+              "Convenzione Welfare Aziendale & Accompagnatore: Copre la quota di 1 lavoratore (50 € con voucher) per un posto letto. Nella camera per 2 posti letto, la seconda persona/accompagnatore non beneficiaria può essere saldata con carta personale dall'addetto o direttamente dall'invitato (su piattaforma o al check-in). Il prezzo per la seconda persona è la differenza tra il prezzo esposto e 50€ del voucher. In fase di prenotazione va indicata la seconda persona per la separazione contabile.",
             capacity: 2,
             priceCents: 10000,
           },
@@ -637,14 +637,14 @@ export async function seedDatabase() {
           {
             name: "Camera Singola della Corte (Convenzione Welfare Aziendale · 1 Persona)",
             description:
-              "1 Posto letto tra gli ulivi secolari di Ostuni con volte in pietra. Prezzo convenzionato 50,00 € coperto al 100% da Voucher Welfare nominativo (Art. 51 TUIR). Prezzo identico per l'altra persona (50,00 €).",
+              "1 Posto letto tra gli ulivi secolari di Ostuni con volte in pietra. Prezzo convenzionato 50,00 € coperto al 100% da Voucher Welfare nominativo (Art. 51 TUIR). Se l'addetto prenota per 2 persone/posti letto, il prezzo per l'altra persona è la differenza tra il prezzo esposto e 50 € del voucher.",
             capacity: 1,
             priceCents: 5000,
           },
           {
             name: "Camera Doppia Suite della Corte (1 Quota Welfare + 1 Quota Accompagnatore)",
             description:
-              "2 Posti letto con patio privato. Prezzo convenzionato 100,00 €: 50,00 € coperti dal Voucher Welfare dell'addetto + 50,00 € per l'accompagnatore non beneficiario con carta personale (su piattaforma o al check-in).",
+              "Convenzione Welfare Aziendale & Accompagnatore: Copre la quota di 1 lavoratore (50 € con voucher) per un posto letto. Nella camera per 2 posti letto, la seconda persona/accompagnatore non beneficiaria può essere saldata con carta personale dall'addetto o direttamente dall'invitato (su piattaforma o al check-in). Il prezzo per la seconda persona è la differenza tra il prezzo esposto e 50€ del voucher. In fase di prenotazione va indicata la seconda persona per la separazione contabile.",
             capacity: 2,
             priceCents: 10000,
           },
@@ -885,14 +885,14 @@ export async function seedDatabase() {
           {
             name: "Camera Singola Panoramica (Convenzione Welfare Aziendale · 1 Persona)",
             description:
-              "1 Posto letto con vista sui colli di Caldarola. Prezzo convenzionato 50,00 € coperto al 100% da 1 Voucher Welfare nominativo (Art. 51 TUIR). Se l'addetto prenota per 2 persone, il prezzo per l'altra persona è identico (50,00 €).",
+              "1 Posto letto con vista sui colli di Caldarola. Prezzo convenzionato 50,00 € coperto al 100% da 1 Voucher Welfare nominativo (Art. 51 TUIR). Se l'addetto prenota per 2 persone/posti letto, il prezzo per l'altra persona è la differenza tra il prezzo esposto e 50 € del voucher.",
             capacity: 1,
             priceCents: 5000,
           },
           {
             name: "Camera Doppia Panoramica (1 Quota Welfare + 1 Quota Accompagnatore)",
             description:
-              "2 Posti letto con prima colazione artigianale dell'orto. Prezzo complessivo 100,00 €: 50,00 € coperti dal Voucher Welfare dell'addetto + 50,00 € a carico della seconda persona con carta personale (sulla piattaforma o al check-in).",
+              "Convenzione Welfare Aziendale & Accompagnatore: Copre la quota di 1 lavoratore (50 € con voucher) per un posto letto. Nella camera per 2 posti letto, la seconda persona/accompagnatore non beneficiaria può essere saldata con carta personale dall'addetto o direttamente dall'invitato (su piattaforma o al check-in). Il prezzo per la seconda persona è la differenza tra il prezzo esposto e 50€ del voucher. In fase di prenotazione va indicata la seconda persona per la separazione contabile.",
             capacity: 2,
             priceCents: 10000,
           },

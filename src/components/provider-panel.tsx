@@ -12,6 +12,7 @@ import {
   Info,
   Plus,
   Receipt,
+  RotateCcw,
   Save,
   Sparkles,
   Stamp,
@@ -59,14 +60,14 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
           {
             name: "Camera Singola (Convenzione Welfare Aziendale · 1 Persona)",
             description:
-              "1 Posto letto. Prezzo convenzionato 50,00 € coperto al 100% da 1 Voucher Welfare aziendale nominativo (Art. 51 TUIR). Se l'addetto prenota per 2 persone/posti letto, il prezzo per l'altra persona è identico (50,00 €).",
+              "1 Posto letto. Prezzo convenzionato 50,00 € coperto al 100% da 1 Voucher Welfare aziendale nominativo (Art. 51 TUIR). Se l'addetto prenota per 2 persone/posti letto, il prezzo per l'altra persona è la differenza tra il prezzo esposto e 50 € del voucher.",
             capacity: 1,
             priceCents: 5000,
           },
           {
             name: "Camera Doppia (1 Quota Welfare + 1 Quota Accompagnatore)",
             description:
-              "2 Posti letto. Prezzo convenzionato 100,00 €: la quota del lavoratore (50,00 €) è coperta dal Voucher Welfare Aziendale. La quota per la seconda persona / accompagnatore non beneficiario di welfare (50,00 €) può essere pagata con carta personale dall'addetto (distinguendola dal voucher) o direttamente dall'ospite invitato (su piattaforma o al check-in).",
+              "Convenzione Welfare Aziendale & Accompagnatore: Copre la quota di 1 lavoratore (50 € con voucher) per un posto letto. Nella camera per 2 posti letto, la seconda persona/accompagnatore non beneficiaria può essere saldata con carta personale dall'addetto o direttamente dall'invitato (su piattaforma o al check-in). Il prezzo per la seconda persona è la differenza tra il prezzo esposto e 50€ del voucher. In fase di prenotazione va indicata la seconda persona per la separazione contabile.",
             capacity: 2,
             priceCents: 10000,
           },
@@ -134,14 +135,14 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
       {
         name: "Camera Singola (Convenzione Welfare Aziendale · 1 Persona)",
         description:
-          "1 Posto letto. Prezzo convenzionato 50,00 € coperto al 100% da 1 Voucher Welfare aziendale nominativo (Art. 51 TUIR). Se l'addetto prenota per 2 persone/posti letto, il prezzo per l'altra persona è identico (50,00 €).",
+          "1 Posto letto. Prezzo convenzionato 50,00 € coperto al 100% da 1 Voucher Welfare aziendale nominativo (Art. 51 TUIR). Se l'addetto prenota per 2 persone/posti letto, il prezzo per l'altra persona è la differenza tra il prezzo esposto e 50 € del voucher.",
         capacity: 1,
         priceCents: 5000,
       },
       {
         name: "Camera Doppia (1 Quota Welfare + 1 Quota Accompagnatore)",
         description:
-          "2 Posti letto. Prezzo convenzionato 100,00 €: la quota del lavoratore (50,00 €) è coperta dal Voucher Welfare Aziendale. La quota per la seconda persona / accompagnatore non beneficiario di welfare (50,00 €) può essere pagata con carta personale dall'addetto (distinguendola dal voucher) o direttamente dall'ospite invitato (su piattaforma o al check-in).",
+          "Convenzione Welfare Aziendale & Accompagnatore: Copre la quota di 1 lavoratore (50 € con voucher) per un posto letto. Nella camera per 2 posti letto, la seconda persona/accompagnatore non beneficiaria può essere saldata con carta personale dall'addetto o direttamente dall'invitato (su piattaforma o al check-in). Il prezzo per la seconda persona è la differenza tra il prezzo esposto e 50€ del voucher. In fase di prenotazione va indicata la seconda persona per la separazione contabile.",
         capacity: 2,
         priceCents: 10000,
       },
@@ -879,10 +880,10 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
               <button
                 type="button"
                 onClick={resetDefaultRooms}
-                className="rounded-full border border-forest/20 bg-cream/50 px-3.5 py-1.5 text-xs font-medium text-forest hover:bg-cream transition"
+                className="inline-flex items-center gap-1.5 rounded-full border border-forest/20 bg-cream/50 px-3.5 py-1.5 text-xs font-medium text-forest hover:bg-cream transition"
                 title="Ripristina l'offerta standard: Camera Singola 50€ e Camera Doppia 100€"
               >
-                ↺ Ripristina Offerte Standard
+                <RotateCcw size={13} /> Ripristina Offerte Standard
               </button>
               <button
                 type="button"
@@ -895,17 +896,17 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
           </div>
 
           {/* GUIDA RIGOROSA ALLE CONVENZIONI WELFARE & SPESE PRIVATE */}
-          <div className="mt-4 rounded-2xl border border-gold/30 bg-sand/20 p-4 text-xs text-olive leading-relaxed space-y-2">
+          <div className="mt-4 rounded-2xl border border-forest/15 bg-cream/40 p-4 text-xs text-olive leading-relaxed space-y-2">
             <strong className="block text-sm font-serif text-forest">Linee Guida Nazionali Welfare (Art. 51 TUIR):</strong>
             <ul className="list-disc pl-4 space-y-1">
               <li>
-                <strong>Camera Singola (50,00 €):</strong> 1 Posto letto. Riservata alla singola persona beneficiaria del Voucher Welfare Aziendale (coperta al 100%). Se l&apos;addetto prenota 2 posti letto, il prezzo per l&apos;altra persona è identico (50,00 €).
+                <strong>Camera Singola (50,00 €):</strong> 1 Posto letto. Riservata alla singola persona beneficiaria del Voucher Welfare Aziendale (coperta al 100% con voucher da 50 €). Se l&apos;addetto prenota per 2 persone/posti letto, il prezzo per l&apos;altra persona è la differenza tra il prezzo esposto e 50 € del voucher.
               </li>
               <li>
-                <strong>Camera Doppia (100,00 €):</strong> 2 Posti letto. La convenzione welfare copre esclusivamente la quota di 1 persona (50,00 € tramite voucher). La quota per la seconda persona / accompagnatore non beneficiario (50,00 €) può essere saldata con carta personale dall&apos;addetto (distinguendola dal welfare B2B) o direttamente dall&apos;ospite invitato (su piattaforma o al check-in).
+                <strong>Camera Doppia:</strong> 2 Posti letto. Convenzione Welfare Aziendale & Accompagnatore: copre la quota di 1 lavoratore (50 € con voucher) per un posto letto. Nella camera per 2 posti letto, la seconda persona/accompagnatore non beneficiaria può essere saldata con carta personale dall&apos;addetto o direttamente dall&apos;invitato (su piattaforma o al check-in). Il prezzo per la seconda persona è la differenza tra il prezzo esposto e 50 € del voucher. In fase di prenotazione va indicata la seconda persona per la separazione contabile.
               </li>
               <li>
-                <strong>Amici & Invitati Community (senza welfare):</strong> I prezzi base sono identici (50 € singola / 100 € doppia), con applicazione automatica dello sconto convenzione del 10% (45 € singola / 90 € doppia) saldabile per intero con la propria carta personale.
+                <strong>Amici & Invitati Community (senza welfare):</strong> I prezzi base delle camere sono identici, con applicazione automatica dello sconto convenzione del 10% saldabile per intero con la propria carta personale.
               </li>
             </ul>
           </div>
