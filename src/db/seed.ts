@@ -459,7 +459,7 @@ export async function seedDatabase() {
           {
             name: "Camera Doppia (1 Quota Welfare + 1 Quota Accompagnatore)",
             description:
-              "Convenzione Welfare Aziendale & Accompagnatore: Copre la quota di 1 lavoratore (50 € con voucher) per un posto letto. Nella camera per 2 posti letto, la seconda persona/accompagnatore non beneficiaria può essere saldata con carta personale dall'addetto o direttamente dall'invitato (su piattaforma o al check-in). Il prezzo per la seconda persona è la differenza tra il prezzo esposto e 50€ del voucher. In fase di prenotazione va indicata la seconda persona per la separazione contabile.",
+              "2 Posti letto nel casale rustico in pietra con travi a vista. Camera matrimoniale accogliente con bagno privato e vista sulla vallata.",
             capacity: 2,
             priceCents: 10000,
           },
@@ -518,7 +518,7 @@ export async function seedDatabase() {
           {
             name: "Camera Doppia Superior Vigneto (1 Quota Welfare + 1 Quota Accompagnatore)",
             description:
-              "Convenzione Welfare Aziendale & Accompagnatore: Copre la quota di 1 lavoratore (50 € con voucher) per un posto letto. Nella camera per 2 posti letto, la seconda persona/accompagnatore non beneficiaria può essere saldata con carta personale dall'addetto o direttamente dall'invitato (su piattaforma o al check-in). Il prezzo per la seconda persona è la differenza tra il prezzo esposto e 50€ del voucher. In fase di prenotazione va indicata la seconda persona per la separazione contabile.",
+              "2 Posti letto tra i filari con vista panoramica sulle colline delle Langhe. Ampia camera matrimoniale con balcone panoramico.",
             capacity: 2,
             priceCents: 10000,
           },
@@ -582,7 +582,7 @@ export async function seedDatabase() {
           {
             name: "Camera Doppia delle Crete (1 Quota Welfare + 1 Quota Accompagnatore)",
             description:
-              "Convenzione Welfare Aziendale & Accompagnatore: Copre la quota di 1 lavoratore (50 € con voucher) per un posto letto. Nella camera per 2 posti letto, la seconda persona/accompagnatore non beneficiaria può essere saldata con carta personale dall'addetto o direttamente dall'invitato (su piattaforma o al check-in). Il prezzo per la seconda persona è la differenza tra il prezzo esposto e 50€ del voucher. In fase di prenotazione va indicata la seconda persona per la separazione contabile.",
+              "2 Posti letto con caminetto e lino lavato nel casale storico della Val d'Orcia.",
             capacity: 2,
             priceCents: 10000,
           },
@@ -644,7 +644,7 @@ export async function seedDatabase() {
           {
             name: "Camera Doppia Suite della Corte (1 Quota Welfare + 1 Quota Accompagnatore)",
             description:
-              "Convenzione Welfare Aziendale & Accompagnatore: Copre la quota di 1 lavoratore (50 € con voucher) per un posto letto. Nella camera per 2 posti letto, la seconda persona/accompagnatore non beneficiaria può essere saldata con carta personale dall'addetto o direttamente dall'invitato (su piattaforma o al check-in). Il prezzo per la seconda persona è la differenza tra il prezzo esposto e 50€ del voucher. In fase di prenotazione va indicata la seconda persona per la separazione contabile.",
+              "2 Posti letto con patio privato tra gli ulivi secolari di Ostuni con volte in pietra a vista.",
             capacity: 2,
             priceCents: 10000,
           },
@@ -892,7 +892,7 @@ export async function seedDatabase() {
           {
             name: "Camera Doppia Panoramica (1 Quota Welfare + 1 Quota Accompagnatore)",
             description:
-              "Convenzione Welfare Aziendale & Accompagnatore: Copre la quota di 1 lavoratore (50 € con voucher) per un posto letto. Nella camera per 2 posti letto, la seconda persona/accompagnatore non beneficiaria può essere saldata con carta personale dall'addetto o direttamente dall'invitato (su piattaforma o al check-in). Il prezzo per la seconda persona è la differenza tra il prezzo esposto e 50€ del voucher. In fase di prenotazione va indicata la seconda persona per la separazione contabile.",
+              "2 Posti letto con prima colazione artigianale dell'orto e splendida vista panoramica sulle colline e sui monti Sibillini.",
             capacity: 2,
             priceCents: 10000,
           },

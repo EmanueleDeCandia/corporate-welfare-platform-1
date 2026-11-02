@@ -67,7 +67,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
           {
             name: "Camera Doppia (1 Quota Welfare + 1 Quota Accompagnatore)",
             description:
-              "Convenzione Welfare Aziendale & Accompagnatore: Copre la quota di 1 lavoratore (50 € con voucher) per un posto letto. Nella camera per 2 posti letto, la seconda persona/accompagnatore non beneficiaria può essere saldata con carta personale dall'addetto o direttamente dall'invitato (su piattaforma o al check-in). Il prezzo per la seconda persona è la differenza tra il prezzo esposto e 50€ del voucher. In fase di prenotazione va indicata la seconda persona per la separazione contabile.",
+              "2 Posti letto. Camera matrimoniale o doppia con servizi privati, colazione e accoglienza del territorio.",
             capacity: 2,
             priceCents: 10000,
           },
@@ -142,7 +142,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
       {
         name: "Camera Doppia (1 Quota Welfare + 1 Quota Accompagnatore)",
         description:
-          "Convenzione Welfare Aziendale & Accompagnatore: Copre la quota di 1 lavoratore (50 € con voucher) per un posto letto. Nella camera per 2 posti letto, la seconda persona/accompagnatore non beneficiaria può essere saldata con carta personale dall'addetto o direttamente dall'invitato (su piattaforma o al check-in). Il prezzo per la seconda persona è la differenza tra il prezzo esposto e 50€ del voucher. In fase di prenotazione va indicata la seconda persona per la separazione contabile.",
+          "2 Posti letto. Camera matrimoniale o doppia con servizi privati, colazione e accoglienza del territorio.",
         capacity: 2,
         priceCents: 10000,
       },

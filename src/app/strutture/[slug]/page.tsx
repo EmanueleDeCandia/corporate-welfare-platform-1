@@ -433,7 +433,10 @@ export default async function VenueDetailPage({
                             <p className="font-serif text-lg font-semibold text-forest shrink-0">{formatEuro(room.priceCents)}</p>
                           </div>
 
-                          <p className="mt-2 text-xs text-olive leading-relaxed">{room.description}</p>
+                          {room.description &&
+                          !room.description.trim().startsWith("Convenzione Welfare Aziendale & Accompagnatore") && (
+                            <p className="mt-2 text-xs text-olive leading-relaxed">{room.description}</p>
+                          )}
 
                           {/* Spiegazione trasparente neutra */}
                           <div className="mt-3 rounded-xl bg-white p-3 text-xs text-forest/90 border border-forest/10 leading-relaxed">
