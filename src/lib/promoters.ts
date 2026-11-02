@@ -159,6 +159,7 @@ export type PromoterDashboardData = {
   // KPI Globali della Piattaforma Radici
   totalGmvCents: number;
   totalCommissionsCents: number;
+  totalProviderNetCents: number;
   totalSettledCents: number;
   totalPendingCents: number;
   
@@ -510,7 +511,7 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     .filter((b) => (b.bookingType === "theater_event" || b.venueType === "theater") && b.finalPriceCents > 0)
     .map((b) => {
       const isCancelled = b.status === "cancelled";
-      const isSettled = b.status === "attended" || b.status === "presence_confirmed" || b.status === "confirmed";
+      const isSettled = b.status === "attended" || b.status === "presence_confirmed";
       const comm = Math.round(b.finalPriceCents * 0.1);
       return {
         id: 300000 + b.id,
@@ -550,12 +551,13 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
   );
   const totalGmvCents = activePlatformTransactions.reduce((sum, tx) => sum + tx.amountCents, 0);
   const totalCommissionsCents = activePlatformTransactions.reduce((sum, tx) => sum + tx.commissionCents, 0);
+  const totalProviderNetCents = activePlatformTransactions.reduce((sum, tx) => sum + tx.providerNetCents, 0);
   const totalSettledCents = activePlatformTransactions
     .filter((tx) => tx.paymentStatus === "settled")
-    .reduce((sum, tx) => sum + tx.amountCents, 0);
+    .reduce((sum, tx) => sum + tx.providerNetCents, 0);
   const totalPendingCents = activePlatformTransactions
     .filter((tx) => tx.paymentStatus === "pending")
-    .reduce((sum, tx) => sum + tx.amountCents, 0);
+    .reduce((sum, tx) => sum + tx.providerNetCents, 0);
 
   // Statistiche Voucher
   const totalVouchersIssued = allVouchers.length;
@@ -804,6 +806,7 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     promoterUser,
     totalGmvCents,
     totalCommissionsCents,
+    totalProviderNetCents,
     totalSettledCents,
     totalPendingCents,
     totalVouchersIssued,

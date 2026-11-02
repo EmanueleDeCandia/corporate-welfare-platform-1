@@ -1574,7 +1574,7 @@ export async function seedDatabase() {
       totalAmountCents: 3800,
       discountCents: 380,
       finalPriceCents: 3420,
-      status: "attended",
+      status: "confirmed",
       confirmationToken: "bkg-luigi-cesto-011",
       guestName: "Luigi Bianchi",
       guestEmail: "luigi.bianchi@email.it",

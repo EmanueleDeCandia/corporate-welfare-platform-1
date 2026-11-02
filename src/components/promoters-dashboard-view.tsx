@@ -777,10 +777,10 @@ export function PromotersDashboardView({ data }: Props) {
           <div className="rounded-2xl bg-white/5 p-4">
             <p className="text-xs uppercase tracking-wider text-cream/70">Pagamenti Intermediati a Fornitori</p>
             <p className="mt-2 font-serif text-2xl text-cream md:text-3xl">
-              {formatEuro(data.totalSettledCents)}
+              {formatEuro(data.totalProviderNetCents)}
             </p>
             <span className="mt-1 block text-[11px] text-cream/60">
-              Saldati ({formatEuro(data.totalPendingCents)} in attesa)
+              Saldati {formatEuro(data.totalSettledCents)} · In attesa {formatEuro(data.totalPendingCents)}
             </span>
           </div>
 
