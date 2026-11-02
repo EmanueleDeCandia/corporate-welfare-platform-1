@@ -890,7 +890,7 @@ export function PromotersDashboardView({ data }: Props) {
             <div>
               <h2 className="font-serif text-2xl text-forest">Registro Transazioni & Commissioni</h2>
               <p className="text-xs text-olive max-w-3xl leading-relaxed mt-1">
-                Supervisione delle transazioni intermediate: non fanno parte dei Voucher di Welfare Aziendale, il calcolo automatico della commissione Radici (esemplificativo del 10% su ristorazione e pernottamento) considera soltanto gli Inviati dagli Addetti. I Produttori locali vengono inseriti anche se non hanno alcuna commissione da parte della Startup: il loro contributo è stato considerato In Kind (1 cestino omaggio su 10 venduti) a beneficio degli acquirenti (Addetti o Invitati) dell&apos;impresa CSR.
+                Supervisione delle transazioni intermediate: non fanno parte dei Voucher di Welfare Aziendale, il calcolo automatico della commissione Radici (esemplificativo del 10% su ristorazione e pernottamento) considera soltanto gli Inviati dagli Addetti. Anche se in questa sede non applicate, le commissioni sulle strutture ricettive sono fondamentali per la copertura del Matching Grant e la sostenibilità economica. I Produttori locali vengono inseriti anche se non hanno alcuna commissione da parte della Startup: il loro contributo è stato considerato In Kind (1 cestino omaggio su 10 venduti) a beneficio degli acquirenti (Addetti o Invitati) dell&apos;impresa CSR.
               </p>
             </div>
             <div className="inline-flex rounded-full bg-forest/5 p-1 shrink-0">
