@@ -2,8 +2,7 @@ node_modules
 .next
 .git
 .pgdata
-radici.db-wal
-radici.db-shm
+radici.db*
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
