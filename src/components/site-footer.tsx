@@ -20,6 +20,7 @@ export function SiteFooter() {
             <Link href="/destinazioni" className="hover:text-[#c29b38] transition">Macro-aree</Link>
             <Link href="/imprese" className="hover:text-[#c29b38] transition">Vetrina imprese ESG</Link>
             <Link href="/come-funziona" className="hover:text-[#c29b38] transition">Come Funziona</Link>
+            <Link href="/torneo" className="hover:text-[#c29b38] transition font-semibold text-[#c29b38]">Torneo Trailer</Link>
             <Link href="/business-model" className="hover:text-[#c29b38] transition text-[#c29b38]">Modello Economico & Note</Link>
           </div>
         </div>

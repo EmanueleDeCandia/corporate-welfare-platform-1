@@ -40,7 +40,12 @@ export async function POST() {
     // 4. Rimuovi tutte le notifiche per rendere l'ambiente delle notifiche completamente pulito
     sqlite.exec(`
       DELETE FROM notifications;
+      DELETE FROM trailer_votes;
+      DELETE FROM trailers;
     `);
+
+    const { ensureTrailers } = await import("@/db/seed");
+    await ensureTrailers();
 
     return NextResponse.json({
       success: true,

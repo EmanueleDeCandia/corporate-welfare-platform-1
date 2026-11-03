@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Sparkles } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { HeaderMenu } from "@/components/header-menu";
 
@@ -38,6 +39,10 @@ export async function SiteHeader({ dark = false }: { dark?: boolean }) {
           </Link>
           <Link href="/come-funziona" className="hover:text-terracotta">
             Come funziona
+          </Link>
+          <Link href="/torneo" className="hover:text-terracotta inline-flex items-center gap-1 font-semibold text-terracotta">
+            <Sparkles size={13} className="text-gold" />
+            Torneo Trailer
           </Link>
         </nav>
         <HeaderMenu

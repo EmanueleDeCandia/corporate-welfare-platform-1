@@ -347,9 +347,69 @@ export async function initDb() {
           notes TEXT,
           created_at INTEGER NOT NULL DEFAULT (unixepoch())
         );
+
+        CREATE TABLE IF NOT EXISTS trailers (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          event_id INTEGER REFERENCES grant_events(id),
+          title TEXT NOT NULL,
+          theater_name TEXT NOT NULL,
+          city TEXT NOT NULL,
+          performing_company TEXT NOT NULL,
+          director TEXT NOT NULL,
+          duration_seconds INTEGER NOT NULL DEFAULT 20,
+          video_url TEXT,
+          poster_url TEXT NOT NULL,
+          synopsis TEXT NOT NULL,
+          genre TEXT NOT NULL DEFAULT 'Teatro & Performing Art',
+          order_index INTEGER NOT NULL DEFAULT 0,
+          active INTEGER NOT NULL DEFAULT 1,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch())
+        );
+
+        CREATE TABLE IF NOT EXISTS trailer_votes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          trailer_id INTEGER NOT NULL REFERENCES trailers(id),
+          user_id INTEGER NOT NULL REFERENCES users(id),
+          company_id INTEGER REFERENCES companies(id),
+          invited_by_user_id INTEGER REFERENCES users(id),
+          created_at INTEGER NOT NULL DEFAULT (unixepoch())
+        );
       `);
 
       // Migrations per tabelle esistenti
+      try {
+        sqlite.exec(`
+          CREATE TABLE IF NOT EXISTS trailers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id INTEGER REFERENCES grant_events(id),
+            title TEXT NOT NULL,
+            theater_name TEXT NOT NULL,
+            city TEXT NOT NULL,
+            performing_company TEXT NOT NULL,
+            director TEXT NOT NULL,
+            duration_seconds INTEGER NOT NULL DEFAULT 20,
+            video_url TEXT,
+            poster_url TEXT NOT NULL,
+            synopsis TEXT NOT NULL,
+            genre TEXT NOT NULL DEFAULT 'Teatro & Performing Art',
+            order_index INTEGER NOT NULL DEFAULT 0,
+            active INTEGER NOT NULL DEFAULT 1,
+            created_at INTEGER NOT NULL DEFAULT (unixepoch())
+          );
+
+          CREATE TABLE IF NOT EXISTS trailer_votes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            trailer_id INTEGER NOT NULL REFERENCES trailers(id),
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            company_id INTEGER REFERENCES companies(id),
+            invited_by_user_id INTEGER REFERENCES users(id),
+            created_at INTEGER NOT NULL DEFAULT (unixepoch())
+          );
+        `);
+      } catch (e) {
+        console.warn("Migration trailers warning:", e);
+      }
+
       try {
         const cCols = sqlite.prepare("PRAGMA table_info(companies)").all() as Array<{ name: string }>;
         if (!cCols.some((col) => col.name === "entity_type")) {

@@ -19,6 +19,8 @@ import {
   grantSeats,
   grantConfirmations,
   bookings,
+  trailers,
+  trailerVotes,
 } from "@/db/schema";
 import { badgeForPoints, hashPassword } from "@/lib/utils";
 
@@ -42,6 +44,7 @@ async function seedIfEmpty() {
     await seedDatabase();
   }
   await ensurePublicEntities();
+  await ensureTrailers();
 }
 
 // Enti pubblici dimostrativi (idempotente). Gli enti pubblici hanno un account referente
@@ -100,6 +103,100 @@ export async function ensurePublicEntities() {
     badgeLevel: "CSR Manager",
     referralCode: "giulia-ferretti",
   });
+}
+
+// Inizializzazione Trailer Spettacoli e Voti del Torneo di Performing Art (idempotente)
+export async function ensureTrailers() {
+  const existing = await db.select({ id: trailers.id }).from(trailers).limit(1);
+  if (existing.length > 0) return;
+
+  const [t1] = await db
+    .insert(trailers)
+    .values({
+      title: "La Tempesta dei Borghi · Prosa & Melodramma Barocco",
+      theaterName: "Teatro Lauro Rossi",
+      city: "Macerata",
+      performingCompany: "Compagnia Filarmonica Marchigiana",
+      director: "Maestro Sergio Moretti",
+      durationSeconds: 20,
+      posterUrl: "/images/teatro-lauro.jpg",
+      synopsis:
+        "Una riscrittura avvincente che fonde il teatro d'attore con sonorità barocche. Lo spettatore viene trasportato in un viaggio ancestrale tra le nebbie delle valli marchigiane e il calore della comunità.",
+      genre: "Prosa & Melodramma Barocco",
+      orderIndex: 1,
+      active: true,
+    })
+    .returning();
+
+  const [t2] = await db
+    .insert(trailers)
+    .values({
+      title: "Risonanze Adriatiche · Concerto per Archi & Fiati",
+      theaterName: "Teatro delle Muse",
+      city: "Ancona",
+      performingCompany: "Orchestra Sinfonica Regionale",
+      director: "Elena Moriconi",
+      durationSeconds: 20,
+      posterUrl: "/images/teatro-delle-muse.jpg",
+      synopsis:
+        "Un crescendo sinfonico che unisce le melodie marinare dell'Adriatico ai canti della mietitura dell'entroterra. Un'esperienza multisensoriale che celebra la biodiversità e la coesione umana.",
+      genre: "Musica Sinfonica & Corale",
+      orderIndex: 2,
+      active: true,
+    })
+    .returning();
+
+  const [t3] = await db
+    .insert(trailers)
+    .values({
+      title: "Memorie di Pietra · Danza Contemporanea & Poesia",
+      theaterName: "Teatro Nicola Vaccaj",
+      city: "Tolentino",
+      performingCompany: "Collettivo Danza Sibillini",
+      director: "Marco Tancredi",
+      durationSeconds: 20,
+      posterUrl: "/images/teatro-vaccaj.jpg",
+      synopsis:
+        "I corpi dei danzatori dialogano con la pietra serena dei vicoli e la luce dei borghi. Una performance vibrante sulla rinascita delle comunità resilienti delle aree interne.",
+      genre: "Danza Contemporanea",
+      orderIndex: 3,
+      active: true,
+    })
+    .returning();
+
+  // Voti seed iniziali rappresentativi
+  const allUsers = await db.select().from(users);
+  const acmeUsers = allUsers.filter((u) => u.email?.includes("@acme.it"));
+  const verdeUsers = allUsers.filter((u) => u.email?.includes("@verdeenergia.it"));
+  const unicamUser = allUsers.find((u) => u.email === "referente@unicam.it");
+  const friendUser = allUsers.find((u) => u.role === "friend");
+
+  const votes: Array<typeof trailerVotes.$inferInsert> = [];
+
+  // Voti ACME sul Trailer 1 (in testa con 4 voti)
+  if (acmeUsers[0]) votes.push({ trailerId: t1.id, userId: acmeUsers[0].id, companyId: acmeUsers[0].companyId });
+  if (acmeUsers[1]) votes.push({ trailerId: t1.id, userId: acmeUsers[1].id, companyId: acmeUsers[1].companyId });
+  if (acmeUsers[2]) votes.push({ trailerId: t1.id, userId: acmeUsers[2].id, companyId: acmeUsers[2].companyId });
+  if (friendUser && acmeUsers[0]) {
+    // Amico invitato da utente ACME: voto attribuito ad ACME
+    votes.push({
+      trailerId: t1.id,
+      userId: friendUser.id,
+      companyId: acmeUsers[0].companyId,
+      invitedByUserId: acmeUsers[0].id,
+    });
+  }
+
+  // Voti Verde Energia sul Trailer 2 (2 voti)
+  if (verdeUsers[0]) votes.push({ trailerId: t2.id, userId: verdeUsers[0].id, companyId: verdeUsers[0].companyId });
+  if (verdeUsers[1]) votes.push({ trailerId: t2.id, userId: verdeUsers[1].id, companyId: verdeUsers[1].companyId });
+
+  // Voto Università di Camerino sul Trailer 3 (1 voto)
+  if (unicamUser) votes.push({ trailerId: t3.id, userId: unicamUser.id, companyId: unicamUser.companyId });
+
+  if (votes.length > 0) {
+    await db.insert(trailerVotes).values(votes);
+  }
 }
 
 export async function seedDatabase() {

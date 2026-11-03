@@ -466,3 +466,42 @@ export type NewBooking = typeof bookings.$inferInsert;
 
 export type GrantEvent = typeof grantEvents.$inferSelect;
 export type NewGrantEvent = typeof grantEvents.$inferInsert;
+
+export const trailers = sqliteTable("trailers", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  eventId: integer("event_id").references(() => grantEvents.id),
+  title: text("title").notNull(),
+  theaterName: text("theater_name").notNull(),
+  city: text("city").notNull(),
+  performingCompany: text("performing_company").notNull(),
+  director: text("director").notNull(),
+  durationSeconds: integer("duration_seconds").notNull().default(20),
+  videoUrl: text("video_url"),
+  posterUrl: text("poster_url").notNull(),
+  synopsis: text("synopsis").notNull(),
+  genre: text("genre").notNull().default("Teatro & Performing Art"),
+  orderIndex: integer("order_index").notNull().default(0),
+  active: integer("active", { mode: "boolean" }).notNull().default(true),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+export const trailerVotes = sqliteTable("trailer_votes", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  trailerId: integer("trailer_id")
+    .notNull()
+    .references(() => trailers.id),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id),
+  companyId: integer("company_id").references(() => companies.id),
+  invitedByUserId: integer("invited_by_user_id").references(() => users.id),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+export type Trailer = typeof trailers.$inferSelect;
+export type TrailerVote = typeof trailerVotes.$inferSelect;
+
