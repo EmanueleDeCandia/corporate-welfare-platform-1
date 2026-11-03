@@ -218,6 +218,7 @@ export function RegisterForm({
             Password
             <input
               type="password"
+              autoComplete="new-password"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               className="mt-1 w-full rounded-2xl border border-forest/10 bg-cream px-4 py-2.5 text-sm outline-none focus:border-gold"

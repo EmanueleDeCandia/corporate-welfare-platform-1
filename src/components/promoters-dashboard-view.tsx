@@ -39,6 +39,8 @@ import {
   Lock,
   Ban,
   Gift,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import type { PromoterDashboardData } from "@/lib/promoters";
 import { formatDate, formatDateTime, formatEuro } from "@/lib/utils";
@@ -111,6 +113,8 @@ export function PromotersDashboardView({ data }: Props) {
   const [isAddCompanyOpen, setIsAddCompanyOpen] = useState(false);
   const [isAddVenueOpen, setIsAddVenueOpen] = useState(false);
   const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  const [showCompanyPassword, setShowCompanyPassword] = useState(false);
+  const [showVenuePassword, setShowVenuePassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deletingCompanyId, setDeletingCompanyId] = useState<number | null>(null);
   const [deletingVenueId, setDeletingVenueId] = useState<number | null>(null);
@@ -2379,6 +2383,7 @@ export function PromotersDashboardView({ data }: Props) {
                     <input
                       type="email"
                       required
+                      autoComplete="off"
                       value={companyForm.managerEmail}
                       onChange={(e) => setCompanyForm({ ...companyForm, managerEmail: e.target.value })}
                       placeholder="es. hr@manifatture.it"
@@ -2387,15 +2392,28 @@ export function PromotersDashboardView({ data }: Props) {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-forest mb-1">Password di Accesso * (min. 6 car.)</label>
-                    <input
-                      type="password"
-                      required
-                      minLength={6}
-                      value={companyForm.managerPassword}
-                      onChange={(e) => setCompanyForm({ ...companyForm, managerPassword: e.target.value })}
-                      placeholder="••••••••"
-                      className="w-full rounded-xl border border-forest/20 px-3 py-2 text-sm text-forest bg-white focus:outline-none"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showCompanyPassword ? "text" : "password"}
+                        required
+                        minLength={6}
+                        name="new_company_manager_password"
+                        autoComplete="new-password"
+                        value={companyForm.managerPassword}
+                        onChange={(e) => setCompanyForm({ ...companyForm, managerPassword: e.target.value })}
+                        placeholder="es. 123456"
+                        className="w-full rounded-xl border border-forest/20 px-3 py-2 pr-10 text-sm text-forest bg-white focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCompanyPassword(!showCompanyPassword)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-olive hover:text-forest transition"
+                        tabIndex={-1}
+                        title={showCompanyPassword ? "Nascondi password" : "Mostra password"}
+                      >
+                        {showCompanyPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -2829,6 +2847,7 @@ export function PromotersDashboardView({ data }: Props) {
                     <label className="block text-xs font-semibold text-forest mb-1">Email di Accesso Fornitore</label>
                     <input
                       type="email"
+                      autoComplete="off"
                       value={venueForm.managerEmail}
                       onChange={(e) => setVenueForm({ ...venueForm, managerEmail: e.target.value })}
                       placeholder="es. paolo@nuovocasale.it"
@@ -2837,13 +2856,26 @@ export function PromotersDashboardView({ data }: Props) {
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-forest mb-1">Password Accesso (min. 6 car.)</label>
-                    <input
-                      type="password"
-                      value={venueForm.managerPassword}
-                      onChange={(e) => setVenueForm({ ...venueForm, managerPassword: e.target.value })}
-                      placeholder="••••••••"
-                      className="w-full rounded-xl border border-forest/20 px-3 py-2 text-sm text-forest bg-white focus:outline-none"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showVenuePassword ? "text" : "password"}
+                        name="new_venue_manager_password"
+                        autoComplete="new-password"
+                        value={venueForm.managerPassword}
+                        onChange={(e) => setVenueForm({ ...venueForm, managerPassword: e.target.value })}
+                        placeholder="es. 123456"
+                        className="w-full rounded-xl border border-forest/20 px-3 py-2 pr-10 text-sm text-forest bg-white focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowVenuePassword(!showVenuePassword)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-olive hover:text-forest transition"
+                        tabIndex={-1}
+                        title={showVenuePassword ? "Nascondi password" : "Mostra password"}
+                      >
+                        {showVenuePassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
