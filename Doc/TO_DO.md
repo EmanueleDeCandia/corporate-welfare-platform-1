@@ -64,4 +64,22 @@ Documento di sintesi delle attività programmate per la prossima fase di svilupp
 
 ---
 
+### [6] Innovazione & Gamification Pre-Conversione (Ondata 1 Completata)
+- [x] **F-01 Simulatore di Impatto del Circuito** ([`/business-model#simulatore`](../src/components/impact-simulator.tsx)):
+  - Motore economico deterministico ([`src/lib/economics.ts`](../src/lib/economics.ts)) basato su tutti gli input di business reali (imprese, addetti, conversione voucher, 90% camera doppia, cesti km 0, distanze 30-70 km, margini convenzione 10%-30%, costi startup 30k-100k€).
+- [x] **F-02 Scheda Sostenibilità Startup** ([`src/lib/promoters.ts`](../src/lib/promoters.ts), [`src/components/promoters-dashboard-view.tsx`](../src/components/promoters-dashboard-view.tsx)):
+  - Monitoraggio del rapporto di copertura del Matching Grant (costo cassa max 15€/persona coperto dal margine ristorazione ~18€/cena).
+- [x] **F-03 Scenari a Confronto** ([`src/lib/economics.ts`](../src/lib/economics.ts)):
+  - Scenari salvati (Prudente, Base, Ambizioso), confronto affiancato e condivisione istantanea tramite query string.
+- [x] **F-04 Tipologia Ente Pubblico vs Privato**:
+  - Distinzione anagrafica e divieto di sponsorizzazione per enti pubblici; inserimento dell'**Università di Camerino** nel seed con account referente dedicato.
+- [x] **F-05 Ticket Studio d'Autore** ([`/account/ticket-studio`](../src/app/account/ticket-studio/page.tsx), [`src/components/ticket-studio.tsx`](../src/components/ticket-studio.tsx)):
+  - Mini applicazione con 6 stili artistici storici (Liberty, Futurismo, Bauhaus, Vintage '50, Acquerello, Ceramica Marchigiana), QR code, valorizzazione locale e condivisione nativa WhatsApp, Email e Social per addetti e community.
+- [x] **F-06 & F-07 Torneo dei Trailer di Performing Art** ([`/torneo`](../src/app/torneo/page.tsx), [`src/components/tournament-view.tsx`](../src/components/tournament-view.tsx), [`src/lib/tournament.ts`](../src/lib/tournament.ts)):
+  - Trailer video di 20 secondi con riproduzione immersiva;
+  - Votazione riservata a dipendenti e amici (attribuita all'impresa dell'invitante);
+  - Assegnazione di **10 Biglietti Omaggio** alla prima classificata e **2 Biglietti Omaggio cad.** alle successive 9 per coinvolgere gli addetti che hanno esaurito i voucher.
+
+---
+
 *Documento creato a chiusura della fase di consolidamento funzionale. Tutte le funzionalità attuali sono convalidate al 100% su `restart-open-architecture`.*
