@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, BookOpen, CheckCircle2, ArrowRight } from "lucide-react";
 import { PublicShell } from "@/components/public-shell";
+import { ImpactSimulator } from "@/components/impact-simulator";
 
 export const metadata = {
   title: "Modello di Business & Note Esplicative · RADICI",
@@ -57,6 +58,12 @@ export default function BusinessModelPage() {
               className="rounded-full border border-cream/20 bg-white/5 px-3 py-1 text-cream/90 transition hover:bg-white/15"
             >
               Nota 4 · Valore CSR vs CAM
+            </a>
+            <a
+              href="#simulatore"
+              className="rounded-full border border-gold/50 bg-gold/20 px-3 py-1 font-semibold text-gold transition hover:bg-gold/30"
+            >
+              Simulatore di Impatto
             </a>
           </div>
         </div>
@@ -368,6 +375,9 @@ export default function BusinessModelPage() {
             </p>
           </div>
         </section>
+
+        {/* SIMULATORE DI IMPATTO */}
+        <ImpactSimulator />
 
         {/* Pulsanti di Navigazione di Ritorno */}
         <section className="flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-mist pt-8">

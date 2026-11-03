@@ -912,6 +912,78 @@ export function PromotersDashboardView({ data }: Props) {
       {/* TAB 1: ECONOMICS & COMMISSIONI RADICI */}
       {activeTab === "economics" && (
         <section className="rounded-[28px] border border-forest/10 bg-white p-6 shadow-sm space-y-6">
+          {/* SCHEDA SOSTENIBILITA STARTUP & COPERTURA GRANT (F-02) */}
+          <div className="rounded-2xl border border-gold/30 bg-gold/5 p-5">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-gold/20">
+              <div className="flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gold/20 text-terracotta">
+                  <TrendingUp size={16} />
+                </span>
+                <div>
+                  <h3 className="font-serif text-lg font-bold text-forest">Sostenibilità della Startup & Copertura Matching Grant</h3>
+                  <p className="text-[11px] text-olive">
+                    Monitoraggio in tempo reale secondo la Business Rule R3: la gestione diretta della ristorazione copre il costo di cassa dei teatri.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/business-model#simulatore"
+                className="inline-flex items-center gap-1.5 rounded-xl bg-forest px-3.5 py-1.5 text-xs font-semibold text-cream hover:bg-forest/90 transition shrink-0"
+              >
+                <span>Simulatore Scenari</span>
+                <ExternalLink size={13} />
+              </Link>
+            </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <div className="rounded-xl bg-white p-3 border border-forest/10">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-olive">Margine Ristorazione</p>
+                <p className="mt-1 font-serif text-xl font-bold text-forest">
+                  {formatEuro(data.sustainability?.dinnerGrossMarginCents || 0)}
+                </p>
+                <p className="text-[10px] text-olive mt-0.5">
+                  {data.sustainability?.dinnerCount || 0} cene (~18€ margine cad.)
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-white p-3 border border-forest/10">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-olive">Costo Cassa Matching Grant</p>
+                <p className="mt-1 font-serif text-xl font-bold text-forest">
+                  {formatEuro(data.sustainability?.grantCashCostCents || 0)}
+                </p>
+                <p className="text-[10px] text-olive mt-0.5">
+                  {data.sustainability?.totalGrantPersons || 0} ingressi a max 15€ cad.
+                </p>
+              </div>
+
+              <div className="rounded-xl bg-white p-3 border border-forest/10">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-olive">Costo Opportunità Servizi</p>
+                <p className="mt-1 font-serif text-xl font-bold text-forest">
+                  {formatEuro(data.sustainability?.grantOpportunityCostCents || 0)}
+                </p>
+                <p className="text-[10px] text-olive mt-0.5">
+                  10€ cad. (buoni su servizi propri)
+                </p>
+              </div>
+
+              <div className={`rounded-xl p-3 border ${
+                (data.sustainability?.grantCoverageRatio || 0) >= 1.0
+                  ? "bg-forest/5 border-forest/20 text-forest"
+                  : "bg-terracotta/5 border-terracotta/20 text-terracotta"
+              }`}>
+                <p className="text-[10px] font-semibold uppercase tracking-wider opacity-80">Rapporto Copertura Grant</p>
+                <p className="mt-1 font-serif text-xl font-bold">
+                  {data.sustainability?.grantCoverageRatio || 0}x
+                </p>
+                <p className="text-[10px] opacity-80 mt-0.5">
+                  {(data.sustainability?.grantCoverageRatio || 0) >= 1.0
+                    ? "✓ Autofinanziamento solido"
+                    : "⚠️ In fase di bilanciamento"}
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-mist">
             <div>
               <h2 className="font-serif text-2xl text-forest">Registro Transazioni & Commissioni</h2>

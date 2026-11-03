@@ -266,6 +266,16 @@ export type PromoterDashboardData = {
   freeBasketsEarnedTotal: number;
   basketsProgressToNextGift: number;
   freeBasketThreshold: number;
+
+  // Sostenibilità Economica della Startup (Rapporto Copertura Matching Grant)
+  sustainability: {
+    dinnerCount: number;
+    dinnerGrossMarginCents: number;
+    totalGrantPersons: number;
+    grantCashCostCents: number;
+    grantOpportunityCostCents: number;
+    grantCoverageRatio: number;
+  };
 };
 
 export async function getPromotersDashboardData(promoterUserId: number): Promise<PromoterDashboardData | null> {
@@ -843,6 +853,25 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     region: th.region,
   }));
 
+  // Sostenibilità Economica della Startup (Business Rule R3)
+  const dinnerTx = activePlatformTransactions.filter(
+    (tx) =>
+      tx.serviceLabel.toLowerCase().includes("cena") ||
+      tx.serviceLabel.toLowerCase().includes("degustazione") ||
+      tx.serviceLabel.toLowerCase().includes("aperitivo")
+  );
+  const dinnerCount = dinnerTx.length;
+  // Margine di contribuzione unitario medio (~18€ = 25€ - 7€ costo materie prime)
+  const dinnerGrossMarginCents = dinnerCount * 1800;
+
+  // Matching Grant: per ogni persona a teatro sostenuta da voucher, la Startup sostiene
+  // max 15€ a persona di costo di cassa (biglietto botteghino). I rimanenti 10€ sono buoni su propri servizi.
+  const activeGrants = grants.filter((g) => g.status !== "declined" && g.status !== "expired");
+  const totalGrantPersons = activeGrants.reduce((sum, g) => sum + (g.seatsRequested || 2), 0);
+  const grantCashCostCents = totalGrantPersons * 1500;
+  const grantOpportunityCostCents = totalGrantPersons * 1000;
+  const grantCoverageRatio = grantCashCostCents > 0 ? Number((dinnerGrossMarginCents / grantCashCostCents).toFixed(2)) : 1.0;
+
   return {
     promoterUser,
     totalGmvCents,
@@ -892,5 +921,13 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
     freeBasketThreshold,
     freeBasketsEarnedTotal,
     basketsProgressToNextGift,
+    sustainability: {
+      dinnerCount,
+      dinnerGrossMarginCents,
+      totalGrantPersons,
+      grantCashCostCents,
+      grantOpportunityCostCents,
+      grantCoverageRatio,
+    },
   };
 }
