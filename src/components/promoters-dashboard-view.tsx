@@ -42,6 +42,7 @@ import {
 } from "lucide-react";
 import type { PromoterDashboardData } from "@/lib/promoters";
 import { formatDate, formatDateTime, formatEuro } from "@/lib/utils";
+import { ExplanatoryNoteTrigger } from "@/components/explanatory-note-modal";
 
 type Props = {
   data: PromoterDashboardData;
@@ -735,8 +736,14 @@ export function PromotersDashboardView({ data }: Props) {
       <section className="rounded-[32px] bg-forest p-6 text-cream shadow-sm md:p-8">
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-gold/20 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-gold">
-              <Sparkles size={14} /> Startup RADICI · Platform Management & Backoffice
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2 rounded-full bg-gold/20 px-3.5 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-gold">
+                <Sparkles size={14} /> Startup RADICI · Platform Management & Backoffice
+              </div>
+              <ExplanatoryNoteTrigger
+                noteId="nota-1"
+                className="border-gold/40 bg-gold/15 text-gold hover:bg-gold hover:text-forest"
+              />
             </div>
             <h1 className="mt-3 font-serif text-3xl md:text-5xl">
               Control Room Piattaforma & Promotori
@@ -757,7 +764,13 @@ export function PromotersDashboardView({ data }: Props) {
         {/* KPI CHIAVE DELLA STARTUP */}
         <div className="mt-8 grid grid-cols-2 gap-4 border-t border-cream/15 pt-6 lg:grid-cols-4">
           <div className="rounded-2xl bg-white/5 p-4">
-            <p className="text-xs uppercase tracking-wider text-cream/70">Volume Transato (GMV)</p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-wider text-cream/70">Volume Transato (GMV)</p>
+              <ExplanatoryNoteTrigger
+                noteId="nota-3"
+                className="border-cream/30 bg-white/10 text-cream hover:bg-white hover:text-forest"
+              />
+            </div>
             <p className="mt-2 font-serif text-2xl text-cream md:text-3xl">
               {formatEuro(data.totalGmvCents)}
             </p>
@@ -765,7 +778,13 @@ export function PromotersDashboardView({ data }: Props) {
           </div>
 
           <div className="rounded-2xl bg-white/5 p-4 border border-gold/30 bg-gold/5">
-            <p className="text-xs uppercase tracking-wider text-gold font-bold">Commissioni Radici (10%)</p>
+            <div className="flex items-center justify-between">
+              <p className="text-xs uppercase tracking-wider text-gold font-bold">Commissioni Radici (10%)</p>
+              <ExplanatoryNoteTrigger
+                noteId="nota-2"
+                className="border-gold/40 bg-gold/15 text-gold hover:bg-gold hover:text-forest"
+              />
+            </div>
             <p className="mt-2 font-serif text-2xl text-gold md:text-3xl">
               {formatEuro(data.totalCommissionsCents)}
             </p>

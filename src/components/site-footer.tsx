@@ -19,7 +19,8 @@ export function SiteFooter() {
             <Link href="/esplora" className="hover:text-[#c29b38] transition">Mappa e strutture</Link>
             <Link href="/destinazioni" className="hover:text-[#c29b38] transition">Macro-aree</Link>
             <Link href="/imprese" className="hover:text-[#c29b38] transition">Vetrina imprese ESG</Link>
-            <Link href="/come-funziona" className="hover:text-[#c29b38] transition">Modello pay-per-use</Link>
+            <Link href="/come-funziona" className="hover:text-[#c29b38] transition">Come Funziona</Link>
+            <Link href="/business-model" className="hover:text-[#c29b38] transition text-[#c29b38]">Modello Economico & Note</Link>
           </div>
         </div>
         <div>

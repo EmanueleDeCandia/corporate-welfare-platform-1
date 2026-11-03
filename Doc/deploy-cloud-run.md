@@ -21,8 +21,7 @@ e ascolta su `0.0.0.0`).
 
 - **Progetto GCP**: `my-project-first-330911`
 - **Region attiva**: `europe-west1` (Belgio, region di riferimento del progetto GCP)
-- **Servizio Cloud Run attivo**: `local-welfare`
-- **URL di produzione live**: `https://local-welfare-898481966164.europe-west1.run.app`
+- **Servizio Cloud Run**: `welfare-impact`
 
 ---
 
@@ -31,7 +30,7 @@ e ascolta su `0.0.0.0`).
 Dalla radice del repository, con `gcloud` autenticato (`gcloud auth login`) e il progetto attivo:
 
 ```bash
-gcloud run deploy local-welfare \
+gcloud run deploy welfare-impact \
   --source . \
   --region europe-west1 \
   --project my-project-first-330911 \
@@ -39,7 +38,7 @@ gcloud run deploy local-welfare \
   --max-instances 1 \
   --memory 1Gi \
   --cpu 1 \
-  --set-env-vars DEMO_MODE=true,NEXT_PUBLIC_APP_URL=https://local-welfare-898481966164.europe-west1.run.app
+  --set-env-vars DEMO_MODE=true
 ```
 
 `--source .` attiva **Cloud Build**: costruisce l'immagine dal `Dockerfile` e la pubblica su

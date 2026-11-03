@@ -28,6 +28,7 @@ import type { Company, Venue, User, Transaction } from "@/db/schema";
 import { formatDateTime, formatEuro, initials } from "@/lib/utils";
 import { RoleBadge } from "@/components/design-system/role-badge";
 import { StatusBadge } from "@/components/design-system/status-badge";
+import { ExplanatoryNoteTrigger } from "@/components/explanatory-note-modal";
 
 type EmployeeRow = {
   user: User;
@@ -214,6 +215,10 @@ export function CompanyDashboardView({ data }: Props) {
                   Area Riservata Impresa · CSR & Welfare
                 </span>
                 <span className="text-xs text-cream/70">P.IVA {company.vatNumber}</span>
+                <ExplanatoryNoteTrigger
+                  noteId="nota-4"
+                  className="border-gold/40 bg-gold/10 text-gold hover:bg-gold hover:text-forest"
+                />
               </div>
               <h1 className="mt-1 font-serif text-3xl md:text-4xl">{company.name}</h1>
               <p className="text-xs text-cream/80 md:text-sm">
@@ -291,9 +296,12 @@ export function CompanyDashboardView({ data }: Props) {
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-3xl bg-white p-5 shadow-sm border border-mist">
-              <span className="text-xs uppercase tracking-wider text-olive font-medium">Plafond Stanziato</span>
+              <div className="flex items-center justify-between">
+                <span className="text-xs uppercase tracking-wider text-olive font-medium">Plafond Stanziato</span>
+                <ExplanatoryNoteTrigger noteId="nota-2" />
+              </div>
               <p className="mt-2 font-serif text-3xl text-forest">{formatEuro(company.fundedAmountCents)}</p>
-              <span className="text-xs text-olive">Per {company.employeesCount} addetti eleggibili</span>
+              <span className="text-xs text-olive">Per {company.employeesCount} addetti eleggibili (75€ cad.)</span>
             </div>
             <div className="rounded-3xl bg-white p-5 shadow-sm border border-mist">
               <span className="text-xs uppercase tracking-wider text-olive font-medium">Capitale Impegnato (Riscatti)</span>
@@ -303,9 +311,12 @@ export function CompanyDashboardView({ data }: Props) {
               <span className="text-xs text-olive">{totalRedeemed} voucher riscattati (obbligo B2B)</span>
             </div>
             <div className="rounded-3xl bg-white p-5 shadow-sm border border-mist">
-              <span className="text-xs uppercase tracking-wider text-gold font-bold">Matching Grant Attivato</span>
+              <div className="flex items-center justify-between">
+                <span className="text-xs uppercase tracking-wider text-gold font-bold">Matching Grant Attivato</span>
+                <ExplanatoryNoteTrigger noteId="nota-3" />
+              </div>
               <p className="mt-2 font-serif text-3xl text-forest">{formatEuro(matchingGrantCents)}</p>
-              <span className="text-xs text-olive">Cultura erogata a costo ZERO per l&apos;azienda</span>
+              <span className="text-xs text-olive">Cultura per 2 a costo ZERO per l&apos;azienda</span>
             </div>
             <div className="rounded-3xl bg-white p-5 shadow-sm border border-mist">
               <span className="text-xs uppercase tracking-wider text-olive font-medium">Adesione Dipendenti</span>
@@ -769,9 +780,15 @@ export function CompanyDashboardView({ data }: Props) {
           <div className="rounded-[32px] bg-forest p-6 text-cream md:p-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <span className="rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold text-gold inline-flex items-center gap-1.5">
-                  <Truck size={13} /> Sinergie Flotta Aziendale · Impatto KM 0
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold text-gold inline-flex items-center gap-1.5">
+                    <Truck size={13} /> Sinergie Flotta Aziendale · Impatto KM 0
+                  </span>
+                  <ExplanatoryNoteTrigger
+                    noteId="nota-4"
+                    className="border-gold/40 bg-gold/10 text-gold hover:bg-gold hover:text-forest"
+                  />
+                </div>
                 <h2 className="mt-2 font-serif text-2xl md:text-3xl">Filiera Agroalimentare di Prossimità</h2>
                 <p className="mt-1 text-xs md:text-sm text-cream/80 max-w-2xl leading-relaxed">
                   Consegne a impatto logistico marginale zero: i prodotti dei piccoli produttori vengono recapitati presso la sede aziendale
