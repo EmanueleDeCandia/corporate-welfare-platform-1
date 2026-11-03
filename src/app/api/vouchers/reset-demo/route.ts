@@ -32,36 +32,15 @@ export async function POST() {
       DELETE FROM bookings WHERE voucher_id IS NOT NULL;
     `);
 
-    // 3. Rimuovi le transazioni di riscatto simulate create durante i test
+    // 3. Rimuovi tutte le transazioni di prova e riscatto demo
     sqlite.exec(`
-      DELETE FROM transactions WHERE type = 'welfare_redeem';
+      DELETE FROM transactions;
     `);
 
-    // 4. Annulla e revoca esplicitamente tutte le notifiche di fatturazione welfare per i fornitori
-    const welfareNotifs = await db
-      .select()
-      .from(notifications)
-      .where(eq(notifications.type, "welfare"));
-
-    for (const notif of welfareNotifs) {
-      const payload = (notif.payload as Record<string, any>) || {};
-      if (!payload.cancelled || !notif.title.includes("[ANNULLATO]")) {
-        await db
-          .update(notifications)
-          .set({
-            title: `[ANNULLATO] Selezione voucher revocata - Non fatturare`,
-            body: `La selezione demo del voucher welfare è stata azzerata. Nessun addebito B2B dovuto e nessuna prestazione richiesta per la struttura.`,
-            read: true,
-            payload: {
-              ...payload,
-              cancelled: true,
-              invoiceHint: "SELEZIONE ANNULLATA - NESSUNA FATTURA DA EMETTERE",
-              status: "cancelled",
-            },
-          })
-          .where(eq(notifications.id, notif.id));
-      }
-    }
+    // 4. Rimuovi tutte le notifiche per rendere l'ambiente delle notifiche completamente pulito
+    sqlite.exec(`
+      DELETE FROM notifications;
+    `);
 
     return NextResponse.json({
       success: true,

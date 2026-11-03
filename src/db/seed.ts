@@ -1345,56 +1345,6 @@ export async function seedDatabase() {
     ])
     .returning();
 
-  const luigiInvite = insertedInvites[0];
-
-  const insertedTx = await db
-    .insert(transactions)
-    .values([
-      // Prestazione Welfare B2B dimostrativa (Art. 51 TUIR): Sofia Neri (Verde Energia S.p.A.)
-      {
-        type: "welfare_redeem",
-        status: "confirmed",
-        userId: sofia.id,
-        venueId: laValle.id,
-        companyId: verde.id,
-        voucherId: 5,
-        amountCents: 5000,
-        discountCents: 0,
-        listPriceCents: 5000,
-        serviceLabel: "Pernottamento Welfare (Art. 51 TUIR)",
-        paymentStatus: "pending",
-        commissionBps: 1000,
-        commissionAmountCents: 500,
-        providerNetCents: 4500,
-        createdAt: new Date("2026-11-01T10:00:00Z"),
-      },
-    ])
-    .returning();
-
-  await db.insert(notifications).values([
-    {
-      venueId: laValle.id,
-      type: "welfare",
-      title: "Nuovo riscatto voucher: Pernottamento",
-      body: `Sofia Neri ha riscattato un voucher welfare da 50.00€. Il pagamento è dovuto dall'impresa Verde Energia S.p.A. indipendentemente dalla presenza fisica.`,
-      payload: {
-        guest: "Sofia Neri",
-        company: "Verde Energia S.p.A.",
-        vat: "09876543210",
-        amountCents: 5000,
-        commissionAmountCents: 500,
-        providerNetCents: 4500,
-        serviceLabel: "Pernottamento (50€)",
-        voucherId: 5,
-        invoiceHint: "EMETTI FATTURA NEL TUO GESTIONALE A: Verde Energia S.p.A. (P.IVA: 09876543210)",
-        vatNote: "Lordo: € 50.00 | Fee Radici (10%): € 5.00 | Netto fornitore: € 45.00",
-        transactionId: insertedTx[0].id,
-      },
-      read: false,
-      createdAt: new Date("2026-11-01T10:00:00Z"),
-    },
-  ]);
-
   await db.insert(shares).values({
     userId: mario.id,
     venueId: laValle.id,

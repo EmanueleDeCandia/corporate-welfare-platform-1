@@ -458,13 +458,14 @@ async function testCommunityBookingsAndOverbookingPrevention() {
     'Cruscotto fornitore /fornitore mostra il tab dedicato alle prenotazioni community e la nuova prenotazione di Luigi Bianchi'
   );
 
-  // Pulizia della prenotazione di test per non lasciare residui duplicati nel DB di sviluppo
+  // Pulizia della prenotazione di test e transazioni di prova per non lasciare residui duplicati nel DB di sviluppo
   try {
     const bookingId = newBookingRes.json?.booking?.id;
     if (bookingId) {
       db.prepare("DELETE FROM bookings WHERE id = ?").run(bookingId);
       db.prepare("DELETE FROM notifications WHERE json_extract(payload, '$.bookingId') = ?").run(bookingId);
     }
+    db.prepare("DELETE FROM transactions WHERE invoice_number = 'FAT-2026-099'").run();
   } catch (e) {}
 }
 
