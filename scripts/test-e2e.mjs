@@ -205,8 +205,15 @@ async function testProviderAttendanceAndInvoice() {
   );
 
   // Test registrazione fattura su transazione di Elena (venue 1)
-  const txVenue1 = db.prepare("SELECT id FROM transactions WHERE venue_id = 1 LIMIT 1").get();
-  const targetTxId = txVenue1 ? txVenue1.id : 3;
+  let txVenue1 = db.prepare("SELECT id FROM transactions WHERE venue_id = 1 LIMIT 1").get();
+  if (!txVenue1) {
+    db.prepare(`
+      INSERT INTO transactions (venue_id, user_id, type, amount_cents, list_price_cents, service_label, status, payment_status, created_at)
+      VALUES (1, 4, 'welfare_redeem', 5000, 5000, 'Pernottamento Welfare (Art. 51 TUIR)', 'confirmed', 'pending', unixepoch())
+    `).run();
+    txVenue1 = db.prepare("SELECT id FROM transactions WHERE venue_id = 1 LIMIT 1").get();
+  }
+  const targetTxId = txVenue1.id;
   const invoiceRes = await request('/api/provider/invoices', {
     method: 'POST',
     headers: cookieHeader,
@@ -450,6 +457,15 @@ async function testCommunityBookingsAndOverbookingPrevention() {
       provPage.text.includes('Luigi Bianchi'),
     'Cruscotto fornitore /fornitore mostra il tab dedicato alle prenotazioni community e la nuova prenotazione di Luigi Bianchi'
   );
+
+  // Pulizia della prenotazione di test per non lasciare residui duplicati nel DB di sviluppo
+  try {
+    const bookingId = newBookingRes.json?.booking?.id;
+    if (bookingId) {
+      db.prepare("DELETE FROM bookings WHERE id = ?").run(bookingId);
+      db.prepare("DELETE FROM notifications WHERE json_extract(payload, '$.bookingId') = ?").run(bookingId);
+    }
+  } catch (e) {}
 }
 
 async function runAll() {

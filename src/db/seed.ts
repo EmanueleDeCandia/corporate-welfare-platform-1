@@ -1350,22 +1350,23 @@ export async function seedDatabase() {
   const insertedTx = await db
     .insert(transactions)
     .values([
-      // Transazione privata community: Luigi Bianchi (amico invitato, paga quota propria)
+      // Prestazione Welfare B2B dimostrativa (Art. 51 TUIR): Sofia Neri (Verde Energia S.p.A.)
       {
-        type: "consumer_payment",
-        status: "receipted",
-        userId: luigi.id,
+        type: "welfare_redeem",
+        status: "confirmed",
+        userId: sofia.id,
         venueId: laValle.id,
-        inviteId: luigiInvite.id,
-        amountCents: 4500,
-        discountCents: 500,
+        companyId: verde.id,
+        voucherId: 5,
+        amountCents: 5000,
+        discountCents: 0,
         listPriceCents: 5000,
-        serviceLabel: "Soggiorno amico · Camera Matrimoniale",
-        paymentStatus: "settled",
+        serviceLabel: "Pernottamento Welfare (Art. 51 TUIR)",
+        paymentStatus: "pending",
         commissionBps: 1000,
-        commissionAmountCents: 450,
-        providerNetCents: 4050,
-        createdAt: new Date("2026-04-04T19:12:00Z"),
+        commissionAmountCents: 500,
+        providerNetCents: 4500,
+        createdAt: new Date("2026-11-01T10:00:00Z"),
       },
     ])
     .returning();
@@ -1373,20 +1374,24 @@ export async function seedDatabase() {
   await db.insert(notifications).values([
     {
       venueId: laValle.id,
-      type: "referral",
-      title: "Notifica referral / consumer",
-      body: 'L\'utente amico "Luigi Bianchi" (invitato da Mario Rossi) ha concluso il saldo.',
+      type: "welfare",
+      title: "Nuovo riscatto voucher: Pernottamento",
+      body: `Sofia Neri ha riscattato un voucher welfare da 50.00€. Il pagamento è dovuto dall'impresa Verde Energia S.p.A. indipendentemente dalla presenza fisica.`,
       payload: {
-        guest: "Luigi Bianchi",
-        inviter: "Mario Rossi",
-        amountCents: 4500,
-        invoiceHint: "INCASSO RICEVUTO: € 45,00 (pagato direttamente dall'utente via carta)",
-        vatNote: "Emettere normale scontrino/corrispettivo fiscale all'ospite.",
-        impact: "Assegnato +1 Punto Impatto a Mario Rossi",
+        guest: "Sofia Neri",
+        company: "Verde Energia S.p.A.",
+        vat: "09876543210",
+        amountCents: 5000,
+        commissionAmountCents: 500,
+        providerNetCents: 4500,
+        serviceLabel: "Pernottamento (50€)",
+        voucherId: 5,
+        invoiceHint: "EMETTI FATTURA NEL TUO GESTIONALE A: Verde Energia S.p.A. (P.IVA: 09876543210)",
+        vatNote: "Lordo: € 50.00 | Fee Radici (10%): € 5.00 | Netto fornitore: € 45.00",
         transactionId: insertedTx[0].id,
       },
       read: false,
-      createdAt: new Date("2026-04-04T19:12:00Z"),
+      createdAt: new Date("2026-11-01T10:00:00Z"),
     },
   ]);
 

@@ -151,15 +151,21 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
     ]);
   }
 
+  // Isola unicamente le prestazioni Welfare B2B (voucher con impresa committente ex Art. 51 TUIR)
+  // I pagamenti privati con carta degli ospiti consumer sono gestiti nel tab "Prenotazioni Community"
+  const welfareRows = rows.filter(
+    (r) => r.transaction.type === "welfare_redeem" || r.transaction.voucherId !== null || r.company !== null
+  );
+
   // Filtra transazioni welfare attive vs revocate
-  const activeRows = rows.filter(
+  const activeRows = welfareRows.filter(
     (r) => r.transaction.status !== "cancelled" && r.transaction.paymentStatus !== "cancelled"
   );
-  const cancelledRows = rows.filter(
+  const cancelledRows = welfareRows.filter(
     (r) => r.transaction.status === "cancelled" || r.transaction.paymentStatus === "cancelled"
   );
   const displayedRows =
-    welfareFilter === "active" ? activeRows : welfareFilter === "cancelled" ? cancelledRows : rows;
+    welfareFilter === "active" ? activeRows : welfareFilter === "cancelled" ? cancelledRows : welfareRows;
 
   // Stato per l'editing degli estremi fattura inline
   const [editingTxId, setEditingTxId] = useState<number | null>(null);
@@ -235,17 +241,17 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
     router.refresh();
   }
 
-  // Calcolo KPI del fornitore
-  const totalVolumeCents = rows.reduce((s, r) => s + r.transaction.amountCents, 0);
-  const totalCommissionCents = rows.reduce(
+  // Calcolo KPI del fornitore (Welfare B2B)
+  const totalVolumeCents = welfareRows.reduce((s, r) => s + r.transaction.amountCents, 0);
+  const totalCommissionCents = welfareRows.reduce(
     (s, r) => s + (r.transaction.commissionAmountCents || Math.round(r.transaction.amountCents * 0.1)),
     0
   );
-  const totalNetCents = rows.reduce(
+  const totalNetCents = welfareRows.reduce(
     (s, r) => s + (r.transaction.providerNetCents || r.transaction.amountCents - Math.round(r.transaction.amountCents * 0.1)),
     0
   );
-  const settledNetCents = rows
+  const settledNetCents = welfareRows
     .filter((r) => r.transaction.paymentStatus === "settled")
     .reduce(
       (s, r) => s + (r.transaction.providerNetCents || r.transaction.amountCents - Math.round(r.transaction.amountCents * 0.1)),
@@ -1135,6 +1141,10 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
                           ? "Avviso Selezione Annullata (Nessun addebito)"
                           : item.type === "welfare"
                           ? "Notifica riscatto welfare B2B (Dovuto per legge)"
+                          : item.type === "community_booking"
+                          ? "Prenotazione Community (Convenzione 10%)"
+                          : item.type === "order"
+                          ? "Ordine Prodotti Locali KM 0"
                           : "Notifica referral community"}
                       </p>
                       {serviceLabel && (
@@ -1187,7 +1197,9 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
                         {payload.vatNote ? <p>→ {String(payload.vatNote)}</p> : null}
                         {payload.impact ? <p>→ Impatto: {String(payload.impact)}</p> : null}
                         <div className="mt-2 pt-2 border-t border-forest/10 font-sans text-[11px] text-olive">
-                          Nota DEMO: In caso di successiva revoca o cambio struttura, questa notifica verrà automaticamente marcata come [ANNULLATO] per bloccare l&apos;emissione della fattura.
+                          {item.type === "welfare"
+                            ? "Nota DEMO: In caso di successiva revoca o cambio struttura, questa notifica verrà automaticamente marcata come [ANNULLATO] per bloccare l'emissione della fattura."
+                            : "Prenotazione con sconto community 10%. Pagamento diretto dall'ospite con carta personale su piattaforma o al check-in (scontrino o corrispettivo fiscale all'ospite)."}
                         </div>
                       </>
                     )}
