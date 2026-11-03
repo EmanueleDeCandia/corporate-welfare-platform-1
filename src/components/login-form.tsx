@@ -46,6 +46,12 @@ const demos: DemoUser[] = [
     category: "Impresa CSR",
     hint: "CSR Manager · Verde Energia Italia (Verifica plafond)",
   },
+  {
+    email: "referente@unicam.it",
+    label: "Giulia Ferretti",
+    category: "Impresa CSR",
+    hint: "Referente Ente Pubblico · Università di Camerino (account senza sponsorizzazione)",
+  },
   // 4. Fornitori (Ricettività, Ristorazione, Filiera Corta)
   {
     email: "elena@lavalle.it",

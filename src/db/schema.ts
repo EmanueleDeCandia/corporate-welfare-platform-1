@@ -26,6 +26,8 @@ export const companies = sqliteTable("companies", {
   localImpactDescription: text("local_impact_description"),
   reportUrl: text("report_url"),
   accent: text("accent").notNull().default("#1C3A2E"),
+  // Tipologia ente: "private" (impresa CSR) oppure "public" (ente pubblico, senza sponsorizzazione)
+  entityType: text("entity_type").notNull().default("private"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),

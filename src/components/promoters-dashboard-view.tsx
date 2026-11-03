@@ -354,6 +354,7 @@ export function PromotersDashboardView({ data }: Props) {
     managerLastName: "Martini",
     managerEmail: "",
     managerPassword: "",
+    entityType: "private",
   });
 
   // Form State Fornitore
@@ -435,6 +436,7 @@ export function PromotersDashboardView({ data }: Props) {
           managerLastName: companyForm.managerLastName,
           managerEmail: companyForm.managerEmail,
           managerPassword: companyForm.managerPassword,
+          entityType: companyForm.entityType,
         }),
       });
 
@@ -462,6 +464,7 @@ export function PromotersDashboardView({ data }: Props) {
         managerLastName: "Martini",
         managerEmail: "",
         managerPassword: "",
+        entityType: "private",
       });
       router.refresh();
     } catch (err: any) {
@@ -1097,6 +1100,11 @@ export function PromotersDashboardView({ data }: Props) {
                       </span>
                       <h3 className="font-serif text-2xl font-bold text-forest">{comp.name}</h3>
                       <p className="text-xs text-olive font-mono mt-0.5">P.IVA: {comp.vatNumber}</p>
+                      {comp.entityType === "public" && (
+                        <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-forest px-2 py-0.5 text-[10px] font-semibold text-cream">
+                          <Building size={10} /> Ente Pubblico
+                        </span>
+                      )}
                     </div>
                     <span className="rounded-full bg-forest/5 px-2.5 py-1 text-xs font-semibold text-forest">
                       {comp.employeesCount} dipendenti
@@ -2289,7 +2297,32 @@ export function PromotersDashboardView({ data }: Props) {
                 />
               </div>
 
+              {/* Tipologia Ente */}
+              <div>
+                <label className="block text-xs font-semibold text-forest mb-1">Tipologia Ente</label>
+                <select
+                  value={companyForm.entityType}
+                  onChange={(e) =>
+                    setCompanyForm({
+                      ...companyForm,
+                      entityType: e.target.value,
+                      sponsoredVenueId: e.target.value === "public" ? "" : companyForm.sponsoredVenueId,
+                    })
+                  }
+                  className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none bg-white"
+                >
+                  <option value="private">Impresa Privata (CSR)</option>
+                  <option value="public">Ente Pubblico (account senza sponsorizzazione)</option>
+                </select>
+                {companyForm.entityType === "public" && (
+                  <p className="mt-1 text-[10px] text-olive">
+                    Gli enti pubblici erogano i voucher di welfare ma non possono sponsorizzare strutture.
+                  </p>
+                )}
+              </div>
+
               {/* Struttura Sponsorizzata */}
+              {companyForm.entityType !== "public" && (
               <div>
                 <label className="block text-xs font-semibold text-forest mb-1">
                   Struttura Sponsorizzata (Hotel, Agriturismo, Ristorante, Produttore, Teatro)
@@ -2310,6 +2343,7 @@ export function PromotersDashboardView({ data }: Props) {
                   La struttura selezionata mostrerà l&apos;impresa come sponsor ufficiale e apparirà nella scheda pubblica dell&apos;azienda.
                 </p>
               </div>
+              )}
 
               {/* Descrizione Impatto Sviluppo Locale */}
               <div>
@@ -3078,6 +3112,7 @@ export function PromotersDashboardView({ data }: Props) {
                 />
               </div>
 
+              {editingCompany?.entityType !== "public" && (
               <div>
                 <label className="block text-xs font-semibold text-forest mb-1">
                   Struttura Sponsorizzata (Hotel, Agriturismo, Ristorante, Produttore, Teatro)
@@ -3098,6 +3133,7 @@ export function PromotersDashboardView({ data }: Props) {
                   La struttura selezionata mostrerà l&apos;azienda come sponsor e apparirà nella scheda pubblica dell&apos;impresa.
                 </p>
               </div>
+              )}
 
               <div>
                 <label className="block text-xs font-semibold text-forest mb-1">

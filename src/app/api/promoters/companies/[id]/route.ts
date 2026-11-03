@@ -47,6 +47,7 @@ export async function PATCH(
       reportUrl,
       sponsoredVenueId,
       accent,
+      entityType: rawEntityType,
     } = body;
 
     const updates: Partial<typeof companies.$inferInsert> = {};
@@ -79,6 +80,10 @@ export async function PATCH(
     if (accent && typeof accent === "string") {
       updates.accent = accent;
     }
+    if (rawEntityType === "public" || rawEntityType === "private") {
+      updates.entityType = rawEntityType;
+    }
+    const finalEntityType = updates.entityType ?? existingCompany.entityType;
 
     let numEmployees = existingCompany.employeesCount;
     if (employeesCount !== undefined) {
@@ -108,7 +113,13 @@ export async function PATCH(
       .returning();
 
     // Gestione della struttura sponsorizzata (se inviata nel payload)
-    if (sponsoredVenueId !== undefined) {
+    if (finalEntityType === "public") {
+      // Gli enti pubblici non possono sponsorizzare: rimuove eventuali sponsorizzazioni precedenti
+      await db
+        .update(venues)
+        .set({ sponsorCompanyId: null })
+        .where(eq(venues.sponsorCompanyId, companyId));
+    } else if (sponsoredVenueId !== undefined) {
       // Disaccoppia prima eventuali strutture già sponsorizzate da questa azienda
       await db
         .update(venues)

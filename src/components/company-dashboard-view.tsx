@@ -212,7 +212,7 @@ export function CompanyDashboardView({ data }: Props) {
             <div>
               <div className="flex items-center gap-2">
                 <span className="rounded-full bg-gold/20 px-3 py-0.5 text-xs font-semibold text-gold">
-                  Area Riservata Impresa · CSR & Welfare
+                  {company.entityType === "public" ? "Area Riservata Ente Pubblico · Welfare" : "Area Riservata Impresa · CSR & Welfare"}
                 </span>
                 <span className="text-xs text-cream/70">P.IVA {company.vatNumber}</span>
                 <ExplanatoryNoteTrigger

@@ -43,6 +43,7 @@ export async function initDb() {
           local_impact_description TEXT,
           report_url TEXT,
           accent TEXT NOT NULL DEFAULT '#1C3A2E',
+          entity_type TEXT NOT NULL DEFAULT 'private',
           created_at INTEGER NOT NULL DEFAULT (unixepoch())
         );
 
@@ -349,6 +350,15 @@ export async function initDb() {
       `);
 
       // Migrations per tabelle esistenti
+      try {
+        const cCols = sqlite.prepare("PRAGMA table_info(companies)").all() as Array<{ name: string }>;
+        if (!cCols.some((col) => col.name === "entity_type")) {
+          sqlite.exec("ALTER TABLE companies ADD COLUMN entity_type TEXT NOT NULL DEFAULT 'private';");
+        }
+      } catch (e) {
+        console.warn("Migration companies warning:", e);
+      }
+
       try {
         const vCols = sqlite.prepare("PRAGMA table_info(vouchers)").all() as Array<{ name: string }>;
         if (!vCols.some((col) => col.name === "plan_id")) {

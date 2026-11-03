@@ -99,6 +99,7 @@ export type CompanyOverview = {
   name: string;
   slug: string;
   vatNumber: string;
+  entityType: string;
   city: string;
   sector: string;
   description: string;
@@ -629,6 +630,7 @@ export async function getPromotersDashboardData(promoterUserId: number): Promise
       name: c.name,
       slug: c.slug,
       vatNumber: c.vatNumber,
+      entityType: c.entityType,
       city: c.city,
       sector: c.sector,
       description: c.description,

@@ -46,7 +46,11 @@ export async function POST(req: Request) {
       managerLastName = "Welfare",
       managerEmail,
       managerPassword,
+      entityType: rawEntityType,
     } = body;
+
+    // Tipologia ente: gli enti pubblici non possono sponsorizzare strutture
+    const entityType = rawEntityType === "public" ? "public" : "private";
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {
       return NextResponse.json({ error: "La ragione sociale dell'impresa è obbligatoria." }, { status: 400 });
@@ -143,11 +147,12 @@ export async function POST(req: Request) {
         localImpactDescription: impactDesc,
         reportUrl: report,
         accent: accent || "#1C3A2E",
+        entityType,
       })
       .returning();
 
     // Collegamento opzionale struttura sponsorizzata (Hotel, Agriturismo, Ristorante, Teatro, ecc.)
-    if (sponsoredVenueId && typeof sponsoredVenueId === "number" && sponsoredVenueId > 0) {
+    if (entityType === "private" && sponsoredVenueId && typeof sponsoredVenueId === "number" && sponsoredVenueId > 0) {
       await db
         .update(venues)
         .set({ sponsorCompanyId: insertedCompany.id })

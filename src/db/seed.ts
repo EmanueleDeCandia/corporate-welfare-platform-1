@@ -38,8 +38,68 @@ export function ensureSeeded() {
 
 async function seedIfEmpty() {
   const existing = await db.select({ id: companies.id }).from(companies).limit(1);
-  if (existing.length > 0) return;
-  await seedDatabase();
+  if (existing.length === 0) {
+    await seedDatabase();
+  }
+  await ensurePublicEntities();
+}
+
+// Enti pubblici dimostrativi (idempotente). Gli enti pubblici hanno un account referente
+// ma non possono sponsorizzare strutture (entityType = "public").
+// Eseguito anche su database gia' popolati, cosi' l'ente compare senza ripristino completo.
+// Non crea voucher, transazioni o notifiche: il primo impatto resta pulito.
+export async function ensurePublicEntities() {
+  const [existing] = await db.select({ id: companies.id }).from(companies).where(eq(companies.slug, "universita-di-camerino")).limit(1);
+  if (existing) return;
+
+  const [unicam] = await db
+    .insert(companies)
+    .values({
+      name: "Università di Camerino",
+      slug: "universita-di-camerino",
+      vatNumber: "00291660439",
+      city: "Camerino",
+      sector: "Istruzione universitaria e ricerca",
+      employeesCount: 50,
+      fundedAmountCents: 0,
+      impactRating: 90,
+      localRedistributionCents: 0,
+      co2SavedKg: 0,
+      entityType: "public",
+      description:
+        "Ateneo dell'entroterra maceratese. Come ente pubblico dispone di un account per l'erogazione dei voucher di welfare al proprio personale, senza possibilita' di sponsorizzazione di strutture.",
+      localImpactDescription:
+        "Il personale dell'Ateneo valorizza i borghi dell'area interna di Camerino: pernottamenti negli agriturismi del territorio e serate a teatro con la filiera corta locale.",
+      accent: "#2F4B7C",
+    })
+    .returning();
+
+  await db.insert(welfarePlans).values({
+    companyId: unicam.id,
+    year: 2026,
+    validFrom: new Date("2026-01-01T00:00:00Z"),
+    validUntil: new Date("2026-12-31T23:59:59Z"),
+    eligibleEmployees: unicam.employeesCount,
+    overnightAmountCents: 5000,
+    dinnerAmountCents: 2500,
+    overnightExtraThresholdBps: 2000,
+    overnightExtraCapBps: 2000,
+    dinnerExtraThresholdBps: 2000,
+    dinnerExtraCapBps: 2000,
+    status: "active",
+  });
+
+  await db.insert(users).values({
+    email: "referente@unicam.it",
+    passwordHash: DEMO_PASSWORD,
+    firstName: "Giulia",
+    lastName: "Ferretti",
+    role: "csr",
+    companyId: unicam.id,
+    impactPoints: 0,
+    badgeLevel: "CSR Manager",
+    referralCode: "giulia-ferretti",
+  });
 }
 
 export async function seedDatabase() {
