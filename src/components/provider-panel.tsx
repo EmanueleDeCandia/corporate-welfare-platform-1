@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Clock,
   FileText,
+  Filter,
   Info,
   Plus,
   Receipt,
@@ -48,6 +49,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
 
   const [panelTab, setPanelTab] = useState<"welfare" | "community" | "rooms">("welfare");
   const [welfareFilter, setWelfareFilter] = useState<"active" | "cancelled" | "all">("active");
+  const [notifFilter, setNotifFilter] = useState<"all" | "unread" | "active" | "cancelled">("all");
   const [pending, setPending] = useState<number | null>(null);
 
   // Stato per la gestione delle offerte camere convenzionate
@@ -1035,76 +1037,178 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
 
       {/* Sezione Notifiche Operative */}
       <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/5">
-        <div className="flex items-center gap-2 text-forest">
-          <Bell size={18} />
-          <h2 className="font-serif text-2xl">Notifiche e Istruzioni di Fatturazione Esterna</h2>
-        </div>
-        <div className="mt-5 space-y-4">
-          {items.map((item) => {
-            const payload = (item.payload ?? {}) as Record<string, any>;
-            const isCancelled =
-              Boolean(payload.cancelled) ||
-              item.title.toLowerCase().includes("annullat") ||
-              item.body.toLowerCase().includes("annullat");
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-forest/10 pb-4">
+          <div className="flex items-center gap-2 text-forest">
+            <Bell size={18} />
+            <h2 className="font-serif text-2xl">Notifiche e Istruzioni di Fatturazione Esterna</h2>
+          </div>
 
-            return (
-              <article
-                key={item.id}
-                className={`rounded-3xl border p-5 ${
-                  isCancelled
-                    ? "border-terracotta/30 bg-terracotta/5"
-                    : item.type === "welfare"
-                    ? "border-gold/40 bg-cream"
-                    : "border-sage/40 bg-sage/10"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-[11px] uppercase tracking-[0.16em] text-olive">
-                    {isCancelled
-                      ? "Avviso Selezione Annullata (Nessun addebito)"
+          {/* TENDINA FILTRO NOTIFICHE */}
+          <div className="flex items-center gap-2 self-start sm:self-auto">
+            <label htmlFor="notif-filter-select" className="text-xs text-olive font-medium flex items-center gap-1">
+              <Filter size={13} /> Mostra:
+            </label>
+            <select
+              id="notif-filter-select"
+              value={notifFilter}
+              onChange={(e) => setNotifFilter(e.target.value as any)}
+              className="rounded-full border border-forest/20 bg-cream/50 px-3.5 py-1.5 text-xs font-semibold text-forest focus:outline-none focus:ring-1 focus:ring-forest cursor-pointer"
+            >
+              <option value="all">Tutte le Notifiche ({items.length})</option>
+              <option value="unread">Da Leggere / In Attesa ({items.filter((i) => !i.read).length})</option>
+              <option value="active">Riscatti Welfare Attivi ({items.filter((i) => {
+                const p = (i.payload ?? {}) as Record<string, any>;
+                return !Boolean(p.cancelled) && !i.title.toLowerCase().includes("annullat") && !i.body.toLowerCase().includes("annullat");
+              }).length})</option>
+              <option value="cancelled">Revocate & Annullate ({items.filter((i) => {
+                const p = (i.payload ?? {}) as Record<string, any>;
+                return Boolean(p.cancelled) || i.title.toLowerCase().includes("annullat") || i.body.toLowerCase().includes("annullat");
+              }).length})</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="mt-5 space-y-4">
+          {(() => {
+            const displayedItems = items.filter((item) => {
+              const payload = (item.payload ?? {}) as Record<string, any>;
+              const isCancelled =
+                Boolean(payload.cancelled) ||
+                item.title.toLowerCase().includes("annullat") ||
+                item.body.toLowerCase().includes("annullat");
+
+              if (notifFilter === "unread") return !item.read;
+              if (notifFilter === "active") return !isCancelled;
+              if (notifFilter === "cancelled") return isCancelled;
+              return true;
+            });
+
+            if (displayedItems.length === 0) {
+              return (
+                <div className="py-8 text-center text-xs text-olive">
+                  {notifFilter === "unread"
+                    ? "Nessuna notifica in attesa di lettura: tutte le notifiche sono state prese in carico."
+                    : notifFilter === "active"
+                    ? "Nessun riscatto welfare attivo da fatturare al momento."
+                    : notifFilter === "cancelled"
+                    ? "Nessuna notifica di annullamento o revoca presente."
+                    : "Nessuna notifica registrata per questa struttura."}
+                </div>
+              );
+            }
+
+            return displayedItems.map((item) => {
+              const payload = (item.payload ?? {}) as Record<string, any>;
+              const isCancelled =
+                Boolean(payload.cancelled) ||
+                item.title.toLowerCase().includes("annullat") ||
+                item.body.toLowerCase().includes("annullat");
+
+              const serviceLabel =
+                payload.serviceLabel ||
+                (payload.voucherId === 1 || item.title.toLowerCase().includes("pernottamento")
+                  ? "Pernottamento (50€)"
+                  : payload.voucherId === 2 ||
+                    item.title.toLowerCase().includes("cena") ||
+                    item.title.toLowerCase().includes("degustazione") ||
+                    item.title.toLowerCase().includes("aperitivo")
+                  ? "Cena / Degustazione KM 0 (25€)"
+                  : payload.voucherId
+                  ? `Voucher #${payload.voucherId}`
+                  : null);
+
+              return (
+                <article
+                  key={item.id}
+                  className={`rounded-3xl border p-5 ${
+                    isCancelled
+                      ? "border-terracotta/30 bg-terracotta/5"
                       : item.type === "welfare"
-                      ? "Notifica riscatto welfare B2B (Dovuto per legge)"
-                      : "Notifica referral community"}
-                  </p>
-                  {isCancelled && (
-                    <span className="rounded-full bg-terracotta/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-terracotta">
-                      Non Fatturare
-                    </span>
-                  )}
-                </div>
-                <h3 className="mt-2 font-serif text-2xl text-forest">{item.title}</h3>
-                <p className="mt-2 text-sm leading-6 text-forest/80">{item.body}</p>
-                <div className="mt-4 space-y-1 text-sm text-forest font-mono text-xs">
-                  {isCancelled ? (
-                    <div className="rounded-xl border border-terracotta/20 bg-white/70 p-3 text-terracotta">
-                      <p className="font-bold">⚠️ PRENOTAZIONE REVOCATA: NESSUNA FATTURA DA EMETTERE</p>
-                      <p className="text-[11px] mt-0.5 font-sans text-forest/80">
-                        Il lavoratore ha modificato o annullato la selezione prima della fruizione. Nessuna prestazione richiesta per questa struttura.
+                      ? "border-gold/40 bg-cream"
+                      : "border-sage/40 bg-sage/10"
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-[11px] uppercase tracking-[0.16em] text-olive font-medium">
+                        {isCancelled
+                          ? "Avviso Selezione Annullata (Nessun addebito)"
+                          : item.type === "welfare"
+                          ? "Notifica riscatto welfare B2B (Dovuto per legge)"
+                          : "Notifica referral community"}
                       </p>
+                      {serviceLabel && (
+                        <span className="rounded-full border border-forest/15 bg-white/80 px-2.5 py-0.5 text-[10px] font-semibold text-forest">
+                          {serviceLabel}
+                        </span>
+                      )}
                     </div>
-                  ) : (
-                    <>
-                      {payload.invoiceHint ? <p className="font-bold">→ {String(payload.invoiceHint)}</p> : null}
-                      {payload.vatNote ? <p>→ {String(payload.vatNote)}</p> : null}
-                      {payload.impact ? <p>→ Impatto: {String(payload.impact)}</p> : null}
-                    </>
-                  )}
-                </div>
-                <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-forest/10 pt-3">
-                  <p className="text-xs text-olive">{formatDateTime(item.createdAt)}</p>
-                  <button
-                    type="button"
-                    disabled={item.read || pending === item.id}
-                    onClick={() => confirmNotification(item.id)}
-                    className="inline-flex items-center gap-2 rounded-full bg-forest px-4 py-2 text-xs uppercase tracking-[0.12em] text-cream disabled:bg-mist disabled:text-olive transition hover:bg-forest/90"
-                  >
-                    {item.type === "welfare" ? <Stamp size={14} /> : <Receipt size={14} />}
-                    {item.read ? "Notifica presa in carico" : "Segna come letta"}
-                  </button>
-                </div>
-              </article>
-            );
-          })}
+                    {isCancelled && (
+                      <span className="rounded-full bg-terracotta/15 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-terracotta">
+                        Non Fatturare
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 className="mt-2 font-serif text-2xl text-forest">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-forest/80">{item.body}</p>
+
+                  <div className="mt-4 space-y-1 text-sm text-forest font-mono text-xs">
+                    {isCancelled ? (
+                      <div className="rounded-xl border border-terracotta/20 bg-white/80 p-3.5 text-terracotta space-y-2">
+                        <div className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider">
+                          <XCircle size={14} className="shrink-0" />
+                          <span>Prenotazione Revocata: Nessuna fattura da emettere</span>
+                        </div>
+                        <p className="text-[11px] font-sans text-forest/80 leading-relaxed">
+                          Il lavoratore ha modificato o annullato la selezione prima della fruizione. Nessuna prestazione richiesta per questa struttura.
+                        </p>
+
+                        {/* NOTA ESPLICATIVA DEMO & AUDIT */}
+                        <div className="mt-2.5 pt-2.5 border-t border-forest/10 text-[11px] font-sans space-y-1 text-olive leading-relaxed">
+                          <div className="flex items-center gap-1 font-semibold text-forest text-xs">
+                            <Info size={12} className="shrink-0 text-forest" />
+                            <span>Nota di Tracciamento DEMO:</span>
+                          </div>
+                          {item.read ? (
+                            <p>
+                              <strong>Notifica originaria convertita:</strong> La precedente notifica di fatturazione emessa alle {formatDateTime(item.createdAt)} è stata convertita automaticamente in <em>&ldquo;Annullata / Presa in carico&rdquo;</em> per bloccare la pratica precedente ed evitare fatturazioni indebite.
+                            </p>
+                          ) : (
+                            <p>
+                              <strong>Nuovo avviso di revoca:</strong> Notifica generata al momento dell&apos;annullamento alle {formatDateTime(item.createdAt)} per allertare il fornitore. Clicca su <em>&ldquo;Segna come letta&rdquo;</em> per confermare la presa visione e archiviarla.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        {payload.invoiceHint ? <p className="font-bold">→ {String(payload.invoiceHint)}</p> : null}
+                        {payload.vatNote ? <p>→ {String(payload.vatNote)}</p> : null}
+                        {payload.impact ? <p>→ Impatto: {String(payload.impact)}</p> : null}
+                        <div className="mt-2 pt-2 border-t border-forest/10 font-sans text-[11px] text-olive">
+                          Nota DEMO: In caso di successiva revoca o cambio struttura, questa notifica verrà automaticamente marcata come [ANNULLATO] per bloccare l&apos;emissione della fattura.
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-forest/10 pt-3">
+                    <p className="text-xs text-olive">{formatDateTime(item.createdAt)}</p>
+                    <button
+                      type="button"
+                      disabled={item.read || pending === item.id}
+                      onClick={() => confirmNotification(item.id)}
+                      className="inline-flex items-center gap-2 rounded-full bg-forest px-4 py-2 text-xs uppercase tracking-[0.12em] text-cream disabled:bg-mist disabled:text-olive transition hover:bg-forest/90"
+                    >
+                      {item.type === "welfare" ? <Stamp size={14} /> : <Receipt size={14} />}
+                      {item.read ? "Notifica presa in carico" : "Segna come letta"}
+                    </button>
+                  </div>
+                </article>
+              );
+            });
+          })()}
         </div>
       </section>
     </div>

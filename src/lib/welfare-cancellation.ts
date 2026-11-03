@@ -108,6 +108,13 @@ export async function executeVoucherCancellation({
 
   // 7. Aggiorna le notifiche per la struttura fornitrice
   if (oldVenueId) {
+    const serviceName =
+      voucher.type === "hotel"
+        ? "Pernottamento (50€)"
+        : voucher.type === "aperitivo"
+        ? "Cena / Degustazione KM 0 (25€)"
+        : "Voucher Welfare";
+
     const existingNotifs = await db
       .select()
       .from(notifications)
@@ -123,12 +130,14 @@ export async function executeVoucherCancellation({
         await db
           .update(notifications)
           .set({
-            title: `[ANNULLATO] Selezione voucher revocata - Non fatturare`,
-            body: `Il lavoratore ${guestName} ha annullato la selezione del voucher prima della fruizione. Nessuna prestazione è stata erogata: NON EMETTERE ALCUNA FATTURA nel tuo gestionale contabile a carico di ${companyName}.`,
+            title: `[ANNULLATO] Selezione voucher revocata: ${serviceName} - Non fatturare`,
+            body: `Il lavoratore ${guestName} ha annullato la selezione del voucher ${serviceName} prima della fruizione. Nessuna prestazione è stata erogata: NON EMETTERE ALCUNA FATTURA nel tuo gestionale contabile a carico di ${companyName}.`,
             read: true,
             payload: {
               ...(payload || {}),
               cancelled: true,
+              serviceLabel: serviceName,
+              voucherId: voucher.id,
               invoiceHint: "SELEZIONE ANNULLATA - NESSUNA FATTURA DA EMETTERE",
               status: "cancelled",
             },
@@ -141,11 +150,12 @@ export async function executeVoucherCancellation({
     await db.insert(notifications).values({
       venueId: oldVenueId,
       type: "welfare",
-      title: "[ANNULLATO] Selezione voucher revocata dal lavoratore",
-      body: `Il lavoratore ${guestName} ha annullato la prenotazione del voucher welfare. Nessun addebito B2B dovuto e nessuna prestazione richiesta per la struttura.`,
+      title: `[ANNULLATO] Selezione voucher revocata dal lavoratore: ${serviceName}`,
+      body: `Il lavoratore ${guestName} ha annullato la prenotazione del voucher welfare ${serviceName}. Nessun addebito B2B dovuto e nessuna prestazione richiesta per la struttura.`,
       payload: {
         guest: guestName,
         voucherId: voucher.id,
+        serviceLabel: serviceName,
         action: "cancelled_by_employee",
         cancelled: true,
         invoiceHint: "PRENOTAZIONE ANNULLATA - NESSUN PAGAMENTO DOVUTO",
