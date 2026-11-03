@@ -52,6 +52,8 @@ import {
 } from "@/lib/utils";
 
 type VenueLite = typeof venues.$inferSelect;
+import { TicketStudio } from "@/components/ticket-studio";
+
 type GrantEventLite = typeof grantEvents.$inferSelect;
 type TxRow = { transaction: typeof transactions.$inferSelect; venue: VenueLite };
 
@@ -83,15 +85,16 @@ type Props = {
   }>;
 };
 
-type Tab = "wallet" | "bookings" | "kit" | "friends";
+type Tab = "wallet" | "ticket-studio" | "bookings" | "kit" | "friends";
 
 export function AccountHub(props: Props) {
-  const [tab, setTab] = useState<Tab>(props.user.role === "friend" ? "bookings" : "wallet");
+  const [tab, setTab] = useState<Tab>(props.user.role === "friend" ? "ticket-studio" : "wallet");
 
   const availableTabs = [
     ...(props.user.role === "employee"
       ? [{ id: "wallet" as const, label: "Portafoglio Welfare", icon: Wallet }]
       : []),
+    { id: "ticket-studio" as const, label: "Ticket Studio d'Autore", icon: Ticket },
     { id: "bookings" as const, label: "Prenotazioni & Sconti", icon: CalendarCheck },
     { id: "friends" as const, label: "Hub Amici & Referral", icon: Users },
     { id: "kit" as const, label: "Kit & Certificati", icon: Share2 },
@@ -105,7 +108,7 @@ export function AccountHub(props: Props) {
             key={item.id}
             type="button"
             onClick={() => setTab(item.id)}
-            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition ${
+            className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition cursor-pointer ${
               tab === item.id ? "bg-forest text-cream shadow-sm" : "bg-white text-forest hover:bg-cream"
             }`}
           >
@@ -116,6 +119,19 @@ export function AccountHub(props: Props) {
       </div>
       <div className="mt-6">
         {tab === "wallet" ? <WalletTab {...props} grantEvents={props.grantEvents ?? []} /> : null}
+        {tab === "ticket-studio" ? (
+          <TicketStudio
+            events={props.grantEvents || []}
+            user={{
+              id: props.user.id,
+              firstName: props.user.firstName,
+              lastName: props.user.lastName,
+              referralCode: props.user.referralCode,
+              role: props.user.role,
+              company: props.company,
+            }}
+          />
+        ) : null}
         {tab === "bookings" ? <BookingsTab {...props} /> : null}
         {tab === "kit" ? <KitTab {...props} /> : null}
         {tab === "friends" ? <FriendsTab {...props} /> : null}
