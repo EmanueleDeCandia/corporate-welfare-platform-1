@@ -9,8 +9,8 @@ description: Istruzioni operative, strategia di persistenza e comandi standard p
 
 - **Progetto GCP**: `my-project-first-330911`
 - **Region**: `europe-west1` (Belgio)
-- **Servizio Cloud Run**: `local-welfare`
-- **URL di produzione**: `https://local-welfare-898481966164.europe-west1.run.app`
+- **Servizio Cloud Run**: `welfare-impact`
+- **URL di produzione**: `https://welfare-impact-898481966164.europe-west1.run.app`
 
 ## 1. Architettura Database: Pura DEMO Effimera (Scelta Intenzionale)
 
@@ -36,7 +36,7 @@ Se l'applicazione dovesse uscire dalla fase DEMO per diventare un'app multi-uten
 ## 3. Comando di Deploy Standard
 
 ```bash
-gcloud run deploy local-welfare \
+gcloud run deploy welfare-impact \
   --source . \
   --region europe-west1 \
   --project my-project-first-330911 \
@@ -44,7 +44,7 @@ gcloud run deploy local-welfare \
   --max-instances 1 \
   --memory 1Gi \
   --cpu 1 \
-  --set-env-vars DEMO_MODE=true,NEXT_PUBLIC_APP_URL=https://local-welfare-898481966164.europe-west1.run.app
+  --set-env-vars DEMO_MODE=true,NEXT_PUBLIC_APP_URL=https://welfare-impact-898481966164.europe-west1.run.app
 ```
 
 ## 4. Variabili d'Ambiente
@@ -52,4 +52,4 @@ gcloud run deploy local-welfare \
 | Variabile | Valore | Descrizione |
 | :--- | :--- | :--- |
 | `DEMO_MODE` | `true` | Abilita i percorsi dimostrativi, login demo rapido e reset seed |
-| `NEXT_PUBLIC_APP_URL` | `https://local-welfare-898481966164.europe-west1.run.app` | Base URL per la generazione di codici QR e link condivisibili |
+| `NEXT_PUBLIC_APP_URL` | `https://welfare-impact-898481966164.europe-west1.run.app` | Base URL per la generazione di codici QR e link condivisibili |

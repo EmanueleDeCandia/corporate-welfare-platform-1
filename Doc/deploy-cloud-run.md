@@ -64,7 +64,7 @@ senza che tu debba fare `docker build`/`push` a mano. La prima build richiede qu
 | Variabile | Valore consigliato | A cosa serve |
 | :--- | :--- | :--- |
 | `DEMO_MODE` | `true` | abilita i percorsi dimostrativi |
-| `NEXT_PUBLIC_APP_URL` | `https://local-welfare-898481966164.europe-west1.run.app` | base URL per QR e link di invito |
+| `NEXT_PUBLIC_APP_URL` | `https://welfare-impact-898481966164.europe-west1.run.app` | base URL per QR e link di invito |
 | `CRON_SECRET` | *opzionale* | se usi il job `/api/cron/grant-confirmations` via Cloud Scheduler |
 
 ---
@@ -73,11 +73,11 @@ senza che tu debba fare `docker build`/`push` a mano. La prima build richiede qu
 
 ```bash
 # Nuova revision
-gcloud run deploy local-welfare --source . --region europe-west1 --project my-project-first-330911
+gcloud run deploy welfare-impact --source . --region europe-west1 --project my-project-first-330911
 
 # Elenco revisioni
-gcloud run revisions list --service local-welfare --region europe-west1 --project my-project-first-330911
+gcloud run revisions list --service welfare-impact --region europe-west1 --project my-project-first-330911
 
 # Spostamento traffico a revisione specifica
-gcloud run services update-traffic local-welfare --region europe-west1 --project my-project-first-330911 --to-revisions <REV>=100
+gcloud run services update-traffic welfare-impact --region europe-west1 --project my-project-first-330911 --to-revisions <REV>=100
 ```
