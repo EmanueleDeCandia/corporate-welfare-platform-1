@@ -22,6 +22,7 @@ e ascolta su `0.0.0.0`).
 - **Progetto GCP**: `my-project-first-330911`
 - **Region attiva**: `europe-west1` (Belgio, region di riferimento del progetto GCP)
 - **Servizio Cloud Run**: `welfare-impact`
+- **URL di produzione live**: `https://welfare-impact-898481966164.europe-west1.run.app`
 
 ---
 
