@@ -35,7 +35,7 @@ export async function SiteHeader({ dark = false }: { dark?: boolean }) {
             Strutture
           </Link>
           <Link href="/imprese" className="hover:text-terracotta">
-            Imprese ESG
+            Aziende Shared Value
           </Link>
           <Link href="/come-funziona" className="hover:text-terracotta">
             Come funziona

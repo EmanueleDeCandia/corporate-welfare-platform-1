@@ -103,7 +103,7 @@ export function HeaderMenu({ dark, user }: Props) {
               Strutture
             </Link>
             <Link href="/imprese" onClick={() => setOpen(false)}>
-              Imprese ESG
+              Aziende Shared Value
             </Link>
             <Link href="/come-funziona" onClick={() => setOpen(false)}>
               Come funziona

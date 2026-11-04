@@ -18,7 +18,7 @@ export function SiteFooter() {
           <div className="mt-3 flex flex-col gap-2 text-sm text-[#fbf7f0]/85">
             <Link href="/esplora" className="hover:text-[#c29b38] transition">Mappa e strutture</Link>
             <Link href="/destinazioni" className="hover:text-[#c29b38] transition">Macro-aree</Link>
-            <Link href="/imprese" className="hover:text-[#c29b38] transition">Vetrina imprese ESG</Link>
+            <Link href="/imprese" className="hover:text-[#c29b38] transition">Valore Condiviso Pubblico Privato</Link>
             <Link href="/come-funziona" className="hover:text-[#c29b38] transition">Come Funziona</Link>
             <Link href="/torneo" className="hover:text-[#c29b38] transition font-semibold text-[#c29b38]">Torneo Trailer</Link>
             <Link href="/business-model" className="hover:text-[#c29b38] transition text-[#c29b38]">Modello Economico & Note</Link>
