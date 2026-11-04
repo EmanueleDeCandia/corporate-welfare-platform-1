@@ -1814,4 +1814,6 @@ export async function seedDatabase() {
       notes: "ritiro in sede aziendale",
     },
   ]);
+
+  await ensurePublicEntities();
 }
