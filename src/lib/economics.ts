@@ -75,34 +75,34 @@ export type SimField = {
 export type SimGroup = { title: string; description?: string; fields: SimField[] };
 
 export const SIM_DEFAULTS: SimInputs = {
-  companies: 20,
-  employeesPerCompany: 150,
-  overnightConversionPct: 60,
-  dinnerConversionPct: 70,
+  companies: 100,
+  employeesPerCompany: 50,
+  overnightConversionPct: 20,
+  dinnerConversionPct: 30,
   overnightDoublePct: 90,
-  extraDinnersPerDiner: 1,
-  referralRate: 1.5,
+  extraDinnersPerDiner: 0.5,
+  referralRate: 3,
   referralConversionPct: 15,
-  friendOvernightPct: 30,
-  km0BuyerPct: 25,
-  km0PurchasesPerBuyer: 2,
-  km0BasketEuros: 42,
+  friendOvernightPct: 10,
+  km0BuyerPct: 10,
+  km0PurchasesPerBuyer: 6,
+  km0BasketEuros: 40,
   km0DeliveryKm: 50,
-  km0BatchesPerCompany: 12,
-  km0ProducersPerBatch: 2,
+  km0BatchesPerCompany: 6,
+  km0ProducersPerBatch: 3,
   co2KgPerKm: 0.25,
   overnightVoucherEuros: 50,
   dinnerVoucherEuros: 25,
   grantTicketCostEuros: 15,
   grantServiceCouponEuros: 10,
-  hotelCommissionPct: 15,
-  dinnerFoodCostEuros: 7,
-  dinnerHostingPct: 0,
-  showsPerYear: 36,
-  bedsPerShow: 120,
-  tournamentTicketsPerEdition: 28,
+  hotelCommissionPct: 20,
+  dinnerFoodCostEuros: 5,
+  dinnerHostingPct: 10,
+  showsPerYear: 20,
+  bedsPerShow: 150,
+  tournamentTicketsPerEdition: 40,
   tournamentEditionsPerYear: 4,
-  startupCostEuros: 60000,
+  startupCostEuros: 50000,
   localMultiplier: 5.1,
 };
 
@@ -211,7 +211,7 @@ export const SIM_GROUPS: SimGroup[] = [
   {
     title: "Struttura costi e moltiplicatore",
     fields: [
-      { key: "startupCostEuros", label: "Costo annuo Startup", min: 30000, max: 100000, step: 1000, unit: "€" },
+      { key: "startupCostEuros", label: "Costo unitario per Rassegna Startup (6 eventi / mese)", min: 30000, max: 100000, step: 1000, unit: "€" },
       { key: "localMultiplier", label: "Moltiplicatore economico locale", min: 1, max: 8, step: 0.1, unit: "n" },
     ],
   },
@@ -221,6 +221,7 @@ export type SimResult = {
   // Rete
   employees: number;
   fundedEuros: number;
+  totalPlafondEuros: number;
   redistributedEuros: number;
   // Volumi
   overnightVouchers: number;
@@ -275,20 +276,27 @@ const round = (n: number, d = 0) => {
 
 export function computeImpact(i: SimInputs): SimResult {
   const employees = i.companies * i.employeesPerCompany;
-  const fundedEuros = employees * (i.overnightVoucherEuros + i.dinnerVoucherEuros);
+  const totalPlafondEuros = employees * (i.overnightVoucherEuros + i.dinnerVoucherEuros);
+
+  // Volumi voucher convertiti dagli addetti
+  const overnightVouchers = Math.round(employees * (i.overnightConversionPct / 100));
+  const double = i.overnightDoublePct / 100;
+  const guestsAccompanying = Math.round(overnightVouchers * double);
+  const employeeOvernightPersons = overnightVouchers + guestsAccompanying;
+  const dinnersVoucher = Math.round(employees * (i.dinnerConversionPct / 100));
+  const dinnersExtra = Math.round(dinnersVoucher * i.extraDinnersPerDiner);
+
+  // Welfare Finanziato: moltiplicazione addetti che riscattano i due tipi di voucher
+  // (es. 5000 addetti, 20% pernottamenti = 1000 * 50€ = 50.000€; 20% cene = 1000 * 25€ = 25.000€ -> Totale = 75.000€ = 0.20 * 5000 * 75€)
+  const fundedEuros =
+    overnightVouchers * i.overnightVoucherEuros + dinnersVoucher * i.dinnerVoucherEuros;
+
+  // Ridistribuito sul territorio: totale voucher riscattati * 5,1 (Moltiplicatore 5,1x Studio Fattibilità)
   const redistributedEuros = fundedEuros * i.localMultiplier;
 
-  // Volumi voucher
-  const overnightVouchers = employees * (i.overnightConversionPct / 100);
-  const double = i.overnightDoublePct / 100;
-  const guestsAccompanying = overnightVouchers * double;
-  const employeeOvernightPersons = overnightVouchers + guestsAccompanying;
-  const dinnersVoucher = employees * (i.dinnerConversionPct / 100);
-  const dinnersExtra = dinnersVoucher * i.extraDinnersPerDiner;
-
-  // Referral
-  const friendConverts = employees * i.referralRate * (i.referralConversionPct / 100);
-  const friendNightPersons = friendConverts * (i.friendOvernightPct / 100);
+  // Referral e Community
+  const friendConverts = Math.round(employees * i.referralRate * (i.referralConversionPct / 100));
+  const friendNightPersons = Math.round(friendConverts * (i.friendOvernightPct / 100));
   const dinnersFriends = friendConverts;
   const dinnersTotal = dinnersVoucher + dinnersExtra + dinnersFriends;
   const overnightPersons = employeeOvernightPersons + friendNightPersons;
@@ -307,7 +315,7 @@ export function computeImpact(i: SimInputs): SimResult {
   const restaurantRevenueEuros =
     (dinnersVoucher + dinnersExtra) * i.dinnerVoucherEuros +
     dinnersFriends * i.dinnerVoucherEuros * friendPrice;
-  const km0Buyers = employees * (i.km0BuyerPct / 100) + friendConverts * (i.km0BuyerPct / 100);
+  const km0Buyers = Math.round(employees * (i.km0BuyerPct / 100) + friendConverts * (i.km0BuyerPct / 100));
   const km0RevenueEuros = km0Buyers * i.km0PurchasesPerBuyer * i.km0BasketEuros;
 
   // Margini Startup
@@ -353,6 +361,7 @@ export function computeImpact(i: SimInputs): SimResult {
   return {
     employees,
     fundedEuros,
+    totalPlafondEuros: round(totalPlafondEuros),
     redistributedEuros,
     overnightVouchers: round(overnightVouchers),
     overnightPersons: round(overnightPersons),
@@ -400,41 +409,40 @@ export const SIM_SCENARIOS: SimScenario[] = [
   {
     id: "prudente",
     label: "Prudente",
-    description: "Rete contenuta, conversioni basse, convenzione minima, cessione agevolata delle materie prime.",
+    description: "Rete ridotta a 50 imprese (1.500 addetti), tasso di conversione prudente (15% notti, 20% cene) e convenzione al 15%.",
     overrides: {
-      companies: 10,
-      employeesPerCompany: 100,
-      overnightConversionPct: 40,
-      dinnerConversionPct: 50,
-      overnightDoublePct: 80,
-      extraDinnersPerDiner: 0.5,
-      referralRate: 0.8,
+      companies: 50,
+      employeesPerCompany: 30,
+      overnightConversionPct: 15,
+      dinnerConversionPct: 20,
+      extraDinnersPerDiner: 0.25,
+      referralRate: 1.5,
       referralConversionPct: 10,
-      hotelCommissionPct: 10,
-      dinnerFoodCostEuros: 10,
+      hotelCommissionPct: 15,
+      dinnerFoodCostEuros: 6,
     },
   },
   {
     id: "base",
     label: "Base",
-    description: "Valori predefiniti coerenti con la matrice dei parametri economici.",
+    description: "Scenario standard di riferimento: 100 imprese (5.000 addetti), 20% notti, 30% cene, referral 3x e convenzione al 20%.",
     overrides: {},
   },
   {
     id: "ambizioso",
     label: "Ambizioso",
-    description: "Rete estesa, referral e torneo attivi, convenzioni al 20%.",
+    description: "Espansione a 150 imprese (9.000 addetti), conversione al 30-40%, referral a 4x e convenzione al 25%.",
     overrides: {
-      companies: 40,
-      employeesPerCompany: 200,
-      overnightConversionPct: 70,
-      dinnerConversionPct: 80,
-      extraDinnersPerDiner: 1.5,
-      referralRate: 2.5,
+      companies: 150,
+      employeesPerCompany: 60,
+      overnightConversionPct: 30,
+      dinnerConversionPct: 40,
+      extraDinnersPerDiner: 1,
+      referralRate: 4,
       referralConversionPct: 20,
-      hotelCommissionPct: 20,
-      dinnerFoodCostEuros: 6,
-      showsPerYear: 60,
+      hotelCommissionPct: 25,
+      dinnerFoodCostEuros: 5,
+      showsPerYear: 30,
       bedsPerShow: 200,
     },
   },

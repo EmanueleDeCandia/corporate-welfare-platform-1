@@ -85,8 +85,16 @@ function Results({ r, i }: { r: SimResult; i: SimInputs }) {
       <div>
         <h4 className="font-serif text-lg text-forest">Impatto sul territorio</h4>
         <div className="mt-2 grid grid-cols-2 gap-3">
-          <Kpi label="Welfare finanziato" value={eur(r.fundedEuros)} sub={`${num(r.employees)} addetti in ${i.companies} imprese`} />
-          <Kpi label="Ridistribuito sul territorio" value={eur(r.redistributedEuros)} sub={`Moltiplicatore ${num(i.localMultiplier, 1)}x`} />
+          <Kpi
+            label="Welfare finanziato"
+            value={eur(r.fundedEuros)}
+            sub={`${num(r.overnightVouchers)} notti + ${num(r.dinnersVoucher)} cene riscattate (${num(r.employees)} addetti)`}
+          />
+          <Kpi
+            label="Ridistribuito sul territorio"
+            value={eur(r.redistributedEuros)}
+            sub="Moltiplicatore 5,1x Studio Fattibilità"
+          />
           <Kpi label="Persone ospitate" value={num(r.overnightPersons)} sub={`${num(r.overnightVouchers)} voucher, ${num(r.guestsAccompanying)} accompagnatori`} />
           <Kpi label="Presenze a teatro (Matching Grant)" value={num(r.theatreAttendance)} />
           <Kpi label="Aperitivi-Cena" value={num(r.dinnersTotal)} sub={`${num(r.dinnersVoucher)} voucher, ${num(r.dinnersExtra)} ricorrenti, ${num(r.dinnersFriends)} amici`} />
@@ -109,7 +117,7 @@ function Results({ r, i }: { r: SimResult; i: SimInputs }) {
             tone={r.grantCoverageRatio >= 1 ? "good" : "bad"}
           />
           <Kpi label="Costo torneo trailer" value={eur(r.tournamentCostEuros)} sub={`${num(r.tournamentTickets)} biglietti omaggio`} />
-          <Kpi label="Costo annuo Startup" value={eur(r.startupCostEuros)} />
+          <Kpi label="Rassegna Startup (6 eventi/mese)" value={eur(r.startupCostEuros)} sub="Costo unitario stimato" />
         </div>
         <div className={`mt-3 rounded-2xl border p-4 ${r.netResultEuros >= 0 ? "border-forest/30 bg-forest/5" : "border-wine/30 bg-wine/5"}`}>
           <p className="text-[10px] font-semibold uppercase tracking-wider text-olive">Risultato netto annuo stimato</p>
@@ -129,10 +137,22 @@ function Results({ r, i }: { r: SimResult; i: SimInputs }) {
         <div className="mt-2 overflow-hidden rounded-2xl border border-mist bg-white text-xs">
           <table className="w-full">
             <tbody className="divide-y divide-mist">
-              <tr><td className="px-3 py-2 text-olive">Hotel e strutture ricettive</td><td className="px-3 py-2 text-right font-semibold text-forest">{num(r.hotelRetainedPct, 0)}% del ricavo</td></tr>
-              <tr><td className="px-3 py-2 text-olive">Ristoranti partner (ospitalità)</td><td className="px-3 py-2 text-right font-semibold text-forest">{num(r.restaurantRetainedPct, 0)}% del prezzo cena</td></tr>
-              <tr><td className="px-3 py-2 text-olive">Produttori Km 0</td><td className="px-3 py-2 text-right font-semibold text-forest">{num(r.producersRetainedPct, 0)}% (nessun prelievo)</td></tr>
-              <tr><td className="px-3 py-2 text-olive">Startup sulla ristorazione</td><td className="px-3 py-2 text-right font-semibold text-forest">{num(r.dinnerMarginPct, 0)}% del prezzo cena</td></tr>
+              <tr>
+                <td className="px-3 py-2 text-olive">Hotel e strutture ricettive</td>
+                <td className="px-3 py-2 text-right font-semibold text-forest">{num(r.hotelRetainedPct, 0)}% del ricavo</td>
+              </tr>
+              <tr>
+                <td className="px-3 py-2 text-olive">Ristoranti partner (per Aperitivo-Cena)</td>
+                <td className="px-3 py-2 text-right font-semibold text-forest">15% del prezzo per servizio allestimento</td>
+              </tr>
+              <tr>
+                <td className="px-3 py-2 text-olive">Startup (Aperitivo-Cena)</td>
+                <td className="px-3 py-2 text-right font-semibold text-forest">65% del prezzo cena</td>
+              </tr>
+              <tr>
+                <td className="px-3 py-2 text-olive">Produttori Km 0</td>
+                <td className="px-3 py-2 text-right font-semibold text-forest">90% (apporto In Kind)</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -200,7 +220,8 @@ export function ImpactSimulator() {
         </h2>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-ink/80">
           Modifica gli input e verifica in tempo reale impatto sul territorio e sostenibilità economica della Startup. Il
-          calcolo è deterministico: stessi input, stessi risultati. Stima dimostrativa, non dato certificato.
+          calcolo è deterministico: stessi input, stessi risultati. Stima a scopo dimostrativo per validare la capacità di Condivisione del Valore.
+          Non considera le linee di revenue da rewardding crowfondung per servizi tecnologici, sponsorizzazioni e convenzioni per evento locale con le Unioni di Comuni.
         </p>
       </div>
 
@@ -236,7 +257,8 @@ export function ImpactSimulator() {
               {(
                 [
                   ["Addetti coinvolti", (r: SimResult) => num(r.employees)],
-                  ["Ridistribuito sul territorio", (r: SimResult) => eur(r.redistributedEuros)],
+                  ["Welfare finanziato (voucher riscattati)", (r: SimResult) => eur(r.fundedEuros)],
+                  ["Ridistribuito sul territorio (5,1x Studio Fattibilità)", (r: SimResult) => eur(r.redistributedEuros)],
                   ["Margine lordo Startup", (r: SimResult) => eur(r.startupGrossMarginEuros)],
                   ["Costo di cassa Matching Grant", (r: SimResult) => eur(r.grantCashCostEuros)],
                   ["Copertura del grant", (r: SimResult) => `${num(r.grantCoverageRatio, 2)}x`],
