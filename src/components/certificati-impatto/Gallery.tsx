@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+﻿import { useMemo, useState } from "react";
 import { CertificateSVG } from "./CertificateSVG";
 import { Btn, Chip, Modal, copyText, inputCls, toast } from "./ui";
+import { Edit3, Download, Copy, ExternalLink, Trash2, UserPlus, Trophy, Award } from "lucide-react";
 import { FORMAT_BY_ID, STYLES, STYLE_BY_ID } from "@/lib/certificati-impatto/constants";
 import { appLink, co2For, fmtDate, fmtNum, remixLink } from "@/lib/certificati-impatto/doc";
 import { downloadBlob, exportRaster, fileName } from "@/lib/certificati-impatto/export";
@@ -208,11 +209,11 @@ export function Gallery({ mine, onEdit, onDelete, onCreate }: Props) {
                 <Btn variant="primary" onClick={() => { const d = open.doc; setOpen(null); onEdit(open.example ? { ...d, id: "IMP-" + Math.random().toString(36).slice(2, 8).toUpperCase(), createdAt: Date.now() } : d); }}>
                   {open.example ? "✨ Remixa questo" : "✎ Modifica"}
                 </Btn>
-                <Btn onClick={() => download(open.doc)}>⬇ PNG</Btn>
-                <Btn onClick={() => copyText(linkFor(open.doc, "direct"))}>🔗 Link verifica</Btn>
-                <Btn onClick={() => copyText(remixLink(open.doc))}>⧉ Link remix</Btn>
-                <Btn onClick={() => window.open(linkFor(open.doc, "direct"), "_blank")}>↗ Pagina pubblica</Btn>
-                {!open.example && <Btn variant="danger" onClick={() => { if (confirm("Eliminare questo certificato dalla galleria?")) { onDelete(open.doc.id); setOpen(null); } }}>🗑 Elimina</Btn>}
+                <Btn onClick={() => download(open.doc)}><Download size={13} className="mr-1 inline" /> PNG</Btn>
+                <Btn onClick={() => copyText(linkFor(open.doc, "direct"))}><Copy size={13} className="mr-1 inline" /> Link verifica</Btn>
+                <Btn onClick={() => copyText(remixLink(open.doc))}><Copy size={13} className="mr-1 inline" /> Link remix</Btn>
+                <Btn onClick={() => window.open(linkFor(open.doc, "direct"), "_blank")}><ExternalLink size={13} className="mr-1 inline" /> Pagina pubblica</Btn>
+                {!open.example && <Btn variant="danger" onClick={() => { if (confirm("Eliminare questo certificato dalla galleria?")) { onDelete(open.doc.id); setOpen(null); } }}><Trash2 size={13} className="mr-1 inline" /> Elimina</Btn>}
               </div>
             </div>
           </div>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas } from "./Canvas";
 import { ContentPanel } from "./panels/ContentPanel";
 import { DesignPanel } from "./panels/DesignPanel";
@@ -7,6 +7,7 @@ import { LayersPanel } from "./panels/LayersPanel";
 import { SharePanel, type Actions } from "./panels/SharePanel";
 import { ExportPanel } from "./panels/ExportPanel";
 import { Btn, Chip, toast } from "./ui";
+import { Edit3, Palette, Contrast, Layers, Share2, Download, Undo2, Redo2, ZoomIn, ZoomOut, Lock, Unlock, Copy, Trash2, CheckCircle2 } from "lucide-react";
 import { BLACKLIST, FORMAT_BY_ID, LEGAL_TEXT } from "@/lib/certificati-impatto/constants";
 import { co2For, duplicateLayer, findViolations, fmtNum } from "@/lib/certificati-impatto/doc";
 import { postToParent, type EmbedConfig } from "@/lib/certificati-impatto/embed";
@@ -17,13 +18,13 @@ import { useDocHistory } from "@/lib/certificati-impatto/useHistory";
 import type { Doc, Layer } from "@/lib/certificati-impatto/types";
 
 type Tab = "dati" | "stile" | "colori" | "livelli" | "social" | "export";
-const TABS: { id: Tab; label: string; icon: string }[] = [
-  { id: "dati", label: "Dati", icon: "✎" },
-  { id: "stile", label: "Stile", icon: "🎨" },
-  { id: "colori", label: "Colori", icon: "◐" },
-  { id: "livelli", label: "Livelli", icon: "☰" },
-  { id: "social", label: "Social", icon: "📣" },
-  { id: "export", label: "Export", icon: "⬇" },
+const TABS: { id: Tab; label: string; icon: any }[] = [
+  { id: "dati", label: "Dati", icon: Edit3 },
+  { id: "stile", label: "Stile", icon: Palette },
+  { id: "colori", label: "Colori", icon: Contrast },
+  { id: "livelli", label: "Livelli", icon: Layers },
+  { id: "social", label: "Social", icon: Share2 },
+  { id: "export", label: "Export", icon: Download },
 ];
 const REQUIRED = new Set(["legal", "qr"]);
 
@@ -162,8 +163,8 @@ export function Editor({ initial, inGallery, embed, onSave, onNew }: Props) {
       {/* Tela */}
       <section className="order-1 min-w-0 lg:sticky lg:top-14 lg:order-2 lg:self-start">
         <div className="mb-2 flex flex-wrap items-center gap-1.5">
-          <button className={ctxBtn} onClick={h.undo} disabled={!h.canUndo} title="Annulla (Ctrl+Z)">↶ Annulla</button>
-          <button className={ctxBtn} onClick={h.redo} disabled={!h.canRedo} title="Ripeti (Ctrl+Shift+Z)">↷ Ripeti</button>
+          <button className={ctxBtn} onClick={h.undo} disabled={!h.canUndo} title="Annulla (Ctrl+Z)"><Undo2 size={13} className="inline mr-1" /> Annulla</button>
+          <button className={ctxBtn} onClick={h.redo} disabled={!h.canRedo} title="Ripeti (Ctrl+Shift+Z)"><Redo2 size={13} className="inline mr-1" /> Ripeti</button>
           <span className="mx-1 h-5 w-px bg-stone-300" />
           <button className={ctxBtn} onClick={() => setZoom((z) => Math.max(0.4, +(z - 0.15).toFixed(2)))} aria-label="Riduci zoom">−</button>
           <button className={ctxBtn} onClick={() => setZoom(1)} title="Adatta">{Math.round(zoom * 100)}%</button>
@@ -173,7 +174,7 @@ export function Editor({ initial, inGallery, embed, onSave, onNew }: Props) {
           <Chip active={safe} onClick={() => setSafe(!safe)}>Area sicura</Chip>
           <div className="ml-auto flex items-center gap-1.5">
             <span className="hidden rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-900 sm:inline">{fmtNum(co2For(doc.loc.km))} kg CO2 · {doc.loc.km} km</span>
-            <Btn size="sm" variant="primary" onClick={save}>{saved ? "✓ Salvato" : "Pubblica"}</Btn>
+            <Btn size="sm" variant="primary" onClick={save}>{saved ? "Salvato" : "Pubblica"}</Btn>
           </div>
         </div>
 
@@ -201,9 +202,9 @@ export function Editor({ initial, inGallery, embed, onSave, onNew }: Props) {
               <span className="mx-1 h-5 w-px bg-stone-200" />
               <button className={ctxBtn} onClick={() => update((d) => { const i = d.layers.findIndex((l) => l.id === layer.id); if (i >= d.layers.length - 1) return d; const a = [...d.layers]; [a[i], a[i + 1]] = [a[i + 1], a[i]]; return { ...d, layers: a }; })}>▲ Avanti</button>
               <button className={ctxBtn} onClick={() => update((d) => { const i = d.layers.findIndex((l) => l.id === layer.id); if (i <= 0) return d; const a = [...d.layers]; [a[i], a[i - 1]] = [a[i - 1], a[i]]; return { ...d, layers: a }; })}>▼ Indietro</button>
-              <button className={ctxBtn} onClick={() => patchLayer(layer.id, { locked: !layer.locked })}>{layer.locked ? "🔒" : "🔓"}</button>
-              <button className={ctxBtn} disabled={REQUIRED.has(layer.kind)} onClick={() => { const c = duplicateLayer(layer); update((d) => ({ ...d, layers: [...d.layers, c] })); setSel(c.id); }}>⧉</button>
-              <button className={ctxBtn + " !text-rose-700"} disabled={REQUIRED.has(layer.kind)} onClick={() => { update((d) => ({ ...d, layers: d.layers.filter((l) => l.id !== layer.id) })); setSel(null); }}>🗑</button>
+              <button className={ctxBtn} onClick={() => patchLayer(layer.id, { locked: !layer.locked })}>{layer.locked ? <Lock size={13} className="text-forest inline" /> : <Unlock size={13} className="text-olive/60 inline" />}</button>
+              <button className={ctxBtn} disabled={REQUIRED.has(layer.kind)} onClick={() => { const c = duplicateLayer(layer); update((d) => ({ ...d, layers: [...d.layers, c] })); setSel(c.id); }}><Copy size={13} /></button>
+              <button className={ctxBtn + " !text-rose-700"} disabled={REQUIRED.has(layer.kind)} onClick={() => { update((d) => ({ ...d, layers: d.layers.filter((l) => l.id !== layer.id) })); setSel(null); }}><Trash2 size={13} /></button>
               <button className={ctxBtn} onClick={() => { setTab("livelli"); }}>Altro…</button>
             </div>
           ) : (
@@ -216,12 +217,31 @@ export function Editor({ initial, inGallery, embed, onSave, onNew }: Props) {
         {/* Conformità */}
         <details className={`mt-2 rounded-xl border px-3 py-2 text-xs ${violations.length ? "border-rose-300 bg-rose-50 text-rose-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`} open={violations.length > 0}>
           <summary className="cursor-pointer font-bold">
-            {violations.length ? `⚠ ${violations.length} termine/i vietato/i da correggere` : "✓ Conformità AGCM / L. 61/2022: disclaimer presenti, nessun termine vietato"}
+            {violations.length ? `⚠ ${violations.length} termine/i vietato/i da correggere` : "✓ Conformità AGCM / L. 61/2022 e D.Lgs. 30/2026: disclaimer presenti, nessun termine vietato."}
           </summary>
-          <div className="mt-2 space-y-2">
-            {violations.map((v, i) => <div key={i}>«{v.term}» in <b>{v.where}</b>{v.origin === "estesa" ? " (lista estesa)" : ""}</div>)}
-            <div className="whitespace-pre-line rounded bg-white/70 p-2 text-[11px] text-stone-700">{LEGAL_TEXT.replace("[DDT]", doc.ddt || "—")}</div>
-            <div className="text-[11px]">Termini bloccati: {BLACKLIST.map((b) => `«${b.term}»`).join(" · ")}. Esportazione e condivisione sono bloccate finché sono presenti.</div>
+          <div className="mt-2 space-y-2 text-[10px] leading-relaxed">
+            {violations.map((v, i) => (
+              <div key={i} className="font-semibold text-rose-700">
+                «{v.term}» in <b>{v.where}</b>{v.origin === "estesa" ? " (lista estesa)" : ""}
+              </div>
+            ))}
+            <div className="whitespace-pre-line rounded bg-white/70 p-2 text-[10px] text-stone-700 font-mono">
+              {LEGAL_TEXT.replace("[DDT]", doc.ddt || "—")}
+            </div>
+            <div className="text-[10px] text-stone-600 space-y-1">
+              <p className="font-medium text-stone-700">
+                Termini vietati dal D.Lgs. 30/2026 che recepisce nel Codice del Consumo la direttiva (UE) 2024/825 sulle &quot;asserzioni ambientali&quot;.
+              </p>
+              <p>
+                Esempi di green claim vietati: {BLACKLIST.map((b) => `«${b.term}»`).join(" · ")}.
+              </p>
+              <p>
+                La Direttiva europea è stata ritirata ma le norme contro il greenwashing sono in vigore in Italia.
+              </p>
+              <p className="font-semibold text-rose-800">
+                Esportazione e condivisione sono bloccate finché sono presenti asserzioni vietate.
+              </p>
+            </div>
           </div>
         </details>
       </section>

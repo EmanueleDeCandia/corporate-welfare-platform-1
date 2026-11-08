@@ -1,7 +1,8 @@
-import { memo, useMemo } from "react";
+﻿import { memo, useMemo } from "react";
 import qrcode from "qrcode-generator";
 import { Art } from "./Art";
 import { SymbolArt } from "./Symbols";
+import { StickerIcon } from "./Stickers";
 import { FONTS, FORMAT_BY_ID } from "@/lib/certificati-impatto/constants";
 import { baseUrl, placeholderCtx, resolveText, verifyLink } from "@/lib/certificati-impatto/doc";
 import { layoutText } from "@/lib/certificati-impatto/text";
@@ -83,9 +84,9 @@ function LayerView({ doc, l, link }: { doc: Doc; l: Layer; link: string }) {
       return <QR w={l.w} link={link} />;
     case "sticker":
       return (
-        <text textAnchor="middle" dominantBaseline="central" fontSize={l.w * 0.82} fontFamily='"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'>
-          {l.emoji}
-        </text>
+        <g transform={`scale(${l.w / 24}) translate(-12 -12)`}>
+          <StickerIcon id={l.emoji ?? "sprout"} size={24} color={colorOf(l.color, d, "accent")} />
+        </g>
       );
     case "image":
       return <image href={l.src} x={-l.w / 2} y={-(l.h ?? l.w) / 2} width={l.w} height={l.h ?? l.w} preserveAspectRatio="xMidYMid meet" />;

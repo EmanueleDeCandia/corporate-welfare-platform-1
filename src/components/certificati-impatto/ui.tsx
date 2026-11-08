@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+﻿import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 // ---- Toast ----------------------------------------------------------------
@@ -39,12 +39,12 @@ export function Btn({ variant = "ghost", size = "md", className, ...p }:
     <button
       {...p}
       className={cn(
-        "inline-flex items-center justify-center gap-1.5 rounded-lg font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:cursor-not-allowed disabled:opacity-40",
+        "inline-flex items-center justify-center gap-1.5 rounded-full font-semibold transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest disabled:cursor-not-allowed disabled:opacity-40",
         size === "sm" && "px-2.5 py-1.5 text-xs", size === "md" && "px-3.5 py-2 text-sm", size === "lg" && "px-5 py-3 text-base",
-        variant === "primary" && "bg-emerald-700 text-white shadow-sm hover:bg-emerald-800 active:scale-[.98]",
+        variant === "primary" && "bg-forest text-white shadow-sm hover:bg-forest/90 active:scale-[.98]",
         variant === "dark" && "bg-stone-900 text-white hover:bg-stone-700",
-        variant === "ghost" && "border border-stone-300 bg-white text-stone-700 hover:border-stone-400 hover:bg-stone-50",
-        variant === "soft" && "bg-emerald-50 text-emerald-900 hover:bg-emerald-100",
+        variant === "ghost" && "border border-forest/20 bg-white text-forest hover:border-forest/40 hover:bg-cream",
+        variant === "soft" && "bg-forest/10 text-forest hover:bg-forest/15",
         variant === "danger" && "border border-rose-200 bg-white text-rose-700 hover:bg-rose-50",
         className
       )}
@@ -55,9 +55,9 @@ export function Btn({ variant = "ghost", size = "md", className, ...p }:
 export function Field({ label, hint, children, className }: { label: string; hint?: ReactNode; children: ReactNode; className?: string }) {
   return (
     <label className={cn("block", className)}>
-      <span className="mb-1 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-stone-500">
+      <span className="mb-1 flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-olive">
         {label}
-        {hint && <span className="font-normal normal-case tracking-normal text-stone-400">{hint}</span>}
+        {hint && <span className="font-normal normal-case tracking-normal text-olive/70">{hint}</span>}
       </span>
       {children}
     </label>
@@ -65,13 +65,13 @@ export function Field({ label, hint, children, className }: { label: string; hin
 }
 
 export const inputCls =
-  "w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-stone-400 focus:border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-600/25";
+  "w-full rounded-lg border border-forest/20 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-olive/70 focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/20";
 
 export function Section({ title, children, aside }: { title: string; children: ReactNode; aside?: ReactNode }) {
   return (
-    <section className="rounded-xl border border-stone-200 bg-white p-4">
+    <section className="rounded-xl border border-forest/10 bg-white p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-sm font-bold text-stone-800">{title}</h3>
+        <h3 className="text-sm font-bold text-forest">{title}</h3>
         {aside}
       </div>
       <div className="space-y-3">{children}</div>
@@ -84,7 +84,7 @@ export function Chip({ active, children, ...p }: React.ButtonHTMLAttributes<HTML
     <button
       {...p}
       className={cn("rounded-full border px-3 py-1 text-xs font-semibold transition",
-        active ? "border-emerald-700 bg-emerald-700 text-white" : "border-stone-300 bg-white text-stone-600 hover:border-stone-400", p.className)}
+        active ? "border-emerald-700 bg-forest text-white" : "border-forest/20 bg-white text-olive hover:border-forest/40", p.className)}
     >
       {children}
     </button>

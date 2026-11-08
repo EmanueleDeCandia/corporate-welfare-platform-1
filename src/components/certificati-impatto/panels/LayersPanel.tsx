@@ -1,5 +1,7 @@
-import { useRef } from "react";
+﻿import { useRef } from "react";
 import { SymbolArt } from "../Symbols";
+import { StickerIcon, MONOCHROME_STICKERS } from "../Stickers";
+import { Eye, EyeOff, Lock, Unlock, ChevronUp, ChevronDown, Trash2, Copy, Plus } from "lucide-react";
 import { ColorField } from "./ColorPanel";
 import { FONTS, FORMAT_BY_ID, PLACEHOLDERS, STICKERS, SYMBOLS } from "@/lib/certificati-impatto/constants";
 import { duplicateLayer, newImage, newShape, newSticker, newSymbolLayer, newText } from "@/lib/certificati-impatto/doc";
@@ -95,7 +97,7 @@ export function LayersPanel({ doc, update, selectedId, select }: Props) {
           <Btn size="sm" variant="soft" onClick={() => add(newShape("circle"))}>◯ Cerchio</Btn>
           <Btn size="sm" variant="soft" onClick={() => add(newShape("pill"))}>⬭ Pillola</Btn>
           <Btn size="sm" variant="soft" onClick={() => add(newShape("line"))}>— Linea</Btn>
-          <Btn size="sm" variant="soft" onClick={() => fileRef.current?.click()}>🖼 Logo / immagine</Btn>
+          <Btn size="sm" variant="soft" onClick={() => fileRef.current?.click()}><Plus size={13} className="mr-1" /> Logo / immagine</Btn>
           <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ""; }} />
         </div>
         <div>
@@ -109,10 +111,19 @@ export function LayersPanel({ doc, update, selectedId, select }: Props) {
           </div>
         </div>
         <div>
-          <div className="mb-1 text-[11px] font-semibold uppercase text-stone-500">Sticker</div>
-          <div className="flex flex-wrap gap-1">
-            {STICKERS.map((e) => (
-              <button key={e} onClick={() => add(newSticker(e))} className="h-9 w-9 rounded-lg border border-stone-200 bg-white text-xl hover:border-emerald-600" aria-label={`Sticker ${e}`}>{e}</button>
+          <div className="mb-1 text-[11px] font-semibold uppercase text-olive">Sticker d&apos;Autore Monocromatici</div>
+          <div className="grid grid-cols-7 gap-1">
+            {MONOCHROME_STICKERS.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => add(newSticker(s.id))}
+                title={s.label}
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-forest/15 bg-white text-forest transition hover:border-forest hover:bg-cream cursor-pointer"
+                aria-label={`Sticker ${s.label}`}
+              >
+                <StickerIcon id={s.id} size={20} color="currentColor" />
+              </button>
             ))}
           </div>
         </div>
@@ -127,12 +138,12 @@ export function LayersPanel({ doc, update, selectedId, select }: Props) {
                 className={`flex items-center gap-1 rounded-lg border px-1.5 py-1 text-sm ${l.id === selectedId ? "border-sky-500 bg-sky-50" : "border-stone-200 bg-white"} ${l.hidden ? "opacity-50" : ""}`}>
                 <button onClick={() => select(l.id)} className="flex min-w-0 flex-1 items-center gap-2 text-left">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-stone-100 text-xs font-bold text-stone-600">{ICON[l.kind]}</span>
-                  <span className="truncate">{l.kind === "sticker" ? l.emoji + " " : ""}{l.name}</span>
+                  <span className="truncate">{l.name}</span>
                 </button>
-                <button title={l.hidden ? "Mostra" : "Nascondi"} disabled={req} onClick={() => patch(l.id, { hidden: !l.hidden }, "k")} className="px-1 text-xs disabled:opacity-30">{l.hidden ? "🙈" : "👁"}</button>
-                <button title={l.locked ? "Sblocca" : "Blocca"} onClick={() => patch(l.id, { locked: !l.locked }, "k")} className="px-1 text-xs">{l.locked ? "🔒" : "🔓"}</button>
-                <button title="Porta avanti" onClick={() => move(l.id, 1)} className="px-1 text-xs text-stone-500">▲</button>
-                <button title="Porta indietro" onClick={() => move(l.id, -1)} className="px-1 text-xs text-stone-500">▼</button>
+                <button title={l.hidden ? "Mostra" : "Nascondi"} disabled={req} onClick={() => patch(l.id, { hidden: !l.hidden }, "k")} className="px-1 text-xs disabled:opacity-30">{l.hidden ? <EyeOff size={14} className="text-olive/50" /> : <Eye size={14} className="text-forest" />}</button>
+                <button title={l.locked ? "Sblocca" : "Blocca"} onClick={() => patch(l.id, { locked: !l.locked }, "k")} className="px-1 text-xs">{l.locked ? <Lock size={14} className="text-forest" /> : <Unlock size={14} className="text-olive/50" />}</button>
+                <button title="Porta avanti" onClick={() => move(l.id, 1)} className="px-1 text-xs text-stone-500"><ChevronUp size={14} /></button>
+                <button title="Porta indietro" onClick={() => move(l.id, -1)} className="px-1 text-xs text-stone-500"><ChevronDown size={14} /></button>
               </li>
             );
           })}
@@ -143,10 +154,10 @@ export function LayersPanel({ doc, update, selectedId, select }: Props) {
       {sel ? (
         <Section title={`Ispettore · ${sel.name}`}>
           <div className="flex flex-wrap gap-2">
-            <Btn size="sm" disabled={REQUIRED.has(sel.kind)} onClick={() => { const c = duplicateLayer(sel); update((d) => ({ ...d, layers: [...d.layers, c] })); select(c.id); }}>⧉ Duplica</Btn>
+            <Btn size="sm" disabled={REQUIRED.has(sel.kind)} onClick={() => { const c = duplicateLayer(sel); update((d) => ({ ...d, layers: [...d.layers, c] })); select(c.id); }}><Copy size={13} className="mr-1" /> Duplica</Btn>
             <Btn size="sm" onClick={() => patch(sel.id, { x: 0.5 })}>↔ Centra X</Btn>
             <Btn size="sm" onClick={() => patch(sel.id, { y: 0.5 })}>↕ Centra Y</Btn>
-            <Btn size="sm" variant="danger" disabled={REQUIRED.has(sel.kind)} onClick={() => remove(sel.id)}>🗑 Elimina</Btn>
+            <Btn size="sm" variant="danger" disabled={REQUIRED.has(sel.kind)} onClick={() => remove(sel.id)}><Trash2 size={13} className="mr-1" /> Elimina</Btn>
           </div>
 
           {(sel.kind === "text" || sel.kind === "legal") && (

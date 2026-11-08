@@ -102,9 +102,9 @@ export const FORMATS: FormatDef[] = [
 export const FORMAT_BY_ID = Object.fromEntries(FORMATS.map((f) => [f.id, f])) as Record<FormatId, FormatDef>;
 
 export const FONTS: Record<FontId, { label: string; css: string }> = {
-  serif: { label: "Georgia (serif)", css: 'Georgia, "Times New Roman", serif' },
+  serif: { label: "Radici Serif (Newsreader / Playfair)", css: '"Newsreader", "Playfair Display", Georgia, Cambria, serif' },
   classic: { label: "Palatino (classico)", css: '"Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif' },
-  sans: { label: "Helvetica (sans)", css: '"Helvetica Neue", Helvetica, Arial, sans-serif' },
+  sans: { label: "Inter (sans)", css: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' },
   rounded: { label: "Trebuchet (umanista)", css: '"Trebuchet MS", "Segoe UI", Verdana, sans-serif' },
   mono: { label: "Courier (mono)", css: '"Courier New", Courier, monospace' },
   display: { label: "Impact (display)", css: 'Impact, "Arial Black", "Helvetica Neue", sans-serif' },
@@ -115,7 +115,7 @@ export const STICKERS = ["🌱", "🌿", "🍃", "🌾", "🌻", "🍇", "🫒",
 
 // ---- Conformità -------------------------------------------------------------
 export const LEGAL_KM0 = "Prodotto a Km 0 (ai sensi della L. 17 maggio 2022, n. 61)";
-export const LEGAL_LOGISTICS = "Attestazione di tracciabilità del percorso su rotta ottimizzata flotta";
+export const LEGAL_LOGISTICS = "Attestazione firmata dal Produttore Km 0 di tracciabilità del percorso su rotta ottimizzata flotta.";
 export const LEGAL_CO2 = "Stima CO2 equivalente evitata rispetto a consegne singole dedicate (DDT n. [DDT] / Registro Magazzino)";
 export const LEGAL_TEXT = [LEGAL_KM0, LEGAL_LOGISTICS, LEGAL_CO2].join("\n");
 

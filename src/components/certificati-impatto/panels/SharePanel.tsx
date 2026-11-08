@@ -1,10 +1,11 @@
-import { useRef, useState } from "react";
+﻿import { useRef, useState } from "react";
 import { CAPTION_TEMPLATES, HASHTAGS, PLACEHOLDERS } from "@/lib/certificati-impatto/constants";
 import { findViolations } from "@/lib/certificati-impatto/doc";
 import { downloadBlob, exportRaster, fileName, nativeShare } from "@/lib/certificati-impatto/export";
 import { apiPayload, blueprint, captionFor, intentUrl, linkFor, type Channel } from "@/lib/certificati-impatto/share";
 import { loadBackend, saveBackend } from "@/lib/certificati-impatto/storage";
 import { Btn, Chip, Field, Section, copyText, inputCls, toast } from "../ui";
+import { Share2, MessageCircle, Send, Copy, AlertTriangle } from "lucide-react";
 import type { PanelProps } from "./ContentPanel";
 
 export interface Actions {
@@ -41,7 +42,9 @@ export function SharePanel({ doc, update, actions }: PanelProps & { actions: Act
   };
 
   const limit = cap.template === "custom" ? 3000 : CAPTION_TEMPLATES[cap.template].limit;
-  const violations = findViolations(doc).filter((v) => v.where === "Caption social");
+  const allViolations = findViolations(doc);
+  const violations = allViolations.filter((v) => v.where === "Caption social");
+  const isBlocked = allViolations.length > 0;
   const previewChannel: Channel = tab;
   const preview = captionFor(doc, previewChannel);
 
@@ -96,19 +99,19 @@ export function SharePanel({ doc, update, actions }: PanelProps & { actions: Act
     <div className="space-y-4">
       <Section title="Condividi ora">
         <div className="grid grid-cols-2 gap-2">
-          <Btn variant="primary" onClick={native} className="col-span-2">📲 Condividi con immagine (smartphone)</Btn>
-          <Btn onClick={() => shareTo("LINKEDIN")}>in LinkedIn</Btn>
-          <Btn onClick={() => shareTo("WHATSAPP")}>💬 WhatsApp</Btn>
-          <Btn onClick={() => shareTo("FACEBOOK")}>f Facebook</Btn>
+          <Btn variant="primary" disabled={isBlocked} onClick={native} className="col-span-2"><Share2 size={14} className="mr-1 inline" /> Condividi con immagine (smartphone)</Btn>
+          <Btn disabled={isBlocked} onClick={() => shareTo("LINKEDIN")}>in LinkedIn</Btn>
+          <Btn disabled={isBlocked} onClick={() => shareTo("WHATSAPP")}><MessageCircle size={14} className="mr-1 inline" /> WhatsApp</Btn>
+          <Btn disabled={isBlocked} onClick={() => shareTo("FACEBOOK")}>f Facebook</Btn>
           <Btn onClick={() => shareTo("INSTAGRAM")}>◎ Instagram</Btn>
-          <Btn onClick={() => shareTo("X")}>𝕏 X / Twitter</Btn>
-          <Btn onClick={() => shareTo("EMAIL")}>✉ Email</Btn>
+          <Btn disabled={isBlocked} onClick={() => shareTo("X")}>𝕏 X / Twitter</Btn>
+          <Btn disabled={isBlocked} onClick={() => shareTo("EMAIL")}>✉ Email</Btn>
         </div>
         <p className="text-xs text-stone-500">
           Per policy delle piattaforme Instagram non accetta post da link web: scarichiamo l'immagine e copiamo la caption. LinkedIn e Facebook aprono la finestra di condivisione con il link tracciato (anteprima OpenGraph).
         </p>
         <div className="flex gap-2">
-          <Btn size="sm" onClick={() => copyText(linkFor(doc, "direct"))}>🔗 Copia link di verifica</Btn>
+          <Btn size="sm" onClick={() => copyText(linkFor(doc, "direct"))}><Copy size={14} className="mr-1 inline" /> Copia link di verifica</Btn>
           <Btn size="sm" onClick={() => window.open(linkFor(doc, "direct"), "_blank")}>Apri pagina</Btn>
         </div>
       </Section>

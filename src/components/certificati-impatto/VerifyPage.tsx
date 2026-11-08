@@ -1,6 +1,7 @@
-import { useEffect } from "react";
+﻿import { useEffect } from "react";
 import { CertificateSVG } from "./CertificateSVG";
 import { Btn, copyText, toast } from "./ui";
+import { Download, Copy, ExternalLink, Plus, Award, MessageCircle, AlertTriangle } from "lucide-react";
 import { CO2_PER_KM, FORMAT_BY_ID, LEGAL_CO2, LEGAL_KM0, LEGAL_LOGISTICS, STYLE_BY_ID } from "@/lib/certificati-impatto/constants";
 import { baseUrl, co2For, fmtDate, fmtNum } from "@/lib/certificati-impatto/doc";
 import { downloadBlob, exportRaster, fileName } from "@/lib/certificati-impatto/export";
@@ -69,12 +70,12 @@ export function VerifyPage({ doc, valid, owned, onCreate, onAdd }: { doc: Doc; v
           <li className="pt-1 italic">La verifica riguarda l'integrità dei dati contenuti nel link; non sostituisce DDT e Registro di Magazzino.</li>
         </ul>
         <div className="flex flex-wrap gap-2">
-          <Btn variant="primary" size="lg" onClick={onCreate}>🌱 Crea il tuo certificato</Btn>
-          {!owned && <Btn size="lg" onClick={() => { onAdd(doc); toast("Aggiunto alla tua galleria"); }}>＋ Aggiungi alla mia galleria</Btn>}
+          <Btn variant="primary" size="lg" onClick={onCreate}><Plus size={14} className="mr-1 inline" /> Crea il tuo certificato</Btn>
+          {!owned && <Btn size="lg" onClick={() => { onAdd(doc); toast("Aggiunto alla tua galleria"); }}><Plus size={14} className="mr-1 inline" /> Aggiungi alla mia galleria</Btn>}
         </div>
         <div className="flex flex-wrap gap-2">
-          <Btn onClick={async () => downloadBlob(await exportRaster(doc, "png"), fileName(doc, "png"))}>⬇ PNG</Btn>
-          <Btn onClick={() => typeof window !== "undefined" && copyText(window.location.href)}>🔗 Copia link</Btn>
+          <Btn onClick={async () => downloadBlob(await exportRaster(doc, "png"), fileName(doc, "png"))}><Download size={13} className="mr-1 inline" /> PNG</Btn>
+          <Btn onClick={() => typeof window !== "undefined" && copyText(window.location.href)}><Copy size={13} className="mr-1 inline" /> Copia link</Btn>
           <Btn onClick={() => window.open(intentUrl(doc, "LINKEDIN")!, "_blank")}>LinkedIn</Btn>
           <Btn onClick={() => window.open(intentUrl(doc, "WHATSAPP")!, "_blank")}>WhatsApp</Btn>
         </div>
