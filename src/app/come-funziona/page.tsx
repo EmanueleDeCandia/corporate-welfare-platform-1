@@ -303,7 +303,7 @@ export default function HowItWorksPage() {
               <span className="font-mono text-2xl font-bold text-gold">Step 04</span>
               <h4 className="font-serif text-lg font-bold text-forest">Gamification, Tornei & Omaggi Advocate</h4>
               <p className="text-xs text-forest/75 leading-relaxed">
-                Per premiare i dipendenti più attivi senza gravare sul plafond welfare aziendale (giustamente contenuto), la piattaforma attiva i Tornei tra Imprese. Nei Tornei tra Compagnie, gli addetti sbloccano Omaggi esclusivi offerti da Radici con il voto. Le Imprese CSR fanno Product Placement nei Trailer votati.
+                Per premiare i dipendenti più attivi senza gravare sul plafond welfare aziendale, la piattaforma estende lo Spettacolo dal vivo online con Tornei tra Compagnie: gli addetti sbloccano Biglietti omaggio offerti da Radici. Le imprese CSR invitate o già presenti, co-ideano i Trailer da votare con Product Placement.
               </p>
             </div>
           </div>
