@@ -374,6 +374,16 @@ export async function initDb() {
           invited_by_user_id INTEGER REFERENCES users(id),
           created_at INTEGER NOT NULL DEFAULT (unixepoch())
         );
+
+        CREATE TABLE IF NOT EXISTS impact_shortlinks (
+          code TEXT PRIMARY KEY,
+          user_id INTEGER REFERENCES users(id),
+          company_id INTEGER REFERENCES companies(id),
+          channel TEXT,
+          doc_payload TEXT NOT NULL,
+          views_count INTEGER NOT NULL DEFAULT 0,
+          created_at INTEGER NOT NULL DEFAULT (unixepoch())
+        );
       `);
 
       // Migrations per tabelle esistenti

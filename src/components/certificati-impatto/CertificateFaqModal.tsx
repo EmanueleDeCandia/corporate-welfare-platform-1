@@ -131,6 +131,28 @@ const FAQ_ITEMS: FAQItem[] = [
       </div>
     ),
   },
+  {
+    id: "shortlink-db-referral",
+    question: "Come funziona l'accorciamento dei link nel database e la tracciabilità B2B senza Google Analytics?",
+    summary: "Tracciabilità deterministica server-side: zero cookie di terze parti, privacy-first e massima affidabilità per 10.000 dipendenti.",
+    content: (
+      <div className="space-y-3 text-xs leading-relaxed text-olive">
+        <p>
+          Per superare le criticità degli strumenti di web analytics commerciali (ad-blocker, firewall e proxy aziendali, banner cookie GDPR non accettati), 
+          RADICI adotta un modello di <strong>Internal URL Shortener deterministico</strong> integrato nel database.
+        </p>
+        <div className="rounded-xl border border-forest/15 bg-paper p-3 space-y-2">
+          <p className="font-semibold text-forest">Architettura della tracciabilità server-side:</p>
+          <ul className="list-disc pl-4 space-y-1">
+            <li><strong>Generazione Shortlink Univoco:</strong> quando un collaboratore condivide il certificato, la piattaforma associa l&apos;ID certificato (es. <code className="font-mono text-forest">/c/IMP-23CQN2</code>) al suo account e alla sua azienda.</li>
+            <li><strong>Registrazione Immediata al Click:</strong> all&apos;apertura del link, il server incrementa il contatore visite lato backend prima di servire la pagina, garantendo il 100% di precisione anche con ad-blocker attivi.</li>
+            <li><strong>Attribuzione Referral Deterministica:</strong> se il collega o l&apos;amico si registra o richiede l&apos;attivazione del welfare per la propria impresa, il sistema riconosce automaticamente chi ha generato l&apos;invito (tramite cookie di prima parte o parametro di sessione).</li>
+            <li><strong>Gamification &amp; Report CSR:</strong> le aziende possono visualizzare in tempo reale nel proprio cruscotto quante persone hanno visionato i certificati dei propri dipendenti e quanti nuovi partner o colleghi sono entrati nel circuito.</li>
+          </ul>
+        </div>
+      </div>
+    ),
+  },
 ];
 
 export function CertificateFaqModal() {

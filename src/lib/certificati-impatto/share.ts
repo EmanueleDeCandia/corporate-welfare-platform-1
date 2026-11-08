@@ -6,19 +6,39 @@ export type Channel = "INSTAGRAM" | "FACEBOOK" | "LINKEDIN" | "WHATSAPP" | "X" |
 
 export const sourceOf = (c: Channel) => c.toLowerCase();
 
+export async function shortenDocUrl(doc: Doc, channel: string = "direct"): Promise<string> {
+  if (typeof window === "undefined") {
+    return linkFor(doc, channel as Channel | "direct");
+  }
+  try {
+    const res = await fetch("/api/certificates/shorten", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ doc, channel }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.shortUrl) return data.shortUrl;
+    }
+  } catch (err) {
+    console.warn("Shortener offline o non raggiungibile, fallback su link compresso:", err);
+  }
+  return linkFor(doc, channel as Channel | "direct");
+}
+
 export function linkFor(doc: Doc, c: Channel | "direct") {
   return verifyLink(doc, { source: c === "direct" ? "direct" : sourceOf(c), medium: c === "direct" ? "link" : "social" });
 }
 
-export function captionFor(doc: Doc, c: Channel | "direct", bold = true) {
-  const link = linkFor(doc, c);
+export function captionFor(doc: Doc, c: Channel | "direct", bold = true, overrideLink?: string) {
+  const link = overrideLink || linkFor(doc, c);
   const t = resolveText(doc.caption.text, placeholderCtx(doc, link));
   return bold ? unicodeBold(t) : t.replace(/\*\*/g, "");
 }
 
-export function intentUrl(doc: Doc, c: Channel): string | null {
-  const link = linkFor(doc, c);
-  const caption = captionFor(doc, c);
+export function intentUrl(doc: Doc, c: Channel, overrideLink?: string): string | null {
+  const link = overrideLink || linkFor(doc, c);
+  const caption = captionFor(doc, c, true, overrideLink);
   const e = encodeURIComponent;
   switch (c) {
     case "LINKEDIN": return `https://www.linkedin.com/sharing/share-offsite/?url=${e(link)}`;

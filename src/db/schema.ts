@@ -505,3 +505,19 @@ export const trailerVotes = sqliteTable("trailer_votes", {
 export type Trailer = typeof trailers.$inferSelect;
 export type TrailerVote = typeof trailerVotes.$inferSelect;
 
+export const impactShortlinks = sqliteTable("impact_shortlinks", {
+  code: text("code").primaryKey(), // es. "IMP-23CQN2" o slug univoco
+  userId: integer("user_id").references(() => users.id),
+  companyId: integer("company_id").references(() => companies.id),
+  channel: text("channel"), // "linkedin" | "whatsapp" | "instagram" | "direct" | "referral"
+  docPayload: text("doc_payload").notNull(), // JSON serializzato del documento
+  viewsCount: integer("views_count").notNull().default(0),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+});
+
+export type ImpactShortlink = typeof impactShortlinks.$inferSelect;
+export type NewImpactShortlink = typeof impactShortlinks.$inferInsert;
+
+
