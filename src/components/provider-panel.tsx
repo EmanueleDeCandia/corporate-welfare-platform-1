@@ -26,6 +26,8 @@ import {
 import type { companies, notifications, transactions, users, venues } from "@/db/schema";
 import type { VenueBookingRow } from "@/lib/data";
 import { formatDate, formatDateTime, formatEuro } from "@/lib/utils";
+import { ImpactCertificateStudio } from "@/components/certificati-impatto/ImpactCertificateStudio";
+import { Award } from "lucide-react";
 
 type Props = {
   venue: typeof venues.$inferSelect;
@@ -47,7 +49,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
     venue.type === "agriturismo" ||
     (venue.rooms && venue.rooms.length > 0);
 
-  const [panelTab, setPanelTab] = useState<"welfare" | "community" | "rooms">("welfare");
+  const [panelTab, setPanelTab] = useState<"welfare" | "community" | "rooms" | "certificati">("welfare");
   const [welfareFilter, setWelfareFilter] = useState<"active" | "cancelled" | "all">("active");
   const [notifFilter, setNotifFilter] = useState<"all" | "unread" | "active" | "cancelled">("all");
   const [pending, setPending] = useState<number | null>(null);
@@ -330,6 +332,18 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
             Offerte Camere & Convenzioni ({roomsList.length})
           </button>
         ) : null}
+        <button
+          type="button"
+          onClick={() => setPanelTab("certificati")}
+          className={`inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition ${
+            panelTab === "certificati"
+              ? "bg-forest text-cream shadow-sm"
+              : "bg-white text-forest hover:bg-cream border border-forest/10"
+          }`}
+        >
+          <Award size={16} />
+          Certificati d&apos;Impatto
+        </button>
       </div>
 
       {panelTab === "welfare" ? (
@@ -874,7 +888,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
             </div>
           )}
         </section>
-      ) : (
+      ) : panelTab === "rooms" ? (
         /* Sezione Gestione Offerte Camere & Convenzioni Welfare */
         <section className="rounded-[28px] bg-white p-6 shadow-sm border border-forest/5">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-forest/10 pb-4">
@@ -1039,6 +1053,17 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
             </div>
           </form>
         </section>
+      ) : (
+        /* Sezione Studio Certificati d'Impatto Km 0 */
+        <ImpactCertificateStudio
+          initialContext={{
+            company: venue.name,
+            promoter: "RADICI · Welfare & Territorio Marche",
+            role: "Struttura Partner Convenzionata",
+            city: venue.city,
+            distanceKm: 40,
+          }}
+        />
       )}
 
       {/* Sezione Notifiche Operative */}

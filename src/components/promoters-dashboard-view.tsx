@@ -45,6 +45,8 @@ import {
 import type { PromoterDashboardData } from "@/lib/promoters";
 import { formatDate, formatDateTime, formatEuro } from "@/lib/utils";
 import { ExplanatoryNoteTrigger } from "@/components/explanatory-note-modal";
+import { ImpactCertificateStudio } from "@/components/certificati-impatto/ImpactCertificateStudio";
+import { Award } from "lucide-react";
 
 type Props = {
   data: PromoterDashboardData;
@@ -79,7 +81,7 @@ const AVAILABLE_SERVICES = [
 export function PromotersDashboardView({ data }: Props) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "economics" | "companies" | "venues" | "vouchers" | "grants" | "bookings" | "producers"
+    "economics" | "companies" | "venues" | "vouchers" | "grants" | "bookings" | "producers" | "certificati"
   >("economics");
 
   // Filtro ordini filiera corta produttori KM 0
@@ -906,6 +908,18 @@ export function PromotersDashboardView({ data }: Props) {
         >
           <ShoppingBag size={15} />
           <span>Filiera Produttori KM 0 ({data.producerOrders.length})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("certificati")}
+          className={`inline-flex items-center gap-1.5 px-4 py-3 text-sm font-medium transition cursor-pointer ${
+            activeTab === "certificati"
+              ? "border-b-2 border-forest font-semibold text-forest"
+              : "text-olive hover:text-forest"
+          }`}
+        >
+          <Award size={15} />
+          <span>Studio Certificati d&apos;Impatto</span>
         </button>
       </div>
 
@@ -2217,6 +2231,17 @@ export function PromotersDashboardView({ data }: Props) {
             </div>
           </div>
         </section>
+      )}
+
+      {/* TAB: STUDIO CERTIFICATI D'IMPATTO */}
+      {activeTab === "certificati" && (
+        <ImpactCertificateStudio
+          initialContext={{
+            promoter: "RADICI · Welfare & Territorio Marche",
+            role: "Startup Promotrice · Amministratore Circuito",
+            distanceKm: 60,
+          }}
+        />
       )}
 
       {/* ========================================================= */}

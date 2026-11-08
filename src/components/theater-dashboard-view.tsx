@@ -21,6 +21,8 @@ import {
 } from "lucide-react";
 import type { TheaterDashboardData, TheaterSpectator } from "@/lib/theater";
 import { formatDate, formatDateTime, formatEuro } from "@/lib/utils";
+import { ImpactCertificateStudio } from "@/components/certificati-impatto/ImpactCertificateStudio";
+import { Award } from "lucide-react";
 
 type Props = {
   data: TheaterDashboardData;
@@ -28,7 +30,7 @@ type Props = {
 
 export function TheaterDashboardView({ data }: Props) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"shows" | "spectators" | "venue">("shows");
+  const [activeTab, setActiveTab] = useState<"shows" | "spectators" | "venue" | "certificati">("shows");
   const [spectators, setSpectators] = useState<TheaterSpectator[]>(data.spectators);
   const [searchQuery, setSearchQuery] = useState("");
   const [updatingId, setUpdatingId] = useState<number | null>(null);
@@ -208,6 +210,17 @@ export function TheaterDashboardView({ data }: Props) {
         >
           <QrCode size={16} />
           Scheda Teatro & Check-in
+        </button>
+        <button
+          onClick={() => setActiveTab("certificati")}
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-sm font-semibold transition ${
+            activeTab === "certificati"
+              ? "border-wine text-wine"
+              : "border-transparent text-olive hover:text-forest"
+          }`}
+        >
+          <Award size={16} />
+          Certificati d&apos;Impatto
         </button>
       </div>
 
@@ -525,6 +538,19 @@ export function TheaterDashboardView({ data }: Props) {
             </p>
           </div>
         </div>
+      )}
+
+      {/* 4D. TAB CERTIFICATI */}
+      {activeTab === "certificati" && (
+        <ImpactCertificateStudio
+          initialContext={{
+            company: data.theaterVenue.name,
+            promoter: "RADICI · Welfare & Territorio Marche",
+            role: "Teatro Storico & Performing Art",
+            city: data.theaterVenue.city,
+            distanceKm: 45,
+          }}
+        />
       )}
     </div>
   );

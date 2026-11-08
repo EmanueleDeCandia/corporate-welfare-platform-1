@@ -29,6 +29,8 @@ import { formatDateTime, formatEuro, initials } from "@/lib/utils";
 import { RoleBadge } from "@/components/design-system/role-badge";
 import { StatusBadge } from "@/components/design-system/status-badge";
 import { ExplanatoryNoteTrigger } from "@/components/explanatory-note-modal";
+import { ImpactCertificateStudio } from "@/components/certificati-impatto/ImpactCertificateStudio";
+import { Award } from "lucide-react";
 
 type EmployeeRow = {
   user: User;
@@ -109,7 +111,9 @@ export function CompanyDashboardView({ data }: Props) {
     producerBasketsSummary,
   } = data;
 
-  const [activeTab, setActiveTab] = useState<"overview" | "employees" | "venues" | "invoices" | "baskets" | "settings">("overview");
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "employees" | "venues" | "invoices" | "baskets" | "certificati" | "settings"
+  >("overview");
 
   // Stato per l'editing dei dati aziendali
   const [companyForm, setCompanyForm] = useState({
@@ -278,6 +282,15 @@ export function CompanyDashboardView({ data }: Props) {
             }`}
           >
             <Truck size={13} /> Sinergie Flotta & KM 0 ({producerBasketsSummary?.totalOrders || 0})
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("certificati")}
+            className={`rounded-full px-4 py-2 text-xs font-medium uppercase tracking-wider transition inline-flex items-center gap-1.5 ${
+              activeTab === "certificati" ? "bg-cream text-forest font-bold" : "bg-white/10 text-cream hover:bg-white/15"
+            }`}
+          >
+            <Award size={13} /> Certificati d&apos;Impatto
           </button>
           <button
             type="button"
@@ -920,6 +933,19 @@ export function CompanyDashboardView({ data }: Props) {
             </div>
           </div>
         </section>
+      )}
+
+      {/* TAB: CERTIFICATI D'IMPATTO */}
+      {activeTab === "certificati" && (
+        <ImpactCertificateStudio
+          initialContext={{
+            company: company.name,
+            promoter: "RADICI · Welfare & Territorio Marche",
+            role: "Azienda Shared Value · CSR",
+            city: company.city,
+            distanceKm: 55,
+          }}
+        />
       )}
     </div>
   );

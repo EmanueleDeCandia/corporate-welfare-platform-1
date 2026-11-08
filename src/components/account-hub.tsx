@@ -52,7 +52,7 @@ import {
 } from "@/lib/utils";
 
 type VenueLite = typeof venues.$inferSelect;
-import { TicketStudio } from "@/components/ticket-studio";
+import { ImpactCertificateStudio } from "@/components/certificati-impatto/ImpactCertificateStudio";
 
 type GrantEventLite = typeof grantEvents.$inferSelect;
 type TxRow = { transaction: typeof transactions.$inferSelect; venue: VenueLite };
@@ -85,19 +85,19 @@ type Props = {
   }>;
 };
 
-type Tab = "wallet" | "ticket-studio" | "bookings" | "kit" | "friends";
+type Tab = "wallet" | "certificati" | "bookings" | "kit" | "friends";
 
 export function AccountHub(props: Props) {
-  const [tab, setTab] = useState<Tab>(props.user.role === "friend" ? "ticket-studio" : "wallet");
+  const [tab, setTab] = useState<Tab>(props.user.role === "friend" ? "certificati" : "wallet");
 
   const availableTabs = [
     ...(props.user.role === "employee"
       ? [{ id: "wallet" as const, label: "Portafoglio Welfare", icon: Wallet }]
       : []),
-    { id: "ticket-studio" as const, label: "Ticket Studio d'Autore", icon: Ticket },
+    { id: "certificati" as const, label: "Certificati d'Impatto Km 0", icon: Award },
     { id: "bookings" as const, label: "Prenotazioni & Sconti", icon: CalendarCheck },
     { id: "friends" as const, label: "Hub Amici & Referral", icon: Users },
-    { id: "kit" as const, label: "Kit & Certificati", icon: Share2 },
+    { id: "kit" as const, label: "Kit & Social", icon: Share2 },
   ];
 
   return (
@@ -119,16 +119,15 @@ export function AccountHub(props: Props) {
       </div>
       <div className="mt-6">
         {tab === "wallet" ? <WalletTab {...props} grantEvents={props.grantEvents ?? []} /> : null}
-        {tab === "ticket-studio" ? (
-          <TicketStudio
-            events={props.grantEvents || []}
-            user={{
-              id: props.user.id,
-              firstName: props.user.firstName,
-              lastName: props.user.lastName,
-              referralCode: props.user.referralCode,
-              role: props.user.role,
-              company: props.company,
+        {tab === "certificati" ? (
+          <ImpactCertificateStudio
+            initialContext={{
+              first: props.user.firstName,
+              last: props.user.lastName,
+              company: props.company?.name || "",
+              promoter: "RADICI · Welfare & Territorio Marche",
+              role: props.user.role === "employee" ? "Dipendente Welfare" : "Community",
+              distanceKm: 55,
             }}
           />
         ) : null}

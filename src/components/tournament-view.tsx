@@ -518,10 +518,10 @@ export function TournamentView({ data, currentUser }: Props) {
               <MessageCircle size={16} /> Condividi su WhatsApp
             </a>
             <Link
-              href="/account/ticket-studio"
+              href="/account/certificati"
               className="inline-flex items-center gap-2 rounded-2xl bg-forest px-5 py-3 text-xs font-bold text-cream shadow-sm hover:bg-forest/90 transition cursor-pointer"
             >
-              <Ticket size={16} /> Apri Ticket Studio d&apos;Autore
+              <Award size={16} /> Apri Certificati d&apos;Impatto
             </Link>
           </div>
         ) : (
