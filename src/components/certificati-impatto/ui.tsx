@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 // ---- Toast ----------------------------------------------------------------
@@ -67,9 +67,9 @@ export function Field({ label, hint, children, className }: { label: string; hin
 export const inputCls =
   "w-full rounded-lg border border-forest/20 bg-white px-3 py-2 text-sm text-stone-900 placeholder:text-olive/70 focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/20";
 
-export function Section({ title, children, aside }: { title: string; children: ReactNode; aside?: ReactNode }) {
+export function Section({ title, children, aside, className }: { title: string; children: ReactNode; aside?: ReactNode; className?: string }) {
   return (
-    <section className="rounded-xl border border-forest/10 bg-white p-4">
+    <section className={cn("rounded-xl border border-forest/10 bg-white p-4 overflow-hidden", className)}>
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-bold text-forest">{title}</h3>
         {aside}

@@ -125,7 +125,7 @@ export function SharePanel({ doc, update, actions }: PanelProps & { actions: Act
         </p>
         <div className="flex gap-2">
           <Btn size="sm" onClick={() => copyText(effectiveLink)}><Copy size={14} className="mr-1 inline" /> Copia link compatto</Btn>
-          <Btn size="sm" onClick={() => window.open(effectiveLink, "_blank")}>Apri pagina</Btn>
+          <Btn size="sm" onClick={() => window.open(linkFor(doc, "direct"), "_blank")}>Apri pagina</Btn>
         </div>
       </Section>
 
@@ -183,9 +183,11 @@ export function SharePanel({ doc, update, actions }: PanelProps & { actions: Act
             </button>
           ))}
         </div>
-        <pre className="max-h-48 whitespace-pre-wrap rounded-lg bg-stone-50 p-3 text-xs leading-relaxed text-stone-800">
-          {preview}
-        </pre>
+        <div className="max-h-56 overflow-y-auto rounded-lg bg-stone-50 p-3">
+          <p className="whitespace-pre-wrap text-xs leading-relaxed text-stone-800">
+            {preview}
+          </p>
+        </div>
       </Section>
 
       <Section title="Blueprint API webhook esterne">
