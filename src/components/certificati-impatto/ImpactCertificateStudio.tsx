@@ -11,6 +11,7 @@ import { postToParent, readEmbedConfig } from "@/lib/certificati-impatto/embed";
 import { clearDraft, loadCerts, loadDraft, saveCerts } from "@/lib/certificati-impatto/storage";
 import type { Doc, SavedCert } from "@/lib/certificati-impatto/types";
 import { Award, Palette, Plus, ArrowLeft } from "lucide-react";
+import { CertificateFaqModal } from "./CertificateFaqModal";
 
 export type ImpactStudioContext = {
   first?: string;
@@ -142,8 +143,11 @@ export function ImpactCertificateStudio({
       {/* Top Banner Navigation */}
       <div className="flex flex-col gap-4 rounded-3xl bg-forest p-6 text-cream sm:flex-row sm:items-center sm:justify-between shadow-sm">
         <div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-sand">
-            <Award size={14} className="text-gold" /> Certificati d&apos;Impatto Km 0
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center gap-2 rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-sand">
+              <Award size={14} className="text-gold" /> Certificati d&apos;Impatto Km 0
+            </div>
+            <CertificateFaqModal />
           </div>
           <h2 className="mt-2 font-serif text-2xl font-bold sm:text-3xl text-white">
             Studio di Certificazione d&apos;Autore
