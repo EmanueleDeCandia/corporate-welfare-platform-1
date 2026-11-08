@@ -142,12 +142,16 @@ export function Editor({ initial, inGallery, embed, onSave, onNew }: Props) {
       {/* Pannelli */}
       <aside className="order-2 min-w-0 lg:order-1">
         <div className="sticky top-14 z-20 -mx-1 mb-3 flex gap-1 overflow-x-auto rounded-xl bg-stone-100/95 p-1 backdrop-blur" role="tablist">
-          {TABS.map((t) => (
-            <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
-              className={`flex shrink-0 items-center gap-1 rounded-lg px-3 py-2 text-xs font-bold transition ${tab === t.id ? "bg-white text-emerald-800 shadow" : "text-stone-500 hover:text-stone-800"}`}>
-              <span aria-hidden>{t.icon}</span>{t.label}
-            </button>
-          ))}
+          {TABS.map((t) => {
+            const Icon = t.icon;
+            return (
+              <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
+                className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold transition cursor-pointer ${tab === t.id ? "bg-white text-forest shadow" : "text-olive hover:text-forest"}`}>
+                <Icon size={14} className="shrink-0" />
+                <span>{t.label}</span>
+              </button>
+            );
+          })}
         </div>
         {tab === "dati" && <ContentPanel {...common} />}
         {tab === "stile" && <DesignPanel {...common} />}
