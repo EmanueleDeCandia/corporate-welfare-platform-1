@@ -50,8 +50,8 @@ export function intentUrl(doc: Doc, c: Channel, overrideLink?: string): string |
   }
 }
 
-export function blueprint(doc: Doc, c: "INSTAGRAM" | "FACEBOOK" | "LINKEDIN" | "WHATSAPP") {
-  const caption = captionFor(doc, c);
+export function blueprint(doc: Doc, c: "INSTAGRAM" | "FACEBOOK" | "LINKEDIN" | "WHATSAPP", overrideLink?: string) {
+  const caption = captionFor(doc, c, true, overrideLink);
   const imageUrl = "https://CDN-DEL-PARTNER/certificati/" + doc.id + ".png";
   switch (c) {
     case "INSTAGRAM":
@@ -72,7 +72,7 @@ export function blueprint(doc: Doc, c: "INSTAGRAM" | "FACEBOOK" | "LINKEDIN" | "
   }
 }
 
-export function apiPayload(doc: Doc, channels: string[]) {
+export function apiPayload(doc: Doc, channels: string[], overrideLink?: string) {
   return {
     schema: "WelfareKm0CardInputV5",
     user_info: { first_name: doc.user.first, last_name: doc.user.last, csr_company_name: doc.user.company },
@@ -84,7 +84,7 @@ export function apiPayload(doc: Doc, channels: string[]) {
       symbol_id: doc.design.symbol,
       output_format: doc.design.format,
     },
-    social_publishing: { target_channels: channels, custom_caption: captionFor(doc, "direct", false), hashtags: HASHTAGS.split(" ") },
-    certificate: { id: doc.id, verify_url: linkFor(doc, "direct") },
+    social_publishing: { target_channels: channels, custom_caption: captionFor(doc, "direct", false, overrideLink), hashtags: HASHTAGS.split(" ") },
+    certificate: { id: doc.id, short_url: overrideLink || undefined, verify_url: linkFor(doc, "direct") },
   };
 }

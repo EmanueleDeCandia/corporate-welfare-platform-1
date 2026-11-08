@@ -97,7 +97,11 @@ export function SharePanel({ doc, update, actions }: PanelProps & { actions: Act
     setSending(true);
     saveBackend(backend);
     try {
-      const res = await fetch(backend, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(apiPayload(doc, ["INSTAGRAM", "FACEBOOK", "LINKEDIN", "WHATSAPP"])) });
+      const res = await fetch(backend, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(apiPayload(doc, ["INSTAGRAM", "FACEBOOK", "LINKEDIN", "WHATSAPP"], effectiveLink)),
+      });
       toast(`Backend: ${res.status} ${res.statusText}`, res.ok ? "ok" : "err");
     } catch (e) {
       toast("Invio fallito: " + (e as Error).message, "err");
@@ -106,7 +110,7 @@ export function SharePanel({ doc, update, actions }: PanelProps & { actions: Act
     }
   };
 
-  const bp = blueprint(doc, tab as "LINKEDIN" | "INSTAGRAM" | "WHATSAPP");
+  const bp = blueprint(doc, tab as "LINKEDIN" | "INSTAGRAM" | "WHATSAPP", effectiveLink);
 
   return (
     <div className="space-y-4">
