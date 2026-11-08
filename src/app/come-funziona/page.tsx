@@ -266,6 +266,49 @@ export default function HowItWorksPage() {
           </div>
         </SurfaceCard>
 
+        {/* WORKFLOW ENGAGEMENT, FIDUCIA & VIRALITÀ B2B */}
+        <SurfaceCard variant="cream" className="space-y-8">
+          <SectionHeader
+            eyebrow="Il Ciclo Engagement & Trustability"
+            title="Come avviene il coinvolgimento e cosa garantisce l'affidabilità"
+            description="Dalla diffusione da parte degli addetti al coinvolgimento di colleghi di altre imprese."
+          />
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="rounded-2xl bg-white p-6 border border-forest/10 shadow-sm space-y-3">
+              <span className="font-mono text-2xl font-bold text-gold">Step 01</span>
+              <h4 className="font-serif text-lg font-bold text-forest">Certificato d&apos;Autore & Anti-Greenwashing</h4>
+              <p className="text-xs text-forest/75 leading-relaxed">
+                Al termine dell&apos;esperienza Km 0, il dipendente genera il proprio Certificato personalizzato. La conformità alla L. 61/2022 e al D.Lgs. 30/2026 (blocco automatico dei green claim ingannevoli) e la firma crittografica decentralizzata garantiscono credibilità e trasparenza totale tra pari.
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-white p-6 border border-forest/10 shadow-sm space-y-3">
+              <span className="font-mono text-2xl font-bold text-gold">Step 02</span>
+              <h4 className="font-serif text-lg font-bold text-forest">Condivisione Social & Passaparola tra Pari</h4>
+              <p className="text-xs text-forest/75 leading-relaxed">
+                Tramite lo shortlink univoco (/c/[codice]), il lavoratore condivide l&apos;attestato su LinkedIn, WhatsApp o Instagram corredato da un Call-To-Action. L&apos;apertura del link non richiede cookie di terze parti o tracciatori invasivi, registrando deterministicamente l&apos;interesse dei contatti.
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-white p-6 border border-forest/10 shadow-sm space-y-3">
+              <span className="font-mono text-2xl font-bold text-gold">Step 03</span>
+              <h4 className="font-serif text-lg font-bold text-forest">Coinvolgimento Colleghi di Altre Imprese</h4>
+              <p className="text-xs text-forest/75 leading-relaxed">
+                Dipendenti di altre realtà produttive visualizzano l&apos;impatto reale del collega e propongono il circuito RADICI al proprio management CSR o HR. L&apos;onboarding di nuove aziende avviene così dal basso, per emulazione virtuosa tra pari e non per pressione commerciale.
+              </p>
+            </div>
+
+            <div className="rounded-2xl bg-white p-6 border border-forest/10 shadow-sm space-y-3">
+              <span className="font-mono text-2xl font-bold text-gold">Step 04</span>
+              <h4 className="font-serif text-lg font-bold text-forest">Gamification, Tornei & Omaggi Advocate</h4>
+              <p className="text-xs text-forest/75 leading-relaxed">
+                Per premiare i dipendenti più attivi senza gravare sul plafond welfare aziendale (giustamente contenuto), la piattaforma attiva i Tornei tra Imprese. Votando i Trailer dei teatri marchigiani, gli addetti sbloccano Omaggi esclusivi e cesti territoriali offerti dai partner grazie al product placement culturale.
+              </p>
+            </div>
+          </div>
+        </SurfaceCard>
+
         {/* LOGISTICA SOSTENIBILE & TABELLA SCIENTIFICA CO2 */}
         <SurfaceCard variant="forest" className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-white/10">
