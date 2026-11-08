@@ -35,15 +35,11 @@ export function ImpactCertificateStudio({
   backHref = "/account",
   backLabel = "Torna all'area personale",
 }: ImpactCertificateStudioProps) {
+  const [mounted, setMounted] = useState(false);
   const [embed] = useState(readEmbedConfig);
   const [view, setView] = useState<"crea" | "gallery" | "verify">("crea");
   const [verifyArg, setVerifyArg] = useState<string>("");
-  const [certs, setCerts] = useState<SavedCert[]>(() => {
-    if (typeof window !== "undefined") {
-      return loadCerts();
-    }
-    return [];
-  });
+  const [certs, setCerts] = useState<SavedCert[]>([]);
   const [editor, setEditor] = useState<{ doc: Doc; key: number } | null>(null);
 
   const defaultFirst = initialContext?.first || embed.first || undefined;
@@ -74,29 +70,43 @@ export function ImpactCertificateStudio({
   }, [defaultCompany, defaultFirst, defaultLast, defaultPromoter, initialContext]);
 
   useEffect(() => {
+    setMounted(true);
+    setCerts(loadCerts());
+  }, []);
+
+  useEffect(() => {
     if (embed.embed) postToParent(embed, "WIDGET_READY", { version: 5 });
   }, [embed]);
 
   useEffect(() => {
-    // Check if there is a hash like #/v/... or #/r/...
-    const h = window.location.hash.replace(/^#/, "");
-    if (h.startsWith("/r/")) {
-      const code = h.slice(3);
-      const d = decodeFull(code);
-      if (d) {
-        setEditor({ doc: { ...d, id: certId(), createdAt: Date.now() }, key: Date.now() });
-        setView("crea");
-        toast("Design aperto in modalità remix: personalizzalo!");
+    const handleHash = () => {
+      const h = window.location.hash.replace(/^#/, "");
+      if (h.startsWith("/r/")) {
+        const code = h.slice(3);
+        const d = decodeFull(code);
+        if (d) {
+          setEditor({ doc: { ...d, id: certId(), createdAt: Date.now() }, key: Date.now() });
+          setView("crea");
+          toast("Design aperto in modalità remix: personalizzalo!");
+        }
+      } else if (h.startsWith("/v/")) {
+        const code = h.slice(3);
+        setVerifyArg(code);
+        setView("verify");
       }
-    } else if (h.startsWith("/v/")) {
-      const code = h.slice(3);
-      setVerifyArg(code);
-      setView("verify");
-    } else {
+    };
+
+    handleHash();
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
+
+  useEffect(() => {
+    if (!editor && !window.location.hash.startsWith("#/v/") && !window.location.hash.startsWith("#/r/")) {
       const draft = loadDraft();
       setEditor({ doc: draft ?? newDoc(), key: 1 });
     }
-  }, [newDoc]);
+  }, [editor, newDoc]);
 
   const openEditor = (d: Doc) => {
     setEditor((e) => ({ doc: d, key: (e?.key ?? 0) + 1 }));
@@ -170,7 +180,7 @@ export function ImpactCertificateStudio({
                 : "border border-sand/30 bg-forest/40 text-sand hover:bg-forest/70"
             }`}
           >
-            I miei Certificati ({certs.length})
+            I miei Certificati {mounted ? `(${certs.length})` : ""}
           </button>
           <button
             onClick={startNew}
