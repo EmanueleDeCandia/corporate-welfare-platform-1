@@ -219,30 +219,30 @@ export function Editor({ initial, inGallery, embed, onSave, onNew }: Props) {
         </div>
 
         {/* Conformità */}
-        <details className={`mt-2 rounded-xl border px-3 py-2 text-xs ${violations.length ? "border-rose-300 bg-rose-50 text-rose-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`} open={violations.length > 0}>
-          <summary className="cursor-pointer font-bold">
+        <details className={`mt-2 rounded-xl border px-3.5 py-2.5 text-xs bg-white shadow-xs ${violations.length ? "border-stone-400 text-stone-900" : "border-stone-200 text-stone-800"}`} open={violations.length > 0}>
+          <summary className="cursor-pointer font-bold text-stone-800 hover:text-stone-950 transition">
             {violations.length ? `⚠ ${violations.length} termine/i vietato/i da correggere` : "✓ Conformità AGCM / L. 61/2022 e D.Lgs. 30/2026: disclaimer presenti, nessun termine vietato."}
           </summary>
-          <div className="mt-2 space-y-2 text-[10px] leading-relaxed">
+          <div className="mt-2.5 space-y-2 text-[10px] leading-relaxed">
             {violations.map((v, i) => (
-              <div key={i} className="font-semibold text-rose-700">
+              <div key={i} className="font-semibold text-stone-900 bg-stone-100 p-1.5 rounded">
                 «{v.term}» in <b>{v.where}</b>{v.origin === "estesa" ? " (lista estesa)" : ""}
               </div>
             ))}
-            <div className="whitespace-pre-line rounded bg-white/70 p-2 text-[10px] text-stone-700 font-mono">
+            <div className="whitespace-pre-line rounded border border-stone-200 bg-stone-50 p-2.5 text-[10px] text-stone-700 font-mono">
               {LEGAL_TEXT.replace("[DDT]", doc.ddt || "—")}
             </div>
             <div className="text-[10px] text-stone-600 space-y-1">
-              <p className="font-medium text-stone-700">
+              <p className="font-medium text-stone-800">
                 Termini vietati dal D.Lgs. 30/2026 che recepisce nel Codice del Consumo la direttiva (UE) 2024/825 sulle &quot;asserzioni ambientali&quot;.
               </p>
-              <p>
+              <p className="text-stone-600">
                 Esempi di green claim vietati: {BLACKLIST.map((b) => `«${b.term}»`).join(" · ")}.
               </p>
-              <p>
+              <p className="text-stone-500">
                 La Direttiva europea è stata ritirata ma le norme contro il greenwashing sono in vigore in Italia.
               </p>
-              <p className="font-semibold text-rose-800">
+              <p className="font-bold text-stone-900 pt-0.5">
                 Esportazione e condivisione sono bloccate finché sono presenti asserzioni vietate.
               </p>
             </div>
