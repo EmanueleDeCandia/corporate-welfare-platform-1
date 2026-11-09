@@ -68,7 +68,7 @@ export function defaultLayers(format: FormatId, style: StyleId): Layer[] {
   const layers: Layer[] = [
     base({ kind: "shape", role: "panel", name: "Pannello", shape: "rect", fill: "bg", stroke: "accent", strokeW: 3, radius: 18, opacity: st.panelOpacity, locked: true }),
     T("eyebrow", "Sopratitolo", "[Promotore] · Welfare Km 0", { weight: 700, ls: 4, caps: true, color: "accent" }),
-    T("title", "Titolo", "Certificato di Impatto", { font: st.titleFont, weight: 700 }),
+    T("title", "Titolo", "Attestato di Impatto", { font: st.titleFont, weight: 700 }),
     base({ kind: "symbol", role: "symbol", name: "Simbolo", symbol: "SIMBOL_BIO_LEAF" }),
     T("subtitle", "Sottotitolo", "conferito a", { italic: true, opacity: 0.85 }),
     T("name", "Nome", "[Nome] [Cognome]", { font: st.titleFont, weight: 700 }),
@@ -98,7 +98,7 @@ export function createDoc(over: {
   return {
     id: over.id ?? certId(),
     createdAt: over.createdAt ?? Date.now(),
-    title: "Certificato di Impatto",
+    title: "Attestato di Impatto",
     user: { first: over.first ?? "Marco", last: over.last ?? "Rossi", company: over.company ?? "Loccioni Group" },
     partners: { promoter: over.promoter ?? "Gruppo Illiria", fleet: "Flotta Illiria Optimised Route", startup: "EcoKm0 Logistics Startup" },
     loc: { city: over.city ?? "Jesi (AN)", km: over.km ?? 55 },
@@ -313,7 +313,7 @@ export function carouselDocs(doc: Doc): Doc[] {
       T("Nome", "[Nome] [Cognome]", 540, 240, 70, { font: st.titleFont }),
       T("Azienda", "[Nome Azienda CSR]", 540, 315, 32, { color: "accent", ls: 1 }),
       base({ kind: "qr", name: "QR", ...f(540, 565), w: 340 }),
-      T("Invito", "Inquadra il QR per verificare il certificato", 540, 790, 24, { weight: 400 }),
+      T("Invito", "Inquadra il QR per verificare l'attestato", 540, 790, 24, { weight: 400 }),
       T("Riferimenti", "ID [ID] · [Data]", 540, 860, 20, { ls: 1.5, weight: 700, opacity: 0.8 }),
       ...legal,
     ],

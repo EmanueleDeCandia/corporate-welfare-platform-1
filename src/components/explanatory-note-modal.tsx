@@ -44,7 +44,7 @@ export const EXPLANATORY_NOTES: Record<NoteId, ExplanatoryNoteData> = {
       },
       {
         label: "4. Go to market per il Shared Value con le imprese CSR",
-        text: "L'azione di contatto diretto della Startup posiziona la proposta sui benefici al territorio, superando i limiti delle offerte basate su prezzo e prodotto. La Startup usa la leva della logistica integrata a impatto zero per i prodotti KM 0 ai dipendenti e i servizi abilitati dal Gruppo: Reporting Integrato ESG, media relation, advertising e tavoli istituzionali di Public Policy.",
+        text: "L'azione di contatto diretto della Startup posiziona la proposta sui benefici al territorio, superando i limiti delle offerte basate su prezzo e prodotto. La Startup usa la leva della logistica integrata a impatto zero per i prodotti KM 0 ai dipendenti e i servizi abilitati dal Gruppo: Reporting Integrato CSR, media relation, advertising e tavoli istituzionali di Public Policy.",
       },
     ],
     strategicTakeaway:

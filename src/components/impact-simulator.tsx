@@ -219,9 +219,7 @@ export function ImpactSimulator() {
           <Calculator size={26} /> Simulatore di Impatto del Circuito
         </h2>
         <p className="mt-2 max-w-3xl text-sm leading-relaxed text-ink/80">
-          Modifica gli input e verifica in tempo reale impatto sul territorio e sostenibilità economica della Startup. Il
-          calcolo è deterministico: stessi input, stessi risultati. Stima a scopo dimostrativo per validare la capacità di Condivisione del Valore.
-          Non considera le linee di revenue da rewardding crowfondung per servizi tecnologici, sponsorizzazioni e convenzioni per evento locale con le Unioni di Comuni.
+          Modifica gli input e verifica in tempo reale impatto sul territorio e sostenibilità economica della Startup. Il calcolo è deterministico: stessi input, stessi risultati. Stima a scopo dimostrativo per validare la capacità di Condivisione del Valore. Non considera le linee di revenue da rewarding crowdfunding per servizi tecnologici, sponsorizzazioni e convenzioni per evento locale con le Unioni di Comuni.
         </p>
       </div>
 

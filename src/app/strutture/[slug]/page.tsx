@@ -360,7 +360,7 @@ export default async function VenueDetailPage({
                   </span>
                   <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-olive">
-                      Sponsor Territoriale ESG
+                      Sponsor Territoriale CSR
                     </p>
                     <p className="text-sm text-forest">
                       Finanziato nel piano welfare da{" "}

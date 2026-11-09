@@ -42,7 +42,7 @@ export async function SiteHeader({ dark = false }: { dark?: boolean }) {
           </Link>
           <Link href="/account/certificati" className="hover:text-terracotta inline-flex items-center gap-1 font-semibold text-forest">
             <Sparkles size={13} className="text-gold" />
-            Certificati d&apos;Impatto
+            Attestati d&apos;Impatto
           </Link>
           <Link href="/torneo" className="hover:text-terracotta inline-flex items-center gap-1 font-semibold text-terracotta">
             <Sparkles size={13} className="text-gold" />

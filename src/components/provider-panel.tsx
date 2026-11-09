@@ -342,7 +342,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
           }`}
         >
           <Award size={16} />
-          Certificati d&apos;Impatto
+          Attestati d&apos;Impatto
         </button>
       </div>
 
@@ -357,7 +357,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
                 Ogni voucher selezionato dal lavoratore costituisce un <strong>debito certo ed esigibile</strong> a carico dell&apos;Impresa CSR committente:
                 il compenso a tuo favore è <strong>dovuto per legge al momento del riscatto</strong>, sia che l&apos;ospite si presenti sia in caso di mancato arrivo (no-show).
                 Emetti la fattura dal tuo gestionale contabile intestandola all&apos;azienda indicata e segna qui il numero di fattura e l&apos;avvenuto saldo.
-                La rilevazione della presenza fisica serve unicamente al monitoraggio statistico ed ESG territoriale.
+                La rilevazione della presenza fisica serve unicamente al monitoraggio statistico ed CSR territoriale.
               </div>
             </div>
           </section>
@@ -410,7 +410,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
                 <th className="pb-3">Ospite / Beneficiario</th>
                 <th className="pb-3">Committente Fattura</th>
                 <th className="pb-3">Importo & Fee Radici</th>
-                <th className="pb-3">Presenza (ESG)</th>
+                <th className="pb-3">Presenza (CSR)</th>
                 <th className="pb-3">Estremi Fattura Esterna</th>
                 <th className="pb-3 text-right">Stato Pagamento</th>
               </tr>
@@ -501,7 +501,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
                         )}
                       </td>
 
-                      {/* Presenza fisica (ESG) */}
+                      {/* Presenza fisica (CSR) */}
                       <td className="py-4 align-top">
                         {isCancelled ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-mist/60 px-2.5 py-1 text-xs font-semibold text-olive">
@@ -1054,7 +1054,7 @@ export function ProviderPanel({ venue, notifications: items, transactions: rows,
           </form>
         </section>
       ) : (
-        /* Sezione Studio Certificati d'Impatto Km 0 */
+        /* Sezione Studio Attestati d'Impatto Km 0 */
         <ImpactCertificateStudio
           initialContext={{
             company: venue.name,

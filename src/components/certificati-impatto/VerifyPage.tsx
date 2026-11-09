@@ -25,8 +25,8 @@ export function VerifyPage({ doc, valid, owned, onCreate, onAdd }: { doc: Doc; v
 
   useEffect(() => {
     const prev = document.title;
-    const title = `Certificato di Impatto di ${doc.user.first} ${doc.user.last} · ${doc.user.company}`;
-    const desc = `${doc.loc.km} km di filiera corta da ${doc.loc.city}: stima di ${fmtNum(co2)} kg di CO2 equivalente evitata. Crea anche tu il tuo certificato.`;
+    const title = `Attestato di Impatto di ${doc.user.first} ${doc.user.last} · ${doc.user.company}`;
+    const desc = `${doc.loc.km} km di filiera corta da ${doc.loc.city}: stima di ${fmtNum(co2)} kg di CO2 equivalente evitata. Crea anche tu il tuo attestato.`;
     document.title = title;
     setMeta("og:title", title);
     setMeta("og:description", desc);
@@ -70,7 +70,7 @@ export function VerifyPage({ doc, valid, owned, onCreate, onAdd }: { doc: Doc; v
           <li className="pt-1 italic">La verifica riguarda l'integrità dei dati contenuti nel link; non sostituisce DDT e Registro di Magazzino.</li>
         </ul>
         <div className="flex flex-wrap gap-2">
-          <Btn variant="primary" size="lg" onClick={onCreate}><Plus size={14} className="mr-1 inline" /> Crea il tuo certificato</Btn>
+          <Btn variant="primary" size="lg" onClick={onCreate}><Plus size={14} className="mr-1 inline" /> Crea il tuo attestato</Btn>
           {!owned && <Btn size="lg" onClick={() => { onAdd(doc); toast("Aggiunto alla tua galleria"); }}><Plus size={14} className="mr-1 inline" /> Aggiungi alla mia galleria</Btn>}
         </div>
         <div className="flex flex-wrap gap-2">

@@ -68,9 +68,9 @@ export function Gallery({ mine, onEdit, onDelete, onCreate }: Props) {
 
   const invite = async () => {
     const url = appLink("invito");
-    const text = "Crea il tuo Certificato di Impatto Km 0: personalizzalo con lo stile di un grande maestro e condividilo con i colleghi.";
+    const text = "Crea il tuo Attestato di Impatto Km 0: personalizzalo con lo stile di un grande maestro e condividilo con i colleghi.";
     if (navigator.share) {
-      try { await navigator.share({ title: "Certificato di Impatto Km 0", text, url }); return; } catch { /* annullato */ }
+      try { await navigator.share({ title: "Attestato di Impatto Km 0", text, url }); return; } catch { /* annullato */ }
     }
     await copyText(`${text} ${url}`);
   };
@@ -108,7 +108,7 @@ export function Gallery({ mine, onEdit, onDelete, onCreate }: Props) {
             <Btn variant="soft" onClick={invite}>🚀 Invita un collega</Btn>
           </div>
           <div className="mt-3 h-3 overflow-hidden rounded-full bg-emerald-900"><div className="h-full rounded-full bg-lime-400 transition-all" style={{ width: pct + "%" }} /></div>
-          <p className="mt-2 text-xs text-emerald-200/80">Ogni certificato pubblicato avvicina l'obiettivo. Dati dimostrativi più i certificati creati su questo dispositivo.</p>
+          <p className="mt-2 text-xs text-emerald-200/80">Ogni certificato pubblicato avvicina l'obiettivo. Dati dimostrativi più gli attestati creati su questo dispositivo.</p>
           <div className="mt-4 flex items-center gap-3 rounded-xl bg-emerald-900/60 p-3">
             <div className="text-3xl">{lvl.icon}</div>
             <div className="min-w-0 flex-1">
@@ -159,7 +159,7 @@ export function Gallery({ mine, onEdit, onDelete, onCreate }: Props) {
             const fm = FORMAT_BY_ID[doc.design.format];
             return (
               <article key={doc.id} className="group mb-5 break-inside-avoid overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-xl">
-                <button className="block w-full" onClick={() => setOpen({ doc, example })} aria-label={`Apri il certificato di ${doc.user.first} ${doc.user.last}`}>
+                <button className="block w-full" onClick={() => setOpen({ doc, example })} aria-label={`Apri l'attestato di ${doc.user.first} ${doc.user.last}`}>
                   <div style={{ aspectRatio: `${fm.w} / ${fm.h}` }}><CertificateSVG doc={doc} /></div>
                 </button>
                 <div className="flex items-center justify-between gap-2 px-3 py-2.5">
@@ -204,7 +204,7 @@ export function Gallery({ mine, onEdit, onDelete, onCreate }: Props) {
                   <div key={k}><dt className="text-[11px] uppercase text-stone-400">{k}</dt><dd className="font-semibold text-stone-800">{v}</dd></div>
                 ))}
               </dl>
-              {open.example && <p className="rounded-lg bg-amber-50 p-2.5 text-xs text-amber-900">Certificato dimostrativo con dati fittizi.</p>}
+              {open.example && <p className="rounded-lg bg-amber-50 p-2.5 text-xs text-amber-900">attestato dimostrativo con dati fittizi.</p>}
               <div className="grid grid-cols-2 gap-2">
                 <Btn variant="primary" onClick={() => { const d = open.doc; setOpen(null); onEdit(open.example ? { ...d, id: "IMP-" + Math.random().toString(36).slice(2, 8).toUpperCase(), createdAt: Date.now() } : d); }}>
                   {open.example ? "✨ Remixa questo" : "✎ Modifica"}
@@ -213,7 +213,7 @@ export function Gallery({ mine, onEdit, onDelete, onCreate }: Props) {
                 <Btn onClick={() => copyText(linkFor(open.doc, "direct"))}><Copy size={13} className="mr-1 inline" /> Link verifica</Btn>
                 <Btn onClick={() => copyText(remixLink(open.doc))}><Copy size={13} className="mr-1 inline" /> Link remix</Btn>
                 <Btn onClick={() => window.open(linkFor(open.doc, "direct"), "_blank")}><ExternalLink size={13} className="mr-1 inline" /> Pagina pubblica</Btn>
-                {!open.example && <Btn variant="danger" onClick={() => { if (confirm("Eliminare questo certificato dalla galleria?")) { onDelete(open.doc.id); setOpen(null); } }}><Trash2 size={13} className="mr-1 inline" /> Elimina</Btn>}
+                {!open.example && <Btn variant="danger" onClick={() => { if (confirm("Eliminare questo attestato dalla galleria?")) { onDelete(open.doc.id); setOpen(null); } }}><Trash2 size={13} className="mr-1 inline" /> Elimina</Btn>}
               </div>
             </div>
           </div>

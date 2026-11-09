@@ -95,7 +95,7 @@ export default async function HomePage() {
                   <CheckCircle2 size={16} className="text-gold" /> Fatturazione diretta alle imprese
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-gold" /> Rating d&apos;impatto ESG certificato
+                  <CheckCircle2 size={16} className="text-gold" /> Rating d&apos;impatto CSR certificato
                 </div>
               </div>
             </div>
@@ -171,12 +171,12 @@ export default async function HomePage() {
                 </div>
                 <h3 className="mt-5 font-serif text-xl text-forest">Per le Imprese</h3>
                 <p className="mt-2 text-sm text-olive leading-relaxed">
-                  Fatturazione diretta, deducibilità fiscale totale e report ESG di filiera
+                  Fatturazione diretta, deducibilità fiscale totale e report CSR di filiera
                   sul capitale rigenerato sul territorio.
                 </p>
               </div>
               <Link href="/imprese" className="mt-6 inline-flex items-center gap-1 text-xs font-semibold text-forest hover:text-gold transition-colors">
-                Scopri i vantaggi ESG <ArrowRight size={14} />
+                Scopri i vantaggi CSR <ArrowRight size={14} />
               </Link>
             </div>
 
@@ -337,7 +337,7 @@ export default async function HomePage() {
               >
                 <div className="flex items-center justify-between">
                   <span className="rounded-full bg-gold/20 px-2.5 py-1 text-[11px] font-medium text-gold">
-                    ESG {company.impactRating}/100
+                    CSR {company.impactRating}/100
                   </span>
                   <span className="text-xs text-cream/50">{company.city}</span>
                 </div>

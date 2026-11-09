@@ -231,7 +231,7 @@ export function CompanyDashboardView({ data }: Props) {
             </div>
           </div>
           <div className="rounded-2xl bg-white/10 px-4 py-3 text-right">
-            <p className="text-[11px] uppercase tracking-wider text-gold">Rating Territoriale ESG</p>
+            <p className="text-[11px] uppercase tracking-wider text-gold">Rating Territoriale CSR</p>
             <p className="font-serif text-3xl text-cream">{company.impactRating}/100</p>
           </div>
         </div>
@@ -290,7 +290,7 @@ export function CompanyDashboardView({ data }: Props) {
               activeTab === "certificati" ? "bg-cream text-forest font-bold" : "bg-white/10 text-cream hover:bg-white/15"
             }`}
           >
-            <Award size={13} /> Certificati d&apos;Impatto
+            <Award size={13} /> Attestati d&apos;Impatto
           </button>
           <button
             type="button"
@@ -765,7 +765,7 @@ export function CompanyDashboardView({ data }: Props) {
             </div>
 
             <label className="block text-sm font-medium text-forest">
-              Descrizione Aziendale e Obiettivi ESG
+              Descrizione Aziendale e Obiettivi CSR
               <textarea
                 rows={3}
                 value={companyForm.description}

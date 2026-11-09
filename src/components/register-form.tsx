@@ -415,7 +415,7 @@ export function RegisterForm({
               </label>
             </div>
             <p className="text-[11px] text-olive leading-relaxed">
-              Verrà creato il tuo <strong>Piano Welfare Territoriale 2026</strong> deducibile ex Art. 51 TUIR con cruscotto ESG per monitorare i dipendenti.
+              Verrà creato il tuo <strong>Piano Welfare Territoriale 2026</strong> deducibile ex Art. 51 TUIR con cruscotto CSR per monitorare i dipendenti.
             </p>
           </div>
         )}

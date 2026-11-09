@@ -45,7 +45,7 @@ export function intentUrl(doc: Doc, c: Channel, overrideLink?: string): string |
     case "FACEBOOK": return `https://www.facebook.com/sharer/sharer.php?u=${e(link)}&quote=${e(caption.slice(0, 500))}`;
     case "WHATSAPP": return `https://wa.me/?text=${e(caption)}`;
     case "X": return `https://twitter.com/intent/tweet?text=${e(caption.replace(link, "").trim().slice(0, 230))}&url=${e(link)}`;
-    case "EMAIL": return `mailto:?subject=${e("Il mio Certificato di Impatto Km 0")}&body=${e(caption)}`;
+    case "EMAIL": return `mailto:?subject=${e("Il mio Attestato di Impatto Km 0")}&body=${e(caption)}`;
     default: return null;
   }
 }
@@ -65,7 +65,7 @@ export function blueprint(doc: Doc, c: "INSTAGRAM" | "FACEBOOK" | "LINKEDIN" | "
       return [
         { step: 1, call: "POST https://api.linkedin.com/v2/assets?action=registerUpload", body: { registerUploadRequest: { recipes: ["urn:li:digitalmediaRecipe:feedshare-image"], owner: "urn:li:organization:{ID}", serviceRelationships: [{ relationshipType: "OWNER", identifier: "urn:li:userGeneratedContent" }] } } },
         { step: 2, call: "PUT {uploadUrl}", body: "<binary PNG>" },
-        { step: 3, call: "POST https://api.linkedin.com/v2/ugcPosts", body: { author: "urn:li:organization:{ID}", lifecycleState: "PUBLISHED", specificContent: { "com.linkedin.ugc.ShareContent": { shareCommentary: { text: caption }, shareMediaCategory: "IMAGE", media: [{ status: "READY", media: "{asset URN}", title: { text: "Certificato di Impatto — " + doc.partners.promoter } }] } }, visibility: { "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC" } } },
+        { step: 3, call: "POST https://api.linkedin.com/v2/ugcPosts", body: { author: "urn:li:organization:{ID}", lifecycleState: "PUBLISHED", specificContent: { "com.linkedin.ugc.ShareContent": { shareCommentary: { text: caption }, shareMediaCategory: "IMAGE", media: [{ status: "READY", media: "{asset URN}", title: { text: "Attestato di Impatto — " + doc.partners.promoter } }] } }, visibility: { "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC" } } },
       ];
     case "WHATSAPP":
       return [{ step: 1, call: "POST https://graph.facebook.com/v21.0/{phone-number-id}/messages", body: { messaging_product: "whatsapp", to: "{NUMERO_E164}", type: "image", image: { link: imageUrl, caption: caption.slice(0, 1000) } } }];

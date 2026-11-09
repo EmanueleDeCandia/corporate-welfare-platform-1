@@ -521,7 +521,7 @@ export function TournamentView({ data, currentUser }: Props) {
               href="/account/certificati"
               className="inline-flex items-center gap-2 rounded-2xl bg-forest px-5 py-3 text-xs font-bold text-cream shadow-sm hover:bg-forest/90 transition cursor-pointer"
             >
-              <Award size={16} /> Apri Certificati d&apos;Impatto
+              <Award size={16} /> Apri Attestati d&apos;Impatto
             </Link>
           </div>
         ) : (

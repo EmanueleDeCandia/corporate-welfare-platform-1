@@ -145,15 +145,15 @@ export function ImpactCertificateStudio({
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <div className="inline-flex items-center gap-2 rounded-full bg-gold/20 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-sand">
-              <Award size={14} className="text-gold" /> Certificati d&apos;Impatto Km 0
+              <Award size={14} className="text-gold" /> Attestati d&apos;Impatto Km 0
             </div>
             <CertificateFaqModal />
           </div>
           <h2 className="mt-2 font-serif text-2xl font-bold sm:text-3xl text-white">
-            Studio di Certificazione d&apos;Autore
+            Studio di Attestazione d&apos;Autore
           </h2>
           <p className="mt-1 text-sm text-sand/80 max-w-2xl">
-            Genera, personalizza e firma i tuoi Certificati di Impatto a filiera corta (L. 61/2022) con stili artistici d&apos;ispirazione (Picasso, Monet, Cézanne) ed esporta in PDF A4, SVG o Carosello Social.
+            Genera, personalizza e firma i tuoi Attestati di Impatto a filiera corta (L. 61/2022) con stili artistici d&apos;ispirazione (Picasso, Monet, Cézanne) ed esporta in PDF A4, SVG o Carosello Social.
           </p>
         </div>
 
@@ -184,13 +184,13 @@ export function ImpactCertificateStudio({
                 : "border border-sand/30 bg-forest/40 text-sand hover:bg-forest/70"
             }`}
           >
-            I miei Certificati {mounted ? `(${certs.length})` : ""}
+            I miegli attestati {mounted ? `(${certs.length})` : ""}
           </button>
           <button
             onClick={startNew}
             className="inline-flex items-center gap-1.5 rounded-full bg-terracotta px-4 py-2 text-xs font-bold text-white shadow hover:opacity-95 transition"
           >
-            <Plus size={14} /> Nuovo Certificato
+            <Plus size={14} /> nuovo attestato
           </button>
         </div>
       </div>
@@ -214,7 +214,7 @@ export function ImpactCertificateStudio({
           <div className="flex items-center justify-between border-b border-forest/10 pb-4">
             <div>
               <h3 className="font-serif text-2xl font-bold text-forest">Archivio Certificati Generati</h3>
-              <p className="text-sm text-olive">Sfoglia, modifica o esporta i tuoi certificati salvati in locale.</p>
+              <p className="text-sm text-olive">Sfoglia, modifica o esporta i tuoi attestati salvati in locale.</p>
             </div>
             <button
               onClick={startNew}
@@ -243,7 +243,7 @@ export function ImpactCertificateStudio({
               <h1 className="mt-2 text-xl font-bold text-rose-900">Link di verifica non valido</h1>
               <p className="mt-1 text-sm text-rose-800">Il codice di verifica o l&apos;impronta non corrispondono.</p>
               <Btn variant="primary" className="mt-4" onClick={startNew}>
-                Crea un nuovo certificato
+                Crea un nuovo attestato
               </Btn>
             </div>
           )}

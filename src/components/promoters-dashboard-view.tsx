@@ -919,7 +919,7 @@ export function PromotersDashboardView({ data }: Props) {
           }`}
         >
           <Award size={15} />
-          <span>Studio Certificati d&apos;Impatto</span>
+          <span>Studio Attestati d&apos;Impatto</span>
         </button>
       </div>
 
@@ -1435,7 +1435,7 @@ export function PromotersDashboardView({ data }: Props) {
           <div className="pb-4 border-b border-mist">
             <h2 className="font-serif text-2xl text-forest">Ciclo di Vita & Flusso Voucher Welfare</h2>
             <p className="text-xs text-olive">
-              Ogni selezione/riscatto di un voucher attiva l&apos;obbligo di pagamento a carico dell&apos;azienda CSR. La presenza reale viene monitorata per l&apos;impatto ESG.
+              Ogni selezione/riscatto di un voucher attiva l&apos;obbligo di pagamento a carico dell&apos;azienda CSR. La presenza reale viene monitorata per l&apos;impatto CSR.
             </p>
           </div>
 
@@ -2456,10 +2456,10 @@ export function PromotersDashboardView({ data }: Props) {
                 />
               </div>
 
-              {/* Link al Reporting Integrato CSR & ESG */}
+              {/* Link al Reporting Integrato CSR & CSR */}
               <div>
                 <label className="block text-xs font-semibold text-forest mb-1">
-                  Pulsante Link: Reporting Integrato CSR & ESG (Opzionale)
+                  Pulsante Link: Reporting Integrato CSR & CSR (Opzionale)
                 </label>
                 <input
                   type="url"
@@ -2469,7 +2469,7 @@ export function PromotersDashboardView({ data }: Props) {
                   className="w-full rounded-xl border border-forest/20 px-3.5 py-2 text-sm text-forest focus:border-forest focus:outline-none"
                 />
                 <p className="mt-1 text-[10px] text-olive">
-                  Link pubblico al bilancio di sostenibilità o rendiconto ESG dell&apos;impresa.
+                  Link pubblico al bilancio di sostenibilità o rendiconto CSR dell&apos;impresa.
                 </p>
               </div>
 
@@ -3081,7 +3081,7 @@ export function PromotersDashboardView({ data }: Props) {
                 </div>
                 <h3 className="font-serif text-2xl text-forest mt-1">Modifica: {editingCompany.name}</h3>
                 <p className="text-xs text-olive">
-                  Aggiorna i dati anagrafici, il plafond welfare, la struttura sponsorizzata e il reporting ESG.
+                  Aggiorna i dati anagrafici, il plafond welfare, la struttura sponsorizzata e il reporting CSR.
                 </p>
               </div>
               <button
@@ -3246,7 +3246,7 @@ export function PromotersDashboardView({ data }: Props) {
 
               <div>
                 <label className="block text-xs font-semibold text-forest mb-1">
-                  Link al Reporting Integrato CSR & ESG (Opzionale)
+                  Link al Reporting Integrato CSR & CSR (Opzionale)
                 </label>
                 <input
                   type="url"

@@ -77,7 +77,7 @@ export default function HowItWorksPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
-                    <span><strong>Rating ESG Certificato</strong>: bilancio di sostenibilità con tracciamento CO₂ risparmiata e capitale ridistribuito.</span>
+                    <span><strong>Rating CSR Certificato</strong>: bilancio di sostenibilità con tracciamento CO₂ risparmiata e capitale ridistribuito.</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 size={16} className="text-forest shrink-0 mt-0.5" />
@@ -260,7 +260,7 @@ export default function HowItWorksPage() {
               <span className="font-mono text-2xl font-bold text-gold">Step 04</span>
               <h4 className="font-serif text-lg font-bold text-forest">Reciprocità & Rendiconto</h4>
               <p className="text-xs text-forest/75 leading-relaxed">
-                Il fornitore emette fattura all&apos;azienda. L&apos;Impresa riceve il report ESG con moltiplicatore 5,1x e matura cesti omaggio dai produttori (regola 10:1).
+                Il fornitore emette fattura all&apos;azienda. L&apos;Impresa riceve il report CSR con moltiplicatore 5,1x e matura cesti omaggio dai produttori (regola 10:1).
               </p>
             </div>
           </div>
@@ -393,7 +393,7 @@ export default function HowItWorksPage() {
               <RoleBadge role="csr" />
               <p className="font-medium text-sm text-forest mt-2">Elena Martini</p>
               <p className="font-mono text-xs text-olive truncate">elena.martini@acme.it</p>
-              <p className="text-[11px] text-forest/70 pt-1">Pannello Aziendale ACME, Plafond, Fatture B2B e Rating ESG</p>
+              <p className="text-[11px] text-forest/70 pt-1">Pannello Aziendale ACME, Plafond, Fatture B2B e Rating CSR</p>
             </div>
 
             <div className="rounded-2xl bg-cream/30 p-4 border border-forest/10 space-y-1">

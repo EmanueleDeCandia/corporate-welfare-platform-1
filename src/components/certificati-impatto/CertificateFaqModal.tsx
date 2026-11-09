@@ -144,10 +144,10 @@ const FAQ_ITEMS: FAQItem[] = [
         <div className="rounded-xl border border-forest/15 bg-paper p-3 space-y-2">
           <p className="font-semibold text-forest">Architettura della tracciabilità server-side:</p>
           <ul className="list-disc pl-4 space-y-1">
-            <li><strong>Generazione Shortlink Univoco:</strong> quando un collaboratore condivide il certificato, la piattaforma associa l&apos;ID certificato (es. <code className="font-mono text-forest">/c/IMP-23CQN2</code>) al suo account e alla sua azienda.</li>
+            <li><strong>Generazione Shortlink Univoco:</strong> quando un collaboratore condivide l'attestato, la piattaforma associa l&apos;ID certificato (es. <code className="font-mono text-forest">/c/IMP-23CQN2</code>) al suo account e alla sua azienda.</li>
             <li><strong>Registrazione Immediata al Click:</strong> all&apos;apertura del link, il server incrementa il contatore visite lato backend prima di servire la pagina, garantendo il 100% di precisione anche con ad-blocker attivi.</li>
             <li><strong>Attribuzione Referral Deterministica:</strong> se il collega o l&apos;amico si registra o richiede l&apos;attivazione del welfare per la propria impresa, il sistema riconosce automaticamente chi ha generato l&apos;invito (tramite cookie di prima parte o parametro di sessione).</li>
-            <li><strong>Gamification &amp; Report CSR:</strong> le aziende possono visualizzare in tempo reale nel proprio cruscotto quante persone hanno visionato i certificati dei propri dipendenti e quanti nuovi partner o colleghi sono entrati nel circuito.</li>
+            <li><strong>Gamification &amp; Report CSR:</strong> le aziende possono visualizzare in tempo reale nel proprio cruscotto quante persone hanno visionato gli attestati dei propri dipendenti e quanti nuovi partner o colleghi sono entrati nel circuito.</li>
           </ul>
         </div>
       </div>
@@ -202,7 +202,7 @@ export function CertificateFaqModal() {
                     FAQ: Autenticità, Diffusione &amp; Tracciabilità
                   </h3>
                   <p className="text-[11px] text-sand/80">
-                    Architettura digitale e garanzie dei Certificati d&apos;Impatto Km 0
+                    Architettura digitale e garanzie dei Attestati d&apos;Impatto Km 0
                   </p>
                 </div>
               </div>

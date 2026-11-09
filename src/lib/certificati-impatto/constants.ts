@@ -146,7 +146,7 @@ export const CAPTION_TEMPLATES: Record<"linkedin" | "instagram" | "whatsapp", { 
       "**Welfare aziendale a filiera corta: un impegno concreto per il nostro territorio.**\n\n" +
       "Io, [Nome] [Cognome], insieme a [Nome Azienda CSR], ho scelto i prodotti a Km 0 della Regione Marche consegnati da [Comune Marche] con la flotta di [Promotore] su rotta ottimizzata: [Km] km di filiera corta e una stima di [CO2] kg di CO2 equivalente evitata rispetto a consegne singole dedicate.\n\n" +
       "Prodotti a Km 0 ai sensi della L. 17 maggio 2022, n. 61. Il valore è una stima calcolata con fattore emissivo di 0,31 kg CO2/km.\n\n" +
-      "👉 **Verifica il certificato e scopri il circuito RADICI:**\n[Link Pagina Web]\n\n" +
+      "👉 **Verifica l'attestato e scopri il circuito RADICI:**\n[Link Pagina Web]\n\n" +
       "Vuoi attivare il welfare aziendale a Km 0 anche nella tua impresa o entrare nella nostra rete di produttori e partner locali? Richiedi informazioni o registrati sulla piattaforma!\n\n" +
       "#WelfareAziendale #Km0 #RegioneMarche #GruppoIlliria #CSR #SostenibilitaTerritoriale",
   },
@@ -154,7 +154,7 @@ export const CAPTION_TEMPLATES: Record<"linkedin" | "instagram" | "whatsapp", { 
     label: "Instagram & Facebook · Visual & Engagement",
     limit: 2200,
     text:
-      "🌱 Il mio Certificato di Impatto Km 0 è pronto!\n\n" +
+      "🌱 Il mio Attestato di Impatto Km 0 è pronto!\n\n" +
       "Da [Comune Marche] alla mia tavola: solo [Km] km di filiera corta e circa [CO2] kg di CO2 equivalente evitata 🚚💚\n\n" +
       "Con [Nome Azienda CSR] e [Promotore] sosteniamo i produttori locali e l'economia delle Marche.\n\n" +
       "👉 Guarda il mio attestato verificato: [Link Pagina Web]\n\n" +
@@ -164,7 +164,7 @@ export const CAPTION_TEMPLATES: Record<"linkedin" | "instagram" | "whatsapp", { 
     label: "WhatsApp · Messaggio diretto",
     limit: 1000,
     text:
-      "Ciao! 👋 Sono [Nome]: ho appena creato il mio Certificato di Impatto Km 0 con [Nome Azienda CSR] — [Km] km da [Comune Marche] e circa [CO2] kg di CO2 evitata 🌱\n\n" +
+      "Ciao! 👋 Sono [Nome]: ho appena creato il mio Attestato di Impatto Km 0 con [Nome Azienda CSR] — [Km] km da [Comune Marche] e circa [CO2] kg di CO2 evitata 🌱\n\n" +
       "Guarda il mio attestato: [Link Pagina Web]\n\n" +
       "Unisciti anche tu al circuito RADICI o scopri come attivare il welfare a filiera corta nella tua azienda: clicca sul link per iscriverti o chiedere informazioni!",
   },

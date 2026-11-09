@@ -60,6 +60,12 @@ export default function BusinessModelPage() {
               Nota 4 · Valore CSR vs CAM
             </a>
             <a
+              href="#nota-5"
+              className="rounded-full border border-cream/20 bg-white/5 px-3 py-1 text-cream/90 transition hover:bg-white/15"
+            >
+              Nota 5 · Servizi CSR
+            </a>
+            <a
               href="#simulatore"
               className="rounded-full border border-gold/50 bg-gold/20 px-3 py-1 font-semibold text-gold transition hover:bg-gold/30"
             >
@@ -78,19 +84,13 @@ export default function BusinessModelPage() {
               Capitolo 1 · Sintesi Esecutiva
             </span>
             <h2 className="font-serif text-2xl sm:text-3xl text-forest mt-1">
-              La Tesi Industriale di RADICI
+              Il Modello Economico di RADICI
             </h2>
           </div>
 
           <div className="rounded-3xl border border-mist bg-white p-6 shadow-sm space-y-4 text-sm leading-relaxed text-ink/90">
             <p>
-              RADICI è una piattaforma concepita per trasformare il welfare aziendale territoriale in una leva di
-              coesione reale per le comunità dei borghi e delle aree interne. A differenza delle convenzioni
-              generaliste, RADICI orienta i flussi economici verso l&apos;accoglienza agrituristica, la filiera corta
-              agricola e i teatri storici, massimizzando il ritorno sul territorio. In questa DEMO sono state inserite
-              soltanto Imprese CSR ma il raggio di azione equipara Aziende Pubbliche e Aziende Private per
-              l&apos;erogazione dei Voucher di Welfare Aziendale. Le Aziende Pubbliche avranno semplicemente un account
-              senza possibilità di Sponsorizzazione.
+              RADICI è una piattaforma concepita per trasformare il welfare aziendale territoriale in una leva di coesione reale per le comunità dei borghi e delle aree interne. A differenza delle convenzioni generaliste, RADICI orienta i flussi economici verso l&apos;accoglienza agrituristica, la filiera corta agricola e i teatri storici, massimizzando il ritorno sul territorio. In questa DEMO sono inserite solo 2 Imprese CSR e una Università fittizie. In fase attuativa la piattaforma non fa distinzione tra Aziende Pubbliche e Aziende Private per l&apos;erogazione dei Voucher di Welfare Aziendale. Le Aziende Pubbliche avranno semplicemente un account senza possibilità di Sponsorizzazione.
             </p>
           </div>
         </section>
@@ -149,7 +149,7 @@ export default function BusinessModelPage() {
                     B) Nuovi Clienti (Valore Condiviso)
                   </h4>
                   <p className="mt-1 text-xs text-olive leading-relaxed font-normal">
-                    Nelle Gare d&apos;Appalto Pubbliche: negli Enti Locali e Unioni di Comuni coinvolti direttamente dalla Startup, Regione, Atenei, Ospedali, l&apos;offerta di Illiria viene valutata in modo preliminare con i vantaggi distintivi riconoscibili della valorizzazione territoriale. In sede di formulazione delle offerte, l&apos;abbatimento dei kilometri addizionali a favore delle produzioni locali, potrebbero aprire opportunità sia per arricchire l&apos;offerta che nella conformità ai Criteri Ambientali Minimi (CAM). La DEMO non ha inserito le Aziende pubbliche nella piattaforma ma la sezione Imprese CSR è dedicata sia ad Aziende pubbliche che private.
+                    Nelle Gare d&apos;Appalto Pubbliche: negli Enti Locali e Unioni di Comuni coinvolti direttamente dalla Startup, Regione, Atenei, Ospedali, l&apos;offerta di Illiria viene valutata in modo preliminare con i vantaggi distintivi riconoscibili della valorizzazione territoriale. In sede di formulazione delle offerte, l&apos;abbatimento dei kilometri addizionali a favore delle produzioni locali, potrebbero aprire opportunità sia per arricchire l&apos;offerta che nella conformità ai Criteri Ambientali Minimi (CAM). La DEMO ha inserito una Università fittizia nella piattaforma: la sezione Imprese CSR è dedicata a qualsiasi Azienda pubblica e privata.
                   </p>
                 </div>
               </div>
@@ -168,7 +168,7 @@ export default function BusinessModelPage() {
                       La leva di adesione della logistica integrata a impatto zero per la fornitura e distribuzione di prodotti locali a filiera corta (Km 0) destinati ai dipendenti, promuovendo contestualmente lo sviluppo economico delle aree interne e il sostegno al patrimonio culturale locale.
                     </li>
                     <li>
-                      Il sostegno che Gruppo abilita servizi che aumentando la rilevanza per ogni partecipante quali il Reporting Integrato di Sostenibilità (ESG), le attività di comunicazione e media relation, l&apos;advertising, nonché l&apos;organizzazione di tavoli istituzionali e dibattiti di Public Policy correlati agli eventi territoriali.
+                      Il sostegno con cui il Gruppo abilita servizi che aumentano la rilevanza per ogni partecipante: il supporto per la redazione del Reporting Integrato di Sostenibilità, le attività di comunicazione e media relation, l&apos;advertising, nonché l&apos;organizzazione di tavoli istituzionali e dibattiti di Public Policy correlati agli eventi territoriali.
                     </li>
                   </ul>
                 </div>
@@ -373,6 +373,36 @@ export default function BusinessModelPage() {
               direttamente in azienda all&apos;interno delle rotte ordinarie, si azzerano le corse individuali e i costi
               logistici che ciascun piccolo produttore dovrebbe sostenere in proprio.
             </p>
+          </div>
+        </section>
+
+        {/* NOTA 5 */}
+        <section id="nota-5" className="space-y-6 scroll-mt-24">
+          <div className="border-l-2 border-forest pl-4">
+            <span className="font-mono text-xs uppercase tracking-wider text-forest font-semibold block">
+              [Nota 5] Focus Metodologico
+            </span>
+            <h2 className="font-serif text-2xl sm:text-3xl text-forest mt-1">
+              Servizi CSR per le Imprese Clienti &amp; Standard di Reporting
+            </h2>
+            <p className="text-xs text-olive mt-1">
+              Integrazione dei framework di rendicontazione, autonomia delle imprese aderenti e linee guida ISO.
+            </p>
+          </div>
+
+          <div className="rounded-3xl border border-mist bg-white p-6 shadow-sm space-y-4 text-sm leading-relaxed text-ink/90">
+            <p>
+              I servizi di supporto forniti dalla Startup per abilitare le imprese aderenti alle attività di Corporate Social Responsibility, tra cui redazione dell&apos;Integrated Reporting e comunicazione delle Best Practice, sono predisposte per essere integrate nella piattaforma. Le attività di supporto sono state realizzate adeguando diversi framework, standard di reporting e di misurazione (IR, WICI, SASB agli standard europei ESRS) e fornite con tool digitali per semplificare la raccolta e l&apos;inserimento dati.
+            </p>
+            <p>
+              Si precisa che le imprese aderenti mantengono la piena autonomia e libertà nella scelta delle modalità di valorizzazione e verifica dei reporting. Possono optare per l&apos;auto-dichiarazione (conforme allo standard ISO/IEC 17050), richiedere un&apos;attestazione di conformità esterna (External Assurance) nelle sue diverse declinazioni di garanzia (limitata o ragionevole) o fare riferimento alle linee guida della norma ISO 26000 per strutturare il proprio modello di responsabilità sociale e rendicontazione partecipata.
+            </p>
+            <div className="rounded-2xl border border-forest/15 bg-sand/15 p-4 text-xs text-olive">
+              <p className="font-semibold text-forest">Documentazione di dettaglio:</p>
+              <p className="mt-1">
+                Questo set di risorse e strumenti è trattato in documento tecnico specifico.
+              </p>
+            </div>
           </div>
         </section>
 

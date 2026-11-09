@@ -94,7 +94,7 @@ export function AccountHub(props: Props) {
     ...(props.user.role === "employee"
       ? [{ id: "wallet" as const, label: "Portafoglio Welfare", icon: Wallet }]
       : []),
-    { id: "certificati" as const, label: "Certificati d'Impatto Km 0", icon: Award },
+    { id: "certificati" as const, label: "Attestati d'Impatto Km 0", icon: Award },
     { id: "bookings" as const, label: "Prenotazioni & Sconti", icon: CalendarCheck },
     { id: "friends" as const, label: "Hub Amici & Referral", icon: Users },
     { id: "kit" as const, label: "Kit & Social", icon: Share2 },
@@ -429,7 +429,7 @@ function WalletTab(props: Props & { grantEvents?: GrantEventLite[] }) {
               <div>
                 <h3 className="font-serif text-2xl text-forest">Storico Riscatto Voucher Welfare</h3>
                 <p className="text-xs text-olive mt-0.5">
-                  Certificazioni di riscatto e riaccredito dei soli voucher welfare aziendali.
+                  Attestazioni di riscatto e riaccredito dei soli voucher welfare aziendali.
                 </p>
               </div>
               {welfareTransactions.length > 5 ? (
@@ -459,7 +459,7 @@ function WalletTab(props: Props & { grantEvents?: GrantEventLite[] }) {
                           </span>
                         ) : (
                           <span className="inline-flex items-center rounded-full bg-forest/15 px-2 py-0.5 text-[10px] font-bold text-forest uppercase">
-                            Welfare Certificato
+                            Welfare Verificato
                           </span>
                         )}
                       </div>
@@ -1077,7 +1077,7 @@ function KitTab({ user, company, venues, shares, certificates }: Props) {
     const place = venue?.name ?? "Agriturismo La Valle";
     const companyName = company?.name ?? "ACME S.p.A.";
     const companyTag = companyName.replace(/\s+/g, "").replace(/[^a-zA-Z0-9]/g, "");
-    return `Questo soggiorno da ${place} è stato sostenuto da ${companyName} per valorizzare l'economia locale — Certificato da RADICI.\n\n#${companyTag} #RadiciWelfare #ImpattoSociale #EconomiaLocale #KM0 #${(venue?.region ?? "Marche").replace(/\s+/g, "")}`;
+    return `Questo soggiorno da ${place} è stato sostenuto da ${companyName} per valorizzare l'economia locale — Verificato da RADICI.\n\n#${companyTag} #RadiciWelfare #ImpattoSociale #EconomiaLocale #KM0 #${(venue?.region ?? "Marche").replace(/\s+/g, "")}`;
   }, [venue, company]);
 
   async function onFile(file: File) {
@@ -1100,13 +1100,13 @@ function KitTab({ user, company, venues, shares, certificates }: Props) {
     ctx.drawImage(badge, 48, height - 250, 180, 180);
     ctx.fillStyle = "#FBF7F0";
     ctx.font = "600 34px Georgia";
-    ctx.fillText("Impatto sociale certificato", 250, height - 170);
+    ctx.fillText("Impatto sociale verificato", 250, height - 170);
     ctx.font = "22px Georgia";
     const line = `Questo soggiorno ha sostenuto l'economia agricola locale del ${venue?.localSupportPercent ?? 15}%`;
     ctx.fillText(line, 250, height - 128);
     ctx.font = "18px Georgia";
     ctx.fillStyle = "#B8954A";
-    ctx.fillText("Certificato da RADICI", 250, height - 92);
+    ctx.fillText("Verificato da RADICI", 250, height - 92);
     setPreview(canvas.toDataURL("image/jpeg", 0.92));
   }
 
@@ -1212,9 +1212,9 @@ function KitTab({ user, company, venues, shares, certificates }: Props) {
           <div className="flex items-center justify-between gap-4">
             <div>
               <div className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-gold">
-                <ShieldCheck size={15} /> Registro Ufficiale ESG
+                <ShieldCheck size={15} /> Registro Ufficiale CSR
               </div>
-              <h3 className="mt-1 font-serif text-2xl text-forest">Certificati di Impatto</h3>
+              <h3 className="mt-1 font-serif text-2xl text-forest">Attestati di Impatto</h3>
               <p className="mt-1 text-xs text-olive">
                 Attestati ufficiali firmati digitalmente su CO₂ evitata e valore economico rigenerato.
               </p>
@@ -1241,7 +1241,7 @@ function KitTab({ user, company, venues, shares, certificates }: Props) {
                       </div>
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-forest">
-                          CIRCUITO RADICI · ESG
+                          CIRCUITO RADICI · CSR
                         </p>
                         <p className="text-[9px] uppercase tracking-[0.12em] text-olive">
                           {cert.type === "co2" ? "Impatto Ambientale" : "Impatto Territoriale"}
@@ -1293,7 +1293,7 @@ function KitTab({ user, company, venues, shares, certificates }: Props) {
 
             {certificates.length === 0 ? (
               <p className="text-sm text-olive">
-                I certificati si sbloccano dopo i primi riscatti e le condivisioni.
+                gli attestati si sbloccano dopo i primi riscatti e le condivisioni.
               </p>
             ) : null}
           </div>

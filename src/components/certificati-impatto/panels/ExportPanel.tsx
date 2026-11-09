@@ -49,7 +49,7 @@ export function ExportPanel({ doc, update, actions, onSave, onNew, onImport, sav
       <Section title="Salva e condividi il lavoro">
         <div className="grid grid-cols-2 gap-2">
           <Btn variant="primary" onClick={onSave} className="col-span-2">{saved ? "Aggiorna nella galleria" : "Pubblica in galleria"}</Btn>
-          <Btn onClick={onNew}>Nuovo certificato</Btn>
+          <Btn onClick={onNew}>nuovo attestato</Btn>
           <Btn onClick={() => update((d) => ({ ...d, layers: applyLayout(d.layers, d.design.format) }))}>Ripristina layout</Btn>
         </div>
         <p className="text-xs text-stone-500">La galleria è salvata solo su questo dispositivo (nessun database). Usa il link «remix» o il file JSON per spostare il lavoro.</p>
