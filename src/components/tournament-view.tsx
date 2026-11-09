@@ -24,6 +24,7 @@ import {
   Ticket,
 } from "lucide-react";
 import type { TournamentData, TrailerWithStats } from "@/lib/tournament";
+import { TournamentTicketModal } from "@/components/tournament-ticket-modal";
 
 type Props = {
   data: TournamentData;
@@ -48,6 +49,7 @@ export function TournamentView({ data, currentUser }: Props) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [voteError, setVoteError] = useState<string | null>(null);
   const [voteSuccess, setVoteSuccess] = useState<string | null>(null);
+  const [ticketModalTrailer, setTicketModalTrailer] = useState<TrailerWithStats | null>(null);
 
   const activeTrailer =
     data.trailers.find((t) => t.id === selectedTrailerId) || data.trailers[0];
@@ -359,34 +361,63 @@ export function TournamentView({ data, currentUser }: Props) {
                   </p>
                 )}
 
-                {/* Pulsante Voto */}
-                <div>
+                {/* Pulsante Voto & Attestato d'Autore */}
+                <div className="space-y-2.5">
                   {activeTrailer.userHasVoted ? (
-                    <div className="flex items-center gap-2 rounded-2xl bg-forest/10 px-5 py-3.5 text-xs font-bold text-forest border border-forest/20">
-                      <CheckCircle2 size={18} className="text-forest" />
-                      Hai votato questo spettacolo! Grazie per aver supportato la tua organizzazione.
+                    <div className="space-y-2.5">
+                      <div className="flex items-center gap-2 rounded-2xl bg-forest/10 px-5 py-3.5 text-xs font-bold text-forest border border-forest/20">
+                        <CheckCircle2 size={18} className="text-forest" />
+                        Hai votato questo spettacolo! Grazie per aver supportato la tua organizzazione.
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setTicketModalTrailer(activeTrailer)}
+                        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gold px-6 py-3.5 text-xs font-black text-forest shadow-md hover:bg-gold/90 transition cursor-pointer"
+                      >
+                        <Award size={16} /> Genera Attestato d&apos;Autore &amp; Invita a Votare
+                      </button>
                     </div>
                   ) : data.userVotedTrailerId ? (
-                    <div className="rounded-2xl bg-sand/30 p-3.5 text-xs text-olive border border-forest/10">
-                      Hai già espresso il tuo voto per un altro trailer in questa edizione.
+                    <div className="space-y-2.5">
+                      <div className="rounded-2xl bg-sand/30 p-3.5 text-xs text-olive border border-forest/10">
+                        Hai già espresso il tuo voto per un altro trailer in questa edizione.
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setTicketModalTrailer(activeTrailer)}
+                        className="w-full flex items-center justify-center gap-2 rounded-2xl border border-forest/20 bg-cream/50 px-6 py-3 text-xs font-bold text-forest hover:bg-cream transition cursor-pointer"
+                      >
+                        <Award size={16} /> Genera Biglietto d&apos;Autore per Questo Spettacolo
+                      </button>
                     </div>
                   ) : (
-                    <button
-                      type="button"
-                      disabled={isSubmitting}
-                      onClick={() => handleVote(activeTrailer.id)}
-                      className="w-full flex items-center justify-center gap-2 rounded-2xl bg-forest px-6 py-4 text-sm font-bold text-cream shadow-md hover:bg-forest/90 transition cursor-pointer disabled:opacity-50"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <Loader2 size={16} className="animate-spin" /> Registrazione Voto in corso...
-                        </>
-                      ) : (
-                        <>
-                          <Vote size={18} /> Vota Questo Spettacolo per la Tua Impresa
-                        </>
+                    <div className="space-y-2.5">
+                      <button
+                        type="button"
+                        disabled={isSubmitting}
+                        onClick={() => handleVote(activeTrailer.id)}
+                        className="w-full flex items-center justify-center gap-2 rounded-2xl bg-forest px-6 py-4 text-sm font-bold text-cream shadow-md hover:bg-forest/90 transition cursor-pointer disabled:opacity-50"
+                      >
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 size={16} className="animate-spin" /> Registrazione Voto in corso...
+                          </>
+                        ) : (
+                          <>
+                            <Vote size={18} /> Vota Questo Spettacolo per la Tua Impresa
+                          </>
+                        )}
+                      </button>
+                      {currentUser && (
+                        <button
+                          type="button"
+                          onClick={() => setTicketModalTrailer(activeTrailer)}
+                          className="w-full flex items-center justify-center gap-2 rounded-2xl border border-forest/20 bg-white px-5 py-3 text-xs font-bold text-forest hover:bg-cream transition cursor-pointer shadow-xs"
+                        >
+                          <Award size={16} className="text-gold" /> Genera Attestato d&apos;Autore &amp; Invita a Votare
+                        </button>
                       )}
-                    </button>
+                    </div>
                   )}
                   {!currentUser && (
                     <p className="text-[10px] text-olive text-center mt-2">
@@ -535,6 +566,15 @@ export function TournamentView({ data, currentUser }: Props) {
           </div>
         )}
       </section>
+
+      {/* MODALE BIGLIETTO D'AUTORE / ATTESTATO DEL TORNEO */}
+      {ticketModalTrailer && currentUser && (
+        <TournamentTicketModal
+          trailer={ticketModalTrailer}
+          currentUser={currentUser}
+          onClose={() => setTicketModalTrailer(null)}
+        />
+      )}
     </div>
   );
 }
