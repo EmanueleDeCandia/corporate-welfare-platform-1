@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -50,6 +50,11 @@ export function TournamentView({ data, currentUser }: Props) {
   const [voteError, setVoteError] = useState<string | null>(null);
   const [voteSuccess, setVoteSuccess] = useState<string | null>(null);
   const [ticketModalTrailer, setTicketModalTrailer] = useState<TrailerWithStats | null>(null);
+  const [mounted, setMounted] = useState<boolean>(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const activeTrailer =
     data.trailers.find((t) => t.id === selectedTrailerId) || data.trailers[0];
@@ -103,8 +108,9 @@ export function TournamentView({ data, currentUser }: Props) {
     }
   }
 
+  const origin = mounted && typeof window !== "undefined" ? window.location.origin : "";
   const referralUrl = currentUser?.referralCode
-    ? `${typeof window !== "undefined" ? window.location.origin : ""}/r/${currentUser.referralCode}`
+    ? `${origin}/r/${currentUser.referralCode}`
     : "";
 
   const waShareText = encodeURIComponent(
